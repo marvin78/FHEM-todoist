@@ -14,17 +14,14 @@ Manage your todoist Tasklists in FHEM
 	<br /><br />
 	<a name="todoist_Define"></a>
   <b>Define</b><br />
-  <ul>
     <code>define &lt;name&gt; todoist &lt;PROJECT-ID&gt;</code><br />
     <br />
 		<b>PROJECT-ID:</b> The ID of your project (=list).<br />
     <br /><br />
 
     Example:
-    <ul>
       <code>define Einkaufsliste todoist 257528237</code><br />
-    </ul>
-  </ul><br />
+<br />
 	<br />
 	<a name="todoist_Set"></a>
   <b>Set</b>
