@@ -776,8 +776,7 @@ sub todoist_sort($) {
 			my $tid = int($temp[1]);
 			my $val = $readings->{$key}{VAL};
 			my $id = ReadingsVal($name,$key."_ID",0);
-			my $rev = $hash->{helper}{"REV"}{"Task_".$tid};
-			$list{$tid} = {content => $val, ID => $id, REV => $rev};
+			$list{$tid} = {content => $val, ID => $id};
 		}
 	}
 	
@@ -794,9 +793,8 @@ sub todoist_sort($) {
 		readingsBulkUpdate($hash,"Task_".sprintf("%03s",$i),$data->{content});
 		readingsBulkUpdate($hash,"Task_".sprintf("%03s",$i)."_dueDate",$hash->{helper}{"DUE_DATE"}{$data->{ID}}) if ($hash->{helper}{"DUE_DATE"}{$data->{ID}});
 		readingsBulkUpdate($hash,"Task_".sprintf("%03s",$i)."_assigneeId",$hash->{helper}{"ASSIGNEE_ID"}{$data->{ID}}) if ($hash->{helper}{"ASSIGNEE_ID"}{$data->{ID}});
-		readingsBulkUpdate($hash,"Task_".sprintf("%03s",$i)."_starred",$hash->{helper}{"STARRED"}{$data->{ID}}) if ($hash->{helper}{"STARRED"}{$data->{ID}});
+		readingsBulkUpdate($hash,"Task_".sprintf("%03s",$i)."_priority",$hash->{helper}{"PRIORITY"}{$data->{ID}}) if ($hash->{helper}{"PRIORITY"}{$data->{ID}});
 		readingsBulkUpdate($hash,"Task_".sprintf("%03s",$i)."_recurrenceType",$hash->{helper}{"RECURRENCE_TYPE"}{$data->{ID}}) if ($hash->{helper}{"RECURRENCE_TYPE"}{$data->{ID}});
-		readingsBulkUpdate($hash,"Task_".sprintf("%03s",$i)."_recurrenceCount",$hash->{helper}{"RECURRENCE_COUNT"}{$data->{ID}}) if ($hash->{helper}{"RECURRENCE_COUNT"}{$data->{ID}});
 		readingsBulkUpdate($hash,"Task_".sprintf("%03s",$i)."_completedAt",$hash->{helper}{"COMPLETED_AT"}{$data->{ID}}) if ($hash->{helper}{"COMPLETED_AT"}{$data->{ID}});
 		readingsBulkUpdate($hash,"Task_".sprintf("%03s",$i)."_completedById",$hash->{helper}{"COMPLETED_BY_ID"}{$data->{ID}}) if ($hash->{helper}{"COMPLETED_BY_ID"}{$data->{ID}});
 		readingsBulkUpdate($hash,"Task_".sprintf("%03s",$i)."_ID",$data->{ID});
