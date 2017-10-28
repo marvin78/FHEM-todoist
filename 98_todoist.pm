@@ -1,4 +1,4 @@
-﻿# $Id: 98_todoist.pm 0001 Version 0.1.0 2017-10-15 10:43:10Z marvin1978 $
+﻿# $Id: 98_todoist.pm 0008 Version 0.2.0 2017-10-28 15:17:10Z marvin1978 $
 
 package main;
 
@@ -28,8 +28,9 @@ sub todoist_Initialize($) {
     $hash->{AttrList} = "disable:1,0 ".
 												"pollInterval ".
 												"do_not_notify ".
-												"sortTasks:1,2,0 ".
-												"getCompleted:1,0 ".
+												"sortTasks:1,0 ".
+												#"getCompleted:1,0 ".
+												"showPriority:1,0 ".
 												$readingFnAttributes;
 	
 	return undef;
@@ -622,7 +623,7 @@ sub todoist_GetTasksCallback($$$){
 					
 					## set priority if present
 					if (defined($task->{priority})) {
-						readingsBulkUpdate($hash, "Task_".$t."_priority",$task->{priority});
+						readingsBulkUpdate($hash, "Task_".$t."_priority",$task->{priority}) if (AttrVal($name,"showPriority",0)==1);
 						$hash->{helper}{"PRIORITY"}{$taskID}=$task->{priority};
 					}
 					
@@ -793,7 +794,7 @@ sub todoist_sort($) {
 		readingsBulkUpdate($hash,"Task_".sprintf("%03s",$i),$data->{content});
 		readingsBulkUpdate($hash,"Task_".sprintf("%03s",$i)."_dueDate",$hash->{helper}{"DUE_DATE"}{$data->{ID}}) if ($hash->{helper}{"DUE_DATE"}{$data->{ID}});
 		readingsBulkUpdate($hash,"Task_".sprintf("%03s",$i)."_assigneeId",$hash->{helper}{"ASSIGNEE_ID"}{$data->{ID}}) if ($hash->{helper}{"ASSIGNEE_ID"}{$data->{ID}});
-		readingsBulkUpdate($hash,"Task_".sprintf("%03s",$i)."_priority",$hash->{helper}{"PRIORITY"}{$data->{ID}}) if ($hash->{helper}{"PRIORITY"}{$data->{ID}});
+		readingsBulkUpdate($hash,"Task_".sprintf("%03s",$i)."_priority",$hash->{helper}{"PRIORITY"}{$data->{ID}}) if ($hash->{helper}{"PRIORITY"}{$data->{ID}} && AttrVal($name,"showPriority",0)==1);
 		readingsBulkUpdate($hash,"Task_".sprintf("%03s",$i)."_recurrenceType",$hash->{helper}{"RECURRENCE_TYPE"}{$data->{ID}}) if ($hash->{helper}{"RECURRENCE_TYPE"}{$data->{ID}});
 		readingsBulkUpdate($hash,"Task_".sprintf("%03s",$i)."_completedAt",$hash->{helper}{"COMPLETED_AT"}{$data->{ID}}) if ($hash->{helper}{"COMPLETED_AT"}{$data->{ID}});
 		readingsBulkUpdate($hash,"Task_".sprintf("%03s",$i)."_completedById",$hash->{helper}{"COMPLETED_BY_ID"}{$data->{ID}}) if ($hash->{helper}{"COMPLETED_BY_ID"}{$data->{ID}});
@@ -1009,13 +1010,13 @@ sub todoist_Attr($@) {
 		InternalTimer(gettimeofday()+1, "todoist_GetTasks", $hash, 0) if (!IsDisabled($name) && IsDisabled($name) != 3);
 	}
 	
-	if ( $attrName eq "sortTasks" ) {
+	if ( $attrName eq "sortTasks" ||  $attrName eq "showPriority") {
 		if ( $cmd eq "set" ) {
-			return "$name: sortTasks has to be 0 or 1" if ($attrVal !~ /^(0|1|2)$/);
-			Log3 $name, 4, "todoist ($name): set attribut sortTasks to $attrVal";
+			return "$name: $attrName has to be 0 or 1" if ($attrVal !~ /^(0|1)$/);
+			Log3 $name, 4, "todoist ($name): set attribut $attrName to $attrVal";
 		}
 		elsif ( $cmd eq "del" ) {
-			Log3 $name, 4, "todoist ($name): deleted attribut sortTasks (standard)";
+			Log3 $name, 4, "todoist ($name): deleted attribut $attrName (standard)";
 		}
 		RemoveInternalTimer($hash,"todoist_GetTasks");
 		InternalTimer(gettimeofday()+1, "todoist_GetTasks", $hash, 0) if (!IsDisabled($name) && IsDisabled($name) != 3);
@@ -1300,6 +1301,12 @@ sub todoist_Notify ($$) {
 		<li>0: don't sort the tasks</li>
 		<li>1: sorts Tasks alphabetically after every update</li>
 		<!--<li>2: sorts Tasks in todoist order</li>-->
+		</ul>
+		<br />
+		<li>showPriority</li>
+		<ul>
+		<li>0: don't show priority (standard)</li>
+		<li>1: show priority</li>
 		</ul>
 		<br /><br />
 		<!--<li>getCompleted</li>
