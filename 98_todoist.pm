@@ -1,4 +1,4 @@
-﻿# $Id: 98_todoist.pm 0008 Version 0.2.0 2017-10-28 15:17:10Z marvin1978 $
+﻿# $Id: 98_todoist.pm 0008 Version 0.2.5 2017-10-29 09:17:10Z marvin1978 $
 
 package main;
 
@@ -29,7 +29,7 @@ sub todoist_Initialize($) {
 												"pollInterval ".
 												"do_not_notify ".
 												"sortTasks:1,0 ".
-												#"getCompleted:1,0 ".
+												"getCompleted:1,0 ".
 												"showPriority:1,0 ".
 												$readingFnAttributes;
 	
@@ -467,10 +467,10 @@ sub todoist_GetTasks($;$) {
 			Log3 $name,5, "$name: hash: ".Dumper($hash);
 			
 			## check if we get also the completed Tasks
-			my $urlComp = "";
+			my $url = "https://todoist.com/api/v7/projects/get_data";
 			
 			if ($completed == 1) {
-				$urlComp = "&completed=true";
+				$url = "https://todoist.com/api/v7/completed/get_all";
 			}
 			
 			my $data= {
@@ -482,7 +482,7 @@ sub todoist_GetTasks($;$) {
 			
 			## get the tasks
 			$param = {
-				url        => "https://todoist.com/api/v7/projects/get_data",
+				url        => $url,
 				method		 => "POST",
 				data			 => $data,
 				header		 => "Content-Type: application/x-www-form-urlencoded",
@@ -515,9 +515,9 @@ sub todoist_GetTasks($;$) {
 	}
 	
 	## one more time, if completed
-	#if (AttrVal($name,"getCompleted",undef) && $completed != 1) {		
-	#	InternalTimer(gettimeofday()+0.1, "todoist_doGetCompTasks", $hash, 0);
-	#}
+	if (AttrVal($name,"getCompleted",0)==1 && $completed != 1) {		
+		InternalTimer(gettimeofday()+0.1, "todoist_doGetCompTasks", $hash, 0);
+	}
 	#InternalTimer(gettimeofday()+2, "todoist_GetUsers", $hash, 0) if ($completed != 1);
 	
 	return undef;
@@ -599,12 +599,12 @@ sub todoist_GetTasksCallback($$$){
 					$hash->{helper}{"WID"}{$taskID}=$i;
 					
 					## set due_date if present
-					if (defined($task->{completed_at})) {
+					if (defined($task->{completed_date})) {
 						## if there is a completed task, we create a new reading
-						readingsBulkUpdate($hash, "Task_".$t."_completedAt",$task->{completed_at});
-						$hash->{helper}{"COMPLETED_AT"}{$taskID}=$task->{completed_at};
-						readingsBulkUpdate($hash, "Task_".$t."_completedById",$task->{completed_by_id});
-						$hash->{helper}{"COMPLETED_BY_ID"}{$taskID}=$task->{completed_by_id};
+						readingsBulkUpdate($hash, "Task_".$t."_completedAt",FmtDateTime(str2time($task->{completed_date})));
+						$hash->{helper}{"COMPLETED_AT"}{$taskID}=FmtDateTime(str2time($task->{completed_date}));
+						readingsBulkUpdate($hash, "Task_".$t."_completedById",$task->{user_id});
+						$hash->{helper}{"COMPLETED_BY_ID"}{$taskID}=$task->{user_id};
 					}
 					
 					## set due_date if present
@@ -998,7 +998,7 @@ sub todoist_Attr($@) {
 	if ( $attrName eq "pollInterval" ) {
 		if ( $cmd eq "set" ) {
 			return "$name: pollInterval has to be a number (seconds)" if ($attrVal!~ /\d+/);
-			return "$name: pollInterval has to be greater than or equal 600" if ($attrVal < 600);
+			return "$name: pollInterval has to be greater than or equal 600" if ($attrVal < 60);
 			$hash->{INTERVAL}=$attrVal;
 			Log3 $name, 4, "todoist ($name): set new pollInterval to $attrVal";
 		}
@@ -1309,8 +1309,8 @@ sub todoist_Notify ($$) {
 		<li>1: show priority</li>
 		</ul>
 		<br /><br />
-		<!--<li>getCompleted</li>
-		get's completed Tasks from list additionally.-->
+		<li>getCompleted</li>
+		get's completed Tasks from list additionally. <b>ATTENTION: Only premium users have access to completed tasks!</b>
 	</ul><br />
 	
 	<a name="todoist_Readings"></a>
