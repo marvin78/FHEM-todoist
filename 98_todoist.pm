@@ -193,7 +193,7 @@ sub todoist_UpdateTask($$$) {
 				Log3 $name,5, "$name: Args: ".Dumper(%args);
 				$method="POST";
 			}
-			## complete a task
+			## uncomplete a task
 			elsif ($type eq "uncomplete") {
 
 				# variables for the commands parameter
