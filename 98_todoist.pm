@@ -1,4 +1,4 @@
-﻿# $Id: 98_todoist.pm 0009 Version 0.2.6 2017-10-29 13:06:10Z marvin1978 $
+﻿# $Id: 98_todoist.pm 0011 Version 0.2.8 2017-10-29 14:48:10Z marvin1978 $
 
 package main;
 
@@ -107,8 +107,10 @@ sub todoist_GetPwd($) {
 }
 
 ## set error Readings
-sub todoist_ErrorReadings($$) {
+sub todoist_ErrorReadings($;$) {
 	my ($hash,$errorText) = @_;
+	
+	$errorText="no data" if (!defined($errorText));
 	
 	my $name = $hash->{NAME};
 
@@ -403,7 +405,7 @@ sub todoist_HandleTaskCallback($$$){
 	}
 	else {
 	
-		## if "created at" in $data, we were successfull
+		## if "sync_status" in $data, we were successfull
 		if(($data =~ /sync_status/ && $data=~/ok/) || $data =~ /sync_id/) {
 			
 			readingsBeginUpdate($hash);
@@ -552,9 +554,9 @@ sub todoist_GetTasksCallback($$$){
 	
 	my $lText="";
 	
-	readingsBeginUpdate($hash);
-	
 	Log3 $name,5, "todoist ($name):  Task Callback param: ".Dumper($param);
+	
+	readingsBeginUpdate($hash);
 	
 	if ($err ne "") {
 		todoist_ErrorReadings($hash,$err);
@@ -566,7 +568,7 @@ sub todoist_GetTasksCallback($$$){
 		Log3 $name,5, "todoist ($name):  Task Callback data (decoded JSON): ".Dumper($decoded_json );
 		
 		if (!$decoded_json->{items}) {
-			todoist_ErrorReadings($hash,"get Tasks: no data!");
+			InternalTimer(gettimeofday()+0.2, "todoist_ErrorReadings",$hash, 0); 
 		}
 		else {
 			my @taskseries = @{$decoded_json->{items}};
@@ -588,7 +590,7 @@ sub todoist_GetTasksCallback($$$){
 			
 			## no data
 			if ($count==0 && $param->{completed} != 1) {
-				todoist_ErrorReadings($hash,"no data");
+				InternalTimer(gettimeofday()+0.2, "todoist_ErrorReadings",$hash, 0); 
 				readingsBulkUpdate($hash, "count",0);
 			}
 			else {
@@ -890,7 +892,7 @@ sub todoist_clearList($) {
 		my $dHash->{hash}=$hash;
 		if ($id !~ /Task_/) {
 			$dHash->{id}=$id;
-			InternalTimer(gettimeofday()+0.1, "todoist_doUpdateTask", $dHash, 0);
+			InternalTimer(gettimeofday()+0.4, "todoist_doUpdateTask", $dHash, 0);
 		}
 	}
 }
