@@ -1,4 +1,4 @@
-﻿# $Id: 98_todoist.pm 0008 Version 0.2.5 2017-10-29 09:17:10Z marvin1978 $
+﻿# $Id: 98_todoist.pm 0009 Version 0.2.6 2017-10-29 13:06:10Z marvin1978 $
 
 package main;
 
@@ -187,6 +187,17 @@ sub todoist_UpdateTask($$$) {
 
 				# variables for the commands parameter
 				$tType = "item_complete";
+				%args = (
+					ids => '['.$taskId.']',
+				);
+				Log3 $name,5, "$name: Args: ".Dumper(%args);
+				$method="POST";
+			}
+			## complete a task
+			elsif ($type eq "uncomplete") {
+
+				# variables for the commands parameter
+				$tType = "item_uncomplete";
 				%args = (
 					ids => '['.$taskId.']',
 				);
@@ -414,6 +425,7 @@ sub todoist_HandleTaskCallback($$$){
 			readingsBulkUpdate($hash, "error","none");
 			readingsBulkUpdate($hash, "lastCreatedTask",$reading) if ($param->{wType} eq "create");
 			readingsBulkUpdate($hash, "lastCompletedTask",$reading) if ($param->{wType} eq "complete");
+			readingsBulkUpdate($hash, "lastUncompletedTask",$reading) if ($param->{wType} eq "uncomplete");
 			readingsBulkUpdate($hash, "lastUpdatedTask",$reading) if ($param->{wType} eq "update");
 			readingsBulkUpdate($hash, "lastDeletedTask",$reading) if ($param->{wType} eq "delete");
 			
@@ -516,7 +528,7 @@ sub todoist_GetTasks($;$) {
 	
 	## one more time, if completed
 	if (AttrVal($name,"getCompleted",0)==1 && $completed != 1) {		
-		InternalTimer(gettimeofday()+0.1, "todoist_doGetCompTasks", $hash, 0);
+		InternalTimer(gettimeofday()+0.5, "todoist_doGetCompTasks", $hash, 0);
 	}
 	#InternalTimer(gettimeofday()+2, "todoist_GetUsers", $hash, 0) if ($completed != 1);
 	
@@ -1047,6 +1059,7 @@ sub todoist_Set ($@) {
 	if (!IsDisabled($name) && !$hash->{helper}{PWD_NEEDED}) {
 		push @sets, "addTask";
 		push @sets, "completeTask";
+		push @sets, "uncompleteTask";
 		push @sets, "deleteTask";
 		push @sets, "updateTask";
 		push @sets, "clearList:noArg";
@@ -1094,6 +1107,15 @@ sub todoist_Set ($@) {
 			my $exp=decode_utf8(join(" ",@args));
 			Log3 $name,5, "todoist ($name): Completed startet with exp: $exp";
 			todoist_UpdateTask ($hash,$exp,"complete");
+		}
+		return "in order to complete a task, we need it's ID" if ($count==0);
+	}
+	elsif ($cmd eq "uncompleteTask") {
+		my $count=@args;
+		if ($count!=0) {
+			my $exp=decode_utf8(join(" ",@args));
+			Log3 $name,5, "todoist ($name): Uncompleted startet with exp: $exp";
+			todoist_UpdateTask ($hash,$exp,"uncomplete");
 		}
 		return "in order to complete a task, we need it's ID" if ($count==0);
 	}
@@ -1281,6 +1303,7 @@ sub todoist_Notify ($$) {
 		todoist-Task-ID (ID:<ID>) as parameter</li><br />
 		<code>set &lt;DEVICE&gt; completeTask &lt;TASK-ID&gt;</code> - completes a task by number<br >
 		<code>set &lt;DEVICE&gt; completeTask ID:&lt;todoist-TASK-ID&gt;</code> - completes a task by todoist-Task-ID<br ><br />
+		<li><b>uncompleteTask</b> - uncompletes a Task. Use it like complete.<br />
 		<li><b>deleteTask</b> - deletes a task. Needs number of task (reading 'Task_NUMBER') or the todoist-Task-ID (ID:<ID>) as parameter</li><br />
 		<code>set &lt;DEVICE&gt; deleteTask &lt;TASK-ID&gt;</code> - deletes a task by number<br >
 		<code>set &lt;DEVICE&gt; deleteTask ID:&lt;todoist-TASK-ID&gt;</code> - deletes a task by todoist-Task-ID<br ><br />
