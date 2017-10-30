@@ -412,7 +412,7 @@ sub todoist_HandleTaskCallback($$$){
 	else {
 	
 		## if "sync_status" in $data, we were successfull
-		if(($data =~ /sync_status/ && $data=~/ok/) || $data =~ /sync_id/) {
+		if((($data =~ /sync_status/ && $data=~/ok/) || $data =~ /sync_id/) && eval {decode_json($data)}) {
 			
 			readingsBeginUpdate($hash);
 		
@@ -445,9 +445,14 @@ sub todoist_HandleTaskCallback($$$){
 		}
 		## we got an error from the API
 		else {
-			my $decoded_json = decode_json($data);
+			my $error="malformed JSON";
+			
+			if (eval {decode_json($data)}) {
+				my $decoded_json = decode_json($data);
+				$error = $decoded_json->{error} if ($decoded_json->{error});
+			}
 			$error = $param->{wType}."Task: ";
-			$error .= $decoded_json->{error} if ($decoded_json->{error});
+			$error .= $error;
 			$error .= "Unknown";
 			Log3 $name, 3, "todoist ($name): got error: ".$error;
 			todoist_ErrorReadings($hash,$error);
