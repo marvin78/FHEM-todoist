@@ -112,6 +112,10 @@ sub todoist_ErrorReadings($;$) {
 	
 	$errorText="no data" if (!defined($errorText));
 	
+	if (defined($hash->{helper}{errorData}) && $hash->{helper}{errorData}!="") {
+		$errorText=$hash->{helper}{errorData};
+	}
+	
 	my $name = $hash->{NAME};
 
 	readingsBeginUpdate( $hash );
@@ -120,6 +124,8 @@ sub todoist_ErrorReadings($;$) {
 	readingsEndUpdate( $hash, 1 );
 	
 	Log3 $name,3, "todoist ($name): ".$errorText;
+	
+	$hash->{helper}{errorData}="";
 	return undef;
 }
 
@@ -562,12 +568,17 @@ sub todoist_GetTasksCallback($$$){
 		todoist_ErrorReadings($hash,$err);
 	}
 	else {
-	
-		my $decoded_json = decode_json($data);
+		my $decoded_json="";
 		
-		Log3 $name,5, "todoist ($name):  Task Callback data (decoded JSON): ".Dumper($decoded_json );
+		if (eval{decode_json($data)}) {
 		
-		if (!$decoded_json->{items}) {
+			$decoded_json = decode_json($data);
+			
+			Log3 $name,5, "todoist ($name):  Task Callback data (decoded JSON): ".Dumper($decoded_json );
+		}
+		
+		if (!$decoded_json->{items} || $decoded_json eq "") {
+			$hash->{helper}{errorData} = Dumper($data);
 			InternalTimer(gettimeofday()+0.2, "todoist_ErrorReadings",$hash, 0); 
 		}
 		else {
