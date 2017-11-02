@@ -447,6 +447,7 @@ sub todoist_HandleTaskCallback($$$){
 		else {
 			my $error="malformed JSON";
 			
+			# if the error is in the file, log this error
 			if (eval {decode_json($data)}) {
 				my $decoded_json = decode_json($data);
 				$error = $decoded_json->{error} if ($decoded_json->{error});
@@ -582,7 +583,7 @@ sub todoist_GetTasksCallback($$$){
 			Log3 $name,5, "todoist ($name):  Task Callback data (decoded JSON): ".Dumper($decoded_json );
 		}
 		
-		if (!$decoded_json->{items} || $decoded_json eq "") {
+		if ((ref($decoded_json) eq "HASH" && !$decoded_json->{items}) || $decoded_json eq "") {
 			$hash->{helper}{errorData} = Dumper($data);
 			InternalTimer(gettimeofday()+0.2, "todoist_ErrorReadings",$hash, 0); 
 		}
