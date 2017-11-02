@@ -147,7 +147,6 @@ sub todoist_UpdateTask($$$) {
 	my %commands=();
 	
 	my $method;
-	my $urlPart;
 	my $taskId;
 	my $title;
 	
@@ -240,7 +239,6 @@ sub todoist_UpdateTask($$$) {
 					ids => '['.$taskId.']',
 				);
 				$method="POST";
-				$urlPart=$taskId."?revision=".int($hash->{helper}{"REV"}{$taskId});
 			}
 			else {
 				return undef;
@@ -678,24 +676,7 @@ sub todoist_GetTasksCallback($$$){
 			}
 		}
 	}
-	## we got an error from the API
-#	else {
-#		eval {
-#			my @decoded_json = decode_json($data);
-#			foreach my $error (@decoded_json) {
-#				my $errorType=$error->{error}{type}?$error->{error}{type}:"";
-#				readingsBulkUpdate($hash, "error",$errorType);
-#				readingsBulkUpdate($hash, "lastError",$errorType);
-#				Log3 $name, 4, "todoist ($name): got error: ".$errorType;
-#			}
-#			1;
-#		}
-#		or do { ## we got HTML instead of JSON - mostly this is the case, if token is wrong
-#			readingsBulkUpdate($hash, "error","malformed JSON / Access Token wrong or API access gone");
-#			Log3 $name,3, "todoist ($name): No access. Token seems to be wrong or we can't get access. Got malformed JSON";
-#			#readingsBulkUpdate($hash,"state","inactive");
-#		}
-#	}
+
 	## list Text for TTS, Text-Message...
 	if ($param->{completed} != 1) {
 		$lText="-" if ($lText eq "");
@@ -715,78 +696,6 @@ sub todoist_GetTasksCallback($$$){
 	return undef;
 }
 
-## Callback for the tasks positions
-sub todoist_GetListPositionsCallback($$$){
-	my ($param, $err, $data) = @_;
-	
-	my $hash=$param->{hash};
-	
-	my $name = $hash->{NAME}; 
-	
-	Log3 $name,5, "todoist ($name):  Task Positions Callback data: ".Dumper($data);
-	
-	my $lText="";
-	
-	readingsBeginUpdate($hash);
-	
-	## did we get JSON in an array? That would mean, we got task data
-	if(eval {\@{decode_json($data)}}) {
-	
-		my @decoded_json = @{decode_json($data)};
-		
-		
-		## do some logging
-		Log3 $name,5, "todoist ($name):  Task Callback Positions data (decoded JSON): ".Dumper(@decoded_json );
-		Log3 $name,4, "todoist ($name):  Task Callback Positions error(s): ".Dumper($err);
-		Log3 $name,5, "todoist ($name):  Task Callback Positions param: ".Dumper($param);
-		
-		my $i=0;
-		
-		## count the results
-		my $count=@decoded_json;
-		
-				
-		## no data
-		if ($count==0 && $param->{completed} != 1) {
-			readingsBulkUpdate($hash, "error","no data");
-			readingsBulkUpdate($hash, "lastError","no data");
-		}
-		else {
-			foreach my $task (@decoded_json) {
-				
-				$hash->{helper}{"POSITIONS"} = $task->{values};
-				
-			}
-			readingsBulkUpdate($hash, "error","none");
-			
-		}
-	}
-	## we got an error from the API
-	else {
-		eval {
-			my @decoded_json = decode_json($data);
-			foreach my $error (@decoded_json) {
-				my $errorType=$error->{error}{type}?$error->{error}{type}:"";
-				readingsBulkUpdate($hash, "error",$errorType);
-				readingsBulkUpdate($hash, "lastError",$errorType);
-				Log3 $name, 4, "todoist ($name): got error: ".$errorType;
-			}
-			1;
-		}
-		or do { ## we got HTML instead of JSON - mostly this is the case, if token is wrong
-			readingsBulkUpdate($hash, "error","malformed JSON / Access Token wrong or API access gone");
-			Log3 $name,3, "todoist ($name): No access. Token seems to be wrong or we can't get access. Got malformed JSON";
-			#readingsBulkUpdate($hash,"state","inactive");
-		}
-	}
-	
-	## sort Tasks by todoist order if set
-	todoist_sorttodoist($hash) if (AttrVal($name,"sortTasks",0) == 2);
-	
-	readingsEndUpdate( $hash, 1 );
-	
-	return undef;
-}
 
 ## sort alphabetically
 sub todoist_sort($) {
@@ -849,55 +758,6 @@ sub todoist_sort($) {
 	return undef;
 }
 
-## sort by todoist order
-sub todoist_sorttodoist($) {
-	my ($hash) = @_;
-	
-	my $name=$hash->{NAME};
-	
-	my $lText="";
-	
-
-	CommandDeleteReading(undef, "$hash->{NAME} (T|t)ask_.*");
-	
-	readingsBeginUpdate($hash);
-	
-	delete($hash->{helper}{"IDS"});
-	
-	## sort Tasks and write them back
-	my $i = 0;
-	my @pos = @{$hash->{helper}{"POSITIONS"}};
-
-	
-	$i = 0;
-	foreach my $ID (@pos) {
-		readingsBulkUpdate($hash,"Task_".sprintf("%03s",$i),$hash->{helper}{"TITLE"}{$ID});
-		readingsBulkUpdate($hash,"Task_".sprintf("%03s",$i)."_dueDate",$hash->{helper}{"DUE_DATE"}{$ID}) if ($hash->{helper}{"DUE_DATE"}{$ID});
-		readingsBulkUpdate($hash,"Task_".sprintf("%03s",$i)."_assigneeId",$hash->{helper}{"ASSIGNEE_ID"}{$ID}) if ($hash->{helper}{"ASSIGNEE_ID"}{$ID});
-		readingsBulkUpdate($hash,"Task_".sprintf("%03s",$i)."_starred",$hash->{helper}{"STARRED"}{$ID}) if ($hash->{helper}{"STARRED"}{$ID});
-		readingsBulkUpdate($hash,"Task_".sprintf("%03s",$i)."_recurrenceType",$hash->{helper}{"RECURRENCE_TYPE"}{$ID}) if ($hash->{helper}{"RECURRENCE_TYPE"}{$ID});
-		readingsBulkUpdate($hash,"Task_".sprintf("%03s",$i)."_recurrenceCount",$hash->{helper}{"RECURRENCE_COUNT"}{$ID}) if ($hash->{helper}{"RECURRENCE_COUNT"}{$ID});
-		readingsBulkUpdate($hash,"Task_".sprintf("%03s",$i)."_completedAt",$hash->{helper}{"COMPLETED_AT"}{$ID}) if ($hash->{helper}{"COMPLETED_AT"}{$ID});
-		readingsBulkUpdate($hash,"Task_".sprintf("%03s",$i)."_completedById",$hash->{helper}{"COMPLETED_BY_ID"}{$ID}) if ($hash->{helper}{"COMPLETED_BY_ID"}{$ID});
-		readingsBulkUpdate($hash,"Task_".sprintf("%03s",$i)."_ID",$ID);
-		
-		$hash->{helper}{"IDS"}{"Task_".$i} = {$ID};
-		$hash->{helper}{"WID"}{$ID} = $i;
-		
-		if (!$hash->{helper}{"COMPLETED_AT"}{$ID}) {
-			$lText.=", " if ($i != 0);
-			$lText.=$hash->{helper}{"TITLE"}{$ID};
-		}
-		$i++;
-	}
-	
-	## list Text for TTS, Text-Message...
-	$lText="-" if ($lText eq "");
-	readingsBulkUpdate($hash,"listText",$lText) if ($lText ne "");
-	
-	readingsEndUpdate( $hash, 1 );
-	return undef;
-}
 
 #################################################
 # delete all Tasks from list
@@ -933,8 +793,7 @@ sub todoist_Undefine($$) {
 
 ################################################
 # If Device is deleted, delete the password data
-sub todoist_Delete($$)
-{
+sub todoist_Delete($$) {
     my ($hash, $name) = @_;  
     
     my $old_index = "todoist_".$name."_passwd";
@@ -953,8 +812,7 @@ sub todoist_Delete($$)
 
 ################################################
 # If Device is renamed, copy the password data
-sub todoist_Rename($$)
-{
+sub todoist_Rename($$) {
     my ($new, $old) = @_;  
     
     my $old_index = "todoist_".$old."_passwd";
@@ -1086,7 +944,6 @@ sub todoist_Set ($@) {
 	}
 	push @sets, "accessToken" if ($hash->{helper}{PWD_NEEDED});
 	push @sets, "newAccessToken" if (!$hash->{helper}{PWD_NEEDED});
-	#push @sets, "sortTasks:noArg" if (!IsDisabled($name) && !$hash->{helper}{PWD_NEEDED} && AttrVal($name,"sortTasks",0) != 1);
 	
 	return join(" ", @sets) if ($cmd eq "?");
 	
@@ -1100,7 +957,7 @@ sub todoist_Set ($@) {
 	if ( $cmd =~ /^(active|inactive)?$/ ) {   
 		readingsSingleUpdate($hash,"state",$cmd,1);
 		RemoveInternalTimer($hash,"todoist_GetTasks");
-		CommandDeleteAttr(undef,"$name disable") if ($cmd eq "active" && AttrVal($name,"disable",0)!=1);
+		CommandDeleteAttr(undef,"$name disable") if ($cmd eq "active" && AttrVal($name,"disable",0)==1);
 		InternalTimer(gettimeofday()+1, "todoist_GetTasks", $hash, 0) if (!IsDisabled($name) && $cmd eq "active");
 		Log3 $name, 3, "todoist ($name): set Device $cmd";
 	}
