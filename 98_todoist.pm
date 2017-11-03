@@ -31,6 +31,7 @@ sub todoist_Initialize($) {
 												"sortTasks:1,0 ".
 												"getCompleted:1,0 ".
 												"showPriority:1,0 ".
+												"autoGetUsers:1,0 ".
 												$readingFnAttributes;
 	
 	return undef;
@@ -112,7 +113,7 @@ sub todoist_ErrorReadings($;$) {
 	
 	$errorText="no data" if (!defined($errorText));
 	
-	if (defined($hash->{helper}{errorData}) && $hash->{helper}{errorData}!="") {
+	if (defined($hash->{helper}{errorData}) && $hash->{helper}{errorData} ne "") {
 		$errorText=$hash->{helper}{errorData};
 	}
 	
@@ -542,7 +543,7 @@ sub todoist_GetTasks($;$) {
 	if (AttrVal($name,"getCompleted",0)==1 && $completed != 1) {		
 		InternalTimer(gettimeofday()+0.5, "todoist_doGetCompTasks", $hash, 0);
 	}
-	#InternalTimer(gettimeofday()+2, "todoist_GetUsers", $hash, 0) if ($completed != 1);
+	InternalTimer(gettimeofday()+2, "todoist_GetUsers", $hash, 0) if ($completed != 1 && AttrVal($name,"autoGetUsers",1) == 1);
 	
 	return undef;
 }
@@ -627,7 +628,7 @@ sub todoist_GetTasksCallback($$$){
 					$hash->{helper}{"TITLE"}{$taskID}=$title;
 					$hash->{helper}{"WID"}{$taskID}=$i;
 					
-					## set due_date if present
+					## set completed_date if present
 					if (defined($task->{completed_date})) {
 						## if there is a completed task, we create a new reading
 						readingsBulkUpdate($hash, "Task_".$t."_completedAt",FmtDateTime(str2time($task->{completed_date})));
@@ -643,11 +644,18 @@ sub todoist_GetTasksCallback($$$){
 						$hash->{helper}{"DUE_DATE"}{$taskID}=FmtDateTime(str2time($task->{due_date_utc}));
 					}
 					
-					## set assignee_id if present
+					## set responsible_uid if present
+					if (defined($task->{responsible_uid})) {
+						## if there is a task with responsible_uid, we create a new reading
+						readingsBulkUpdate($hash, "Task_".$t."_responsibleUid",$task->{responsible_uid});
+						$hash->{helper}{"RESPONSIBLE_UID"}{$taskID}=$task->{responsible_uid};
+					}
+					
+					## set assigned_by_uid if present
 					if (defined($task->{assigned_by_uid})) {
-						## if there is a task with assignee_id, we create a new reading
-						readingsBulkUpdate($hash, "Task_".$t."_assigneeId",$task->{assigned_by_uid});
-						$hash->{helper}{"ASSIGNEE_ID"}{$taskID}=$task->{assigned_by_uid};
+						## if there is a task with assigned_by_uid, we create a new reading
+						readingsBulkUpdate($hash, "Task_".$t."_assignedByUid",$task->{assigned_by_uid});
+						$hash->{helper}{"ASSIGNEDBY_UID"}{$taskID}=$task->{assigned_by_uid};
 					}
 					
 					## set priority if present
@@ -697,6 +705,145 @@ sub todoist_GetTasksCallback($$$){
 }
 
 
+## get all Users
+sub todoist_GetUsers($) {
+	my ($hash) = @_;
+	
+	my $name=$hash->{NAME};
+	
+	my $param;
+	
+	my $pwd="";
+	
+	## if no token is needed and device is not disabled, check token and get list vom todoist
+	if (!$hash->{helper}{PWD_NEEDED} && !IsDisabled($name)) {
+		
+		## get password
+		$pwd=todoist_GetPwd($hash);
+		
+		my $data= {
+			token						=> $pwd,
+			sync_token			=> '*',
+			resource_types	=> '["collaborators"]'
+		};
+		
+		if ($pwd) {
+		
+			Log3 $name,5, "$name: hash: ".Dumper($hash);
+			
+			$param = {
+				url        => "https://todoist.com/api/v7/sync",
+				data			 => $data,
+				timeout    => 7,
+				method		 => "POST",
+				header		 => "Content-Type: application/x-www-form-urlencoded",
+				hash 			 => $hash,
+				callback   => \&todoist_GetUsersCallback,  ## call callback sub to work with the data we get
+			};
+			
+			
+			Log3 $name,5, "todoist ($name): Param: ".Dumper($param);
+			
+			## non-blocking access to todoist API
+			InternalTimer(gettimeofday()+1, "HttpUtils_NonblockingGet", $param, 0);
+		}
+		else {
+			todoist_ErrorReadings($hash,"access token empty");
+		}
+	}
+	else {
+		if (!IsDisabled($name)) {
+			todoist_ErrorReadings($hash,"no access token set");
+		}
+		else {
+			todoist_ErrorReadings($hash,"device is disabled");
+		}
+	}
+	
+	return undef;
+}
+
+sub todoist_GetUsersCallback($$$){
+	my ($param, $err, $data) = @_;
+	
+	my $hash=$param->{hash};
+	
+	my $name = $hash->{NAME}; 
+	
+	Log3 $name,5, "todoist ($name): User Callback data: ".Dumper($data);
+	
+	if ($err ne "") {
+		todoist_ErrorReadings($hash,$err);
+	}
+	else {
+		my $decoded_json="";
+		
+		if (eval{decode_json($data)}) {
+		
+			$decoded_json = decode_json($data);
+			
+			Log3 $name,5, "todoist ($name):  User Callback data (decoded JSON): ".Dumper($decoded_json );
+		}
+		
+		readingsBeginUpdate($hash);
+		if ((ref($decoded_json) eq "HASH" && !$decoded_json->{collaborators}) || $decoded_json eq "") {
+			$hash->{helper}{errorData} = Dumper($data);
+			InternalTimer(gettimeofday()+0.2, "todoist_ErrorReadings",$hash, 0); 
+		}
+		else {
+			my @users = @{$decoded_json->{collaborators}};
+			my @states = @{$decoded_json->{collaborator_states}};
+			## count the results
+			my $count=@users;
+			
+			## delete Task_* readings for changed list
+			CommandDeleteReading(undef, "$hash->{NAME} (U|u)ser_.*");
+			delete($hash->{helper}{USER});
+			
+			Log3 $name,5, "todoist ($name):  Task States: ".Dumper(@states);
+			
+			## no data
+			if ($count==0) {
+				readingsBulkUpdate($hash, "error","no data");
+				readingsBulkUpdate($hash, "lastError","no data");
+				readingsBulkUpdate($hash, "countUsers",0);
+			}
+			else {
+			
+				my $i=0;
+				foreach my $user (@users) {
+					my $do=0;
+					foreach my $state (@states) {
+						$do=1 if ($user->{id} == $state->{user_id} && $state->{project_id} == $hash->{PID});
+					}
+					
+					if ($do==1) {
+						my $userName = encode_utf8($user->{full_name});
+						my $t = sprintf ('%03d',$i);
+						
+						## get todoist-User-ID
+						my $userID = $user->{id};
+						
+						readingsBulkUpdate($hash, "User_".$t,$userName);
+						readingsBulkUpdate($hash, "User_".$t."_ID",$userID);
+
+						## a few helper for ID and revision
+						$hash->{helper}{USER}{"IDS"}{"User_".$i}=$userID;
+						$hash->{helper}{USER}{"NAME"}{$userID}=$userName;
+						$hash->{helper}{USER}{"WID"}{$userID}=$i;
+						$i++;
+					}
+				}
+				readingsBulkUpdate($hash, "error","none");
+				readingsBulkUpdate($hash, "countUsers",$i);
+			}
+		}
+		readingsEndUpdate( $hash, 1 );
+	}
+		
+	
+}
+
 ## sort alphabetically
 sub todoist_sort($) {
 	my ($hash) = @_;
@@ -733,7 +880,8 @@ sub todoist_sort($) {
 		my $data = $list{$key};
 		readingsBulkUpdate($hash,"Task_".sprintf("%03s",$i),$data->{content});
 		readingsBulkUpdate($hash,"Task_".sprintf("%03s",$i)."_dueDate",$hash->{helper}{"DUE_DATE"}{$data->{ID}}) if ($hash->{helper}{"DUE_DATE"}{$data->{ID}});
-		readingsBulkUpdate($hash,"Task_".sprintf("%03s",$i)."_assigneeId",$hash->{helper}{"ASSIGNEE_ID"}{$data->{ID}}) if ($hash->{helper}{"ASSIGNEE_ID"}{$data->{ID}});
+		readingsBulkUpdate($hash,"Task_".sprintf("%03s",$i)."_responsibleUid",$hash->{helper}{"RESPONSIBLE_UID"}{$data->{ID}}) if ($hash->{helper}{"RESPONSIBLE_UID"}{$data->{ID}});
+		readingsBulkUpdate($hash,"Task_".sprintf("%03s",$i)."_assignedByUid",$hash->{helper}{"ASSIGNEDBY_UID"}{$data->{ID}}) if ($hash->{helper}{"ASSIGNEDBY_UID"}{$data->{ID}});
 		readingsBulkUpdate($hash,"Task_".sprintf("%03s",$i)."_priority",$hash->{helper}{"PRIORITY"}{$data->{ID}}) if ($hash->{helper}{"PRIORITY"}{$data->{ID}} && AttrVal($name,"showPriority",0)==1);
 		readingsBulkUpdate($hash,"Task_".sprintf("%03s",$i)."_recurrenceType",$hash->{helper}{"RECURRENCE_TYPE"}{$data->{ID}}) if ($hash->{helper}{"RECURRENCE_TYPE"}{$data->{ID}});
 		readingsBulkUpdate($hash,"Task_".sprintf("%03s",$i)."_completedAt",$hash->{helper}{"COMPLETED_AT"}{$data->{ID}}) if ($hash->{helper}{"COMPLETED_AT"}{$data->{ID}});
@@ -941,6 +1089,7 @@ sub todoist_Set ($@) {
 		push @sets, "updateTask";
 		push @sets, "clearList:noArg";
 		push @sets, "getTasks:noArg";
+		push @sets, "getUsers:noArg";
 	}
 	push @sets, "accessToken" if ($hash->{helper}{PWD_NEEDED});
 	push @sets, "newAccessToken" if (!$hash->{helper}{PWD_NEEDED});
@@ -965,6 +1114,11 @@ sub todoist_Set ($@) {
 		RemoveInternalTimer($hash,"todoist_GetTasks");
 		Log3 $name, 4, "todoist ($name): set getTasks manually. Timer restartet.";
 		InternalTimer(gettimeofday()+1, "todoist_GetTasks", $hash, 0) if (!IsDisabled($name) && !$hash->{helper}{PWD_NEEDED});
+	}
+	elsif ($cmd eq "getUsers") {
+		RemoveInternalTimer($hash,"todoist_GetUsers");
+		Log3 $name, 4, "todoist ($name): set getUsers manually.";
+		InternalTimer(gettimeofday()+1, "todoist_GetUsers", $hash, 0) if (!IsDisabled($name) && !$hash->{helper}{PWD_NEEDED});
 	}
 	elsif ($cmd eq "accessToken" || $cmd eq "newAccessToken") {
 		return todoist_setPwd ($hash,$name,@args);
@@ -1153,6 +1307,7 @@ sub todoist_Notify ($$) {
 		<li><b>inactive</b> - set the device inactive (deletes the timer, polling is off)</li><br />
 		<li><b>newAccessToken</b> - replace the saved token with a new one.</li><br />
 		<li><b>getTasks</b> - get the task list immediately, reset timer.</li><br />
+		<li><b>getUsers</b> - get the projects users immediately.</li><br />
 		<li><b>addTask</b> - create a new task. Needs title as parameter.<br /><br />
 		<code>set &lt;DEVICE&gt; addTask &lt;TASK_TITLE&gt;[:&lt;DUE_DATE&gt;]</code><br ><br />
 		Additional Parameters are:<br />
@@ -1194,22 +1349,33 @@ sub todoist_Notify ($$) {
 		<li><a href="#do_not_notify">do_not_notify</a></li><br />
     <li><a name="#disable">disable</a></li><br />
 		<li>pollInterval</li>
-		get the list every pollInterval seconds. Default is 1800. Smallest possible value is 600.<br /><br />
+		get the list every pollInterval seconds. Default is 1800. Smallest possible value is 60.<br /><br />
 		<li>sortTasks</li>
 		<ul>
-		<li>0: don't sort the tasks</li>
+		<li>0: don't sort the tasks (default)</li>
 		<li>1: sorts Tasks alphabetically after every update</li>
 		<!--<li>2: sorts Tasks in todoist order</li>-->
 		</ul>
 		<br />
 		<li>showPriority</li>
 		<ul>
-		<li>0: don't show priority (standard)</li>
+		<li>0: don't show priority (default)</li>
 		<li>1: show priority</li>
 		</ul>
-		<br /><br />
+		<br />
 		<li>getCompleted</li>
-		get's completed Tasks from list additionally. <b>ATTENTION: Only premium users have access to completed tasks!</b>
+		<ul>
+		<li>0: don't get completet tasks (default)</li>
+		<li>1: get completed tasks</li>
+		</ul><br />
+		<b>ATTENTION: Only premium users have	access to completed tasks!</b>
+		<br /><br />
+		<li>autoGetUsers</li>
+		<ul>
+		<li>0: don't get users automatically</li>
+		<li>1: get users after every "getTasks" (default)</li>
+		</ul>
+		<br /><br />
 	</ul><br />
 	
 	<a name="todoist_Readings"></a>
@@ -1223,14 +1389,18 @@ sub todoist_Notify ($$) {
       the priority of your task.</li><br />
 		<li>Task_XXX_ID<br />
       the todoist ID of Task_X.</li><br />
-		<!--<li>Task_XXX_completedAt<br />
+		<li>Task_XXX_completedAt<br />
       only for completed Tasks (attribute getCompleted).</li><br />
 		<li>Task_XXX_completedById<br />
       only for completed Tasks (attribute getCompleted).</li><br />
+    <li>Task_XXX_assignedByUid<br />
+      the user this task was assigned by.</li><br />
+		<li>Task_XXX_responsibleUid<br />
+      the user this task was assigned to.</li><br />
 		<li>User_XXX<br />
       the lists users are listet as User_000, User_001 [...].</li><br />
 		<li>User_XXX_ID<br />
-      the users todoist ID.</li><br />-->
+      the users todoist ID.</li><br />
 		<li>listText<br />
       a comma seperated list of tasks in the specified list. This may be used for TTS, Messages etc.</li><br />
 		<li>count<br />
