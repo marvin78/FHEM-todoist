@@ -1,4 +1,4 @@
-﻿# $Id: 98_todoist.pm 0016 Version 0.4.2 2017-11-03 14:06:10Z marvin1978 $
+﻿# $Id: 98_todoist.pm 0018 Version 0.4.3 2017-11-06 16:25:10Z marvin1978 $
 
 package main;
 
@@ -108,7 +108,7 @@ sub todoist_GetPwd($) {
 }
 
 ## set error Readings
-sub todoist_ErrorReadings($;$) {
+sub todoist_ErrorReadings($;$$) {
 	my ($hash,$errorLog,$errorMessage) = @_;
 	
 	$errorLog="no data" if (!defined($errorLog));
