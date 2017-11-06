@@ -109,24 +109,31 @@ sub todoist_GetPwd($) {
 
 ## set error Readings
 sub todoist_ErrorReadings($;$) {
-	my ($hash,$errorText) = @_;
+	my ($hash,$errorLog,$errorMessage) = @_;
 	
-	$errorText="no data" if (!defined($errorText));
+	$errorLog="no data" if (!defined($errorLog));
+	$errorMessage="no data" if (!defined($errorMessage));
 	
 	if (defined($hash->{helper}{errorData}) && $hash->{helper}{errorData} ne "") {
-		$errorText=$hash->{helper}{errorData};
+		$errorLog=$hash->{helper}{errorData};
+	}
+	
+	if (defined($hash->{helper}{errorMessage}) && $hash->{helper}{errorMessage} ne "") {
+		$errorMessage=$hash->{helper}{errorMessage};
 	}
 	
 	my $name = $hash->{NAME};
 
 	readingsBeginUpdate( $hash );
-	readingsBulkUpdate( $hash,"error",$errorText );
-	readingsBulkUpdate( $hash,"lastError",$errorText );
+	readingsBulkUpdate( $hash,"error",$errorMessage );
+	readingsBulkUpdate( $hash,"lastError",$errorMessage );
 	readingsEndUpdate( $hash, 1 );
 	
-	Log3 $name,3, "todoist ($name): ".$errorText;
+	Log3 $name,3, "todoist ($name): Error Message: ".$errorMessage;
+	Log3 $name,3, "todoist ($name): Api-Error Callback-data: ".$errorLog;
 	
 	$hash->{helper}{errorData}="";
+	$hash->{helper}{errorMessage}="";
 	return undef;
 }
 
@@ -460,8 +467,7 @@ sub todoist_HandleTaskCallback($$$){
 		
 	}	
 	
-	RemoveInternalTimer($hash,"todoist_GetTasks");
-	InternalTimer(gettimeofday()+1, "todoist_GetTasks", $hash, 0); ## loop with Interval
+	todoist_RestartGetTimer($hash);
 	
 	return undef;
 }
@@ -584,6 +590,7 @@ sub todoist_GetTasksCallback($$$){
 		
 		if ((ref($decoded_json) eq "HASH" && !$decoded_json->{items}) || $decoded_json eq "") {
 			$hash->{helper}{errorData} = Dumper($data);
+			$hash->{helper}{errorMessage} = "Response was damaged or empty. See log for details.";
 			InternalTimer(gettimeofday()+0.2, "todoist_ErrorReadings",$hash, 0); 
 		}
 		else {
@@ -788,6 +795,7 @@ sub todoist_GetUsersCallback($$$){
 		readingsBeginUpdate($hash);
 		if ((ref($decoded_json) eq "HASH" && !$decoded_json->{collaborators}) || $decoded_json eq "") {
 			$hash->{helper}{errorData} = Dumper($data);
+			$hash->{helper}{errorMessage} = "Response was damaged or empty. See log for details.";
 			InternalTimer(gettimeofday()+0.2, "todoist_ErrorReadings",$hash, 0); 
 		}
 		else {
@@ -1016,18 +1024,17 @@ sub todoist_Attr($@) {
 		if ( $cmd eq "set" && $attrVal == 1 ) {
 			if ($hash->{READINGS}{state}{VAL} ne "disabled") {
 				readingsSingleUpdate($hash,"state","disabled",1);
-				RemoveInternalTimer($hash,"todoist_GetTasks");
 				RemoveInternalTimer($hash);
+				RemoveInternalTimer($hash,"todoist_GetTasks");
 				Log3 $name, 4, "todoist ($name): $name is now disabled";
 			}
 		}
 		elsif ( $cmd eq "del" || $attrVal == 0 ) {
 			if ($hash->{READINGS}{state}{VAL} ne "active") {
 				readingsSingleUpdate($hash,"state","active",1);
-				RemoveInternalTimer($hash,"todoist_GetTasks");
 				RemoveInternalTimer($hash);
 				Log3 $name, 4, "todoist ($name): $name is now ensabled";
-				InternalTimer(gettimeofday()+1, "todoist_GetTasks", $hash, 0);
+				todoist_RestartGetTimer($hash);
 			}
 		}
 	}
@@ -1043,8 +1050,7 @@ sub todoist_Attr($@) {
 			$hash->{INTERVAL}=1800;
 			Log3 $name, 4, "todoist ($name): set new pollInterval to 1800 (standard)";
 		}
-		RemoveInternalTimer($hash,"todoist_GetTasks");
-		InternalTimer(gettimeofday()+1, "todoist_GetTasks", $hash, 0) if (!IsDisabled($name) && IsDisabled($name) != 3);
+		todoist_RestartGetTimer($hash);
 	}
 	
 	if ( $attrName eq "sortTasks" ||  $attrName eq "showPriority") {
@@ -1055,8 +1061,7 @@ sub todoist_Attr($@) {
 		elsif ( $cmd eq "del" ) {
 			Log3 $name, 4, "todoist ($name): deleted attribut $attrName (standard)";
 		}
-		RemoveInternalTimer($hash,"todoist_GetTasks");
-		InternalTimer(gettimeofday()+1, "todoist_GetTasks", $hash, 0) if (!IsDisabled($name) && IsDisabled($name) != 3);
+		todoist_RestartGetTimer($hash);
 	}
 	
 	if ( $attrName eq "getCompleted" ) {
@@ -1067,8 +1072,7 @@ sub todoist_Attr($@) {
 		elsif ( $cmd eq "del" ) {
 			Log3 $name, 4, "todoist ($name): deleted attribut getCompleted (standard)";
 		}
-		RemoveInternalTimer($hash,"todoist_GetTasks");
-		InternalTimer(gettimeofday()+1, "todoist_GetTasks", $hash, 0) if (!IsDisabled($name) && IsDisabled($name) != 3);
+		todoist_RestartGetTimer($hash);
 	}
 	
 	return;
@@ -1206,12 +1210,11 @@ sub todoist_setPwd($$@) {
 	delete($hash->{helper}{PWD_NEEDED}) if(exists($hash->{helper}{PWD_NEEDED}));
 	
 	
-	RemoveInternalTimer($hash,"todoist_GetTasks");
-	
 	if (AttrVal($name,"disable",0) != 1) {
 		readingsSingleUpdate($hash,"state","active",1);
-		InternalTimer(gettimeofday()+1, "todoist_GetTasks", $hash, 0);
 	}
+	
+	todoist_RestartGetTimer($hash);
 	
 	Log3 $name, 3, "todoist ($name). New Password set.";
 	
@@ -1257,11 +1260,22 @@ sub todoist_Notify ($$) {
 	
   return if(!grep(m/^INITIALIZED|REREADCFG$/, @{$dev->{CHANGED}}));
 
-  RemoveInternalTimer($hash, "todoist_GetTasks");
-	InternalTimer(gettimeofday()+1, "todoist_GetTasks", $hash, 0) if (!IsDisabled($name) && !$hash->{helper}{PWD_NEEDED});
+  todoist_RestartGetTimer($hash);
 
   return undef;
 
+}
+
+# restart timers for getTasks if active
+sub todoist_RestartGetTimer($) {
+	my ($hash) = @_;
+	
+	my $name = $hash->{NAME};
+	
+	RemoveInternalTimer($hash, "todoist_GetTasks");
+	InternalTimer(gettimeofday()+1, "todoist_GetTasks", $hash, 0) if (!IsDisabled($name) && !$hash->{helper}{PWD_NEEDED});
+	
+	return undef;
 }
 
 
