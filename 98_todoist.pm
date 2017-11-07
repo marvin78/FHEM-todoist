@@ -1,4 +1,4 @@
-﻿# $Id: 98_todoist.pm 0027 Version 0.4.6 2017-11-07 16:02:10Z marvin1978 $
+﻿# $Id: 98_todoist.pm 0087 Version 0.4.7 2017-11-07 16:16:10Z marvin1978 $
 
 package main;
 
@@ -1069,24 +1069,13 @@ sub todoist_Attr($@) {
 		todoist_RestartGetTimer($hash);
 	}
 	
-	if ( $attrName eq "sortTasks" ||  $attrName eq "showPriority") {
+	if ( $attrName eq "sortTasks" ||  $attrName =~ /(show(Priority|AssignedBy|Responsible)|getCompleted)/) {
 		if ( $cmd eq "set" ) {
 			return "$name: $attrName has to be 0 or 1" if ($attrVal !~ /^(0|1)$/);
 			Log3 $name, 4, "todoist ($name): set attribut $attrName to $attrVal";
 		}
 		elsif ( $cmd eq "del" ) {
-			Log3 $name, 4, "todoist ($name): deleted attribut $attrName (standard)";
-		}
-		todoist_RestartGetTimer($hash);
-	}
-	
-	if ( $attrName eq "getCompleted" ) {
-		if ( $cmd eq "set" ) {
-			return "$name: getCompleted has to be 0 or 1" if ($attrVal !~ /^(0|1)$/);
-			Log3 $name, 4, "todoist ($name): set attribut getCompleted to $attrVal";
-		}
-		elsif ( $cmd eq "del" ) {
-			Log3 $name, 4, "todoist ($name): deleted attribut getCompleted (standard)";
+			Log3 $name, 4, "todoist ($name): deleted attribut $attrName";
 		}
 		todoist_RestartGetTimer($hash);
 	}
