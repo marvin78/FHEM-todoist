@@ -1,4 +1,4 @@
-﻿# $Id: 98_todoist.pm 0018 Version 0.4.3 2017-11-06 16:25:10Z marvin1978 $
+﻿# $Id: 98_todoist.pm 0020 Version 0.4.4 2017-11-07 13:54:10Z marvin1978 $
 
 package main;
 
@@ -234,6 +234,9 @@ sub todoist_UpdateTask($$$) {
 				$args{'date_string'} = $h->{"due_date"} if ($h->{'due_date'});
 				## change priority
 				$args{'priority'} = int($h->{"priority"}) if ($h->{"priority"});
+				## Who is responsible for the task
+				$data->{'responsible_uid'} = $h->{"responsibleUid"} if ($h->{"responsibleUid"});
+				$data->{'responsible_uid'} = $h->{"responsible"} if ($h->{"responsible"});
 					
 				## Debug
 				#Log3 $name, 1, "todoist ($name): Debug: ".Dumper(%datas);
@@ -353,8 +356,12 @@ sub todoist_CreateTask($$) {
 			$data->{'date_string'} = $h->{"due_date"} if ($h->{"due_date"});
 			
 			
-			## Task is starred? Push it to hash
+			## Task priority
 			$data->{'priority'} = $h->{"priority"} if ($h->{"priority"});
+			
+			## Who is responsible for the task
+			$data->{'responsible_uid'} = $h->{"responsibleUid"} if ($h->{"responsibleUid"});
+			$data->{'responsible_uid'} = $h->{"responsible"} if ($h->{"responsible"});
 			
 			
 			
@@ -1328,6 +1335,7 @@ sub todoist_RestartGetTimer($) {
 		<ul>
 		 <li>dueDate (due_date)=&lt;DUE_DATE&gt; (can be free form text or format: YYYY-MM-DDTHH:MM)</li>
 		 <li>priority=the priority of the task (a number between 1 and 4, 4 for very urgent and 1 for natural).</li>
+		 <li>responsibleUid=the todoist-ID of the user who is responsible for accomplishing the current task</li>
 		</ul><br />
 		Examples: <br /><br />
 			<code>set &lt;DEVICE&gt; addTask &lt;TASK_TITLE&gt; dueDate=2017-01-15 priority=2</code><br /><br />
@@ -1338,6 +1346,7 @@ sub todoist_RestartGetTimer($) {
 		 <li>dueDate (due_date)=&lt;DUE_DATE&gt; (can be free form text or format: YYYY-MM-DDTHH:MM)</li>
 		 <li>priority=(1..4) (string)</li>
 		 <li>title=&lt;TITLE&gt; (string)</li>
+		 <li>responsibleUid=the todoist-ID of the user who is responsible for accomplishing the current task</li>
 		</ul><br />
 		Examples: <br /><br />
 		<code>set &lt;DEVICE&gt; updateTask ID:12345678 dueDate=2017-01-15 priority=1</code><br />
