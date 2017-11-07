@@ -1,4 +1,4 @@
-﻿# $Id: 98_todoist.pm 0021 Version 0.4.5 2017-11-07 15:00:10Z marvin1978 $
+﻿# $Id: 98_todoist.pm 0027 Version 0.4.6 2017-11-07 16:02:10Z marvin1978 $
 
 package main;
 
@@ -31,6 +31,8 @@ sub todoist_Initialize($) {
 												"sortTasks:1,0 ".
 												"getCompleted:1,0 ".
 												"showPriority:1,0 ".
+												"showAssignedBy:1,0 ".
+												"showResponsible:1,0 ".
 												"autoGetUsers:1,0 ".
 												$readingFnAttributes;
 	
@@ -668,14 +670,14 @@ sub todoist_GetTasksCallback($$$){
 					## set responsible_uid if present
 					if (defined($task->{responsible_uid})) {
 						## if there is a task with responsible_uid, we create a new reading
-						readingsBulkUpdate($hash, "Task_".$t."_responsibleUid",$task->{responsible_uid});
+						readingsBulkUpdate($hash, "Task_".$t."_responsibleUid",$task->{responsible_uid}) if (AttrVal($name,"showResponsible",0)==1);
 						$hash->{helper}{"RESPONSIBLE_UID"}{$taskID}=$task->{responsible_uid};
 					}
 					
 					## set assigned_by_uid if present
 					if (defined($task->{assigned_by_uid})) {
 						## if there is a task with assigned_by_uid, we create a new reading
-						readingsBulkUpdate($hash, "Task_".$t."_assignedByUid",$task->{assigned_by_uid});
+						readingsBulkUpdate($hash, "Task_".$t."_assignedByUid",$task->{assigned_by_uid}) if (AttrVal($name,"showAssignedBy",0)==1);
 						$hash->{helper}{"ASSIGNEDBY_UID"}{$taskID}=$task->{assigned_by_uid};
 					}
 					
@@ -1393,6 +1395,18 @@ sub todoist_RestartGetTimer($) {
 		<ul>
 		<li>0: don't show priority (default)</li>
 		<li>1: show priority</li>
+		</ul>
+		<br />
+		<li>showAssignedBy</li>
+		<ul>
+		<li>0: don't show assignedByUid (default)</li>
+		<li>1: show assignedByUid</li>
+		</ul>
+		<br />
+		<li>showResponsible</li>
+		<ul>
+		<li>0: don't show responsibleUid (default)</li>
+		<li>1: show responsibleUid</li>
 		</ul>
 		<br />
 		<li>getCompleted</li>
