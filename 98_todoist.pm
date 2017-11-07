@@ -235,8 +235,8 @@ sub todoist_UpdateTask($$$) {
 				## change priority
 				$args{'priority'} = int($h->{"priority"}) if ($h->{"priority"});
 				## Who is responsible for the task
-				$data->{'responsible_uid'} = $h->{"responsibleUid"} if ($h->{"responsibleUid"});
-				$data->{'responsible_uid'} = $h->{"responsible"} if ($h->{"responsible"});
+				$args{'responsible_uid'} = $h->{"responsibleUid"} if ($h->{"responsibleUid"});
+				$args{'responsible_uid'} = $h->{"responsible"} if ($h->{"responsible"});
 					
 				## Debug
 				#Log3 $name, 1, "todoist ($name): Debug: ".Dumper(%datas);
