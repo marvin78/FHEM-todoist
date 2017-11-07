@@ -1,4 +1,4 @@
-﻿# $Id: 98_todoist.pm 0020 Version 0.4.4 2017-11-07 13:54:10Z marvin1978 $
+﻿# $Id: 98_todoist.pm 0021 Version 0.4.5 2017-11-07 15:00:10Z marvin1978 $
 
 package main;
 
@@ -129,7 +129,7 @@ sub todoist_ErrorReadings($;$$) {
 	readingsBulkUpdate( $hash,"lastError",$errorMessage );
 	readingsEndUpdate( $hash, 1 );
 	
-	Log3 $name,3, "todoist ($name): Error Message: ".$errorMessage;
+	Log3 $name,2, "todoist ($name): Error Message: ".$errorMessage;
 	Log3 $name,3, "todoist ($name): Api-Error Callback-data: ".$errorLog;
 	
 	$hash->{helper}{errorData}="";
@@ -237,6 +237,9 @@ sub todoist_UpdateTask($$$) {
 				## Who is responsible for the task
 				$args{'responsible_uid'} = $h->{"responsibleUid"} if ($h->{"responsibleUid"});
 				$args{'responsible_uid'} = $h->{"responsible"} if ($h->{"responsible"});
+				## who assigned the task? 
+				$args{'assigned_by_uid'} = $h->{"assignedByUid"} if ($h->{"assignedByUid"});
+				$args{'assigned_by_uid'} = $h->{"assignedBy"} if ($h->{"assignedByUid"});
 					
 				## Debug
 				#Log3 $name, 1, "todoist ($name): Debug: ".Dumper(%datas);
@@ -359,9 +362,13 @@ sub todoist_CreateTask($$) {
 			## Task priority
 			$data->{'priority'} = $h->{"priority"} if ($h->{"priority"});
 			
-			## Who is responsible for the task
+			## who is responsible for the task?
 			$data->{'responsible_uid'} = $h->{"responsibleUid"} if ($h->{"responsibleUid"});
 			$data->{'responsible_uid'} = $h->{"responsible"} if ($h->{"responsible"});
+			
+			## who assigned the task? 
+			$data->{'assigned_by_uid'} = $h->{"assignedByUid"} if ($h->{"assignedByUid"});
+			$data->{'assigned_by_uid'} = $h->{"assignedBy"} if ($h->{"assignedByUid"});
 			
 			
 			
@@ -468,7 +475,7 @@ sub todoist_HandleTaskCallback($$$){
 			$error = $param->{wType}."Task: ";
 			$error .= $error;
 			$error .= "Unknown";
-			Log3 $name, 3, "todoist ($name): got error: ".$error;
+			Log3 $name, 2, "todoist ($name): got error: ".$error;
 			todoist_ErrorReadings($hash,$error);
 		}
 		
@@ -1336,6 +1343,7 @@ sub todoist_RestartGetTimer($) {
 		 <li>dueDate (due_date)=&lt;DUE_DATE&gt; (can be free form text or format: YYYY-MM-DDTHH:MM)</li>
 		 <li>priority=the priority of the task (a number between 1 and 4, 4 for very urgent and 1 for natural).</li>
 		 <li>responsibleUid=the todoist-ID of the user who is responsible for accomplishing the current task</li>
+		 <li>assignedByUid=the todoist-ID of the user who assigned the current task</li>
 		</ul><br />
 		Examples: <br /><br />
 			<code>set &lt;DEVICE&gt; addTask &lt;TASK_TITLE&gt; dueDate=2017-01-15 priority=2</code><br /><br />
@@ -1347,6 +1355,7 @@ sub todoist_RestartGetTimer($) {
 		 <li>priority=(1..4) (string)</li>
 		 <li>title=&lt;TITLE&gt; (string)</li>
 		 <li>responsibleUid=the todoist-ID of the user who is responsible for accomplishing the current task</li>
+		 <li>assignedByUid=the todoist-ID of the user who assigned the current task</li>
 		</ul><br />
 		Examples: <br /><br />
 		<code>set &lt;DEVICE&gt; updateTask ID:12345678 dueDate=2017-01-15 priority=1</code><br />
@@ -1357,7 +1366,7 @@ sub todoist_RestartGetTimer($) {
 		todoist-Task-ID (ID:<ID>) as parameter</li><br />
 		<code>set &lt;DEVICE&gt; completeTask &lt;TASK-ID&gt;</code> - completes a task by number<br >
 		<code>set &lt;DEVICE&gt; completeTask ID:&lt;todoist-TASK-ID&gt;</code> - completes a task by todoist-Task-ID<br ><br />
-		<li><b>uncompleteTask</b> - uncompletes a Task. Use it like complete.<br />
+		<li><b>uncompleteTask</b> - uncompletes a Task. Use it like complete.<br /><br />
 		<li><b>deleteTask</b> - deletes a task. Needs number of task (reading 'Task_NUMBER') or the todoist-Task-ID (ID:<ID>) as parameter</li><br />
 		<code>set &lt;DEVICE&gt; deleteTask &lt;TASK-ID&gt;</code> - deletes a task by number<br >
 		<code>set &lt;DEVICE&gt; deleteTask ID:&lt;todoist-TASK-ID&gt;</code> - deletes a task by todoist-Task-ID<br ><br />
