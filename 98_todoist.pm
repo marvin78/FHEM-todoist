@@ -1,4 +1,4 @@
-﻿# $Id: 98_todoist.pm 0029 Version 0.4.8 2017-11-10 11:25:10Z marvin1978 $
+﻿# $Id: 98_todoist.pm 0029 Version 0.4.8 2017-11-10 12:35:10Z marvin1978 $
 
 package main;
 
@@ -905,8 +905,8 @@ sub todoist_sort($) {
 		my $data = $list{$key};
 		readingsBulkUpdate($hash,"Task_".sprintf("%03s",$i),$data->{content});
 		readingsBulkUpdate($hash,"Task_".sprintf("%03s",$i)."_dueDate",$hash->{helper}{"DUE_DATE"}{$data->{ID}}) if ($hash->{helper}{"DUE_DATE"}{$data->{ID}});
-		readingsBulkUpdate($hash,"Task_".sprintf("%03s",$i)."_responsibleUid",$hash->{helper}{"RESPONSIBLE_UID"}{$data->{ID}}) if ($hash->{helper}{"RESPONSIBLE_UID"}{$data->{ID}});
-		readingsBulkUpdate($hash,"Task_".sprintf("%03s",$i)."_assignedByUid",$hash->{helper}{"ASSIGNEDBY_UID"}{$data->{ID}}) if ($hash->{helper}{"ASSIGNEDBY_UID"}{$data->{ID}});
+		readingsBulkUpdate($hash,"Task_".sprintf("%03s",$i)."_responsibleUid",$hash->{helper}{"RESPONSIBLE_UID"}{$data->{ID}}) if ($hash->{helper}{"RESPONSIBLE_UID"}{$data->{ID}} && AttrVal($name,"showResponsible",0)==1);
+		readingsBulkUpdate($hash,"Task_".sprintf("%03s",$i)."_assignedByUid",$hash->{helper}{"ASSIGNEDBY_UID"}{$data->{ID}}) if ($hash->{helper}{"ASSIGNEDBY_UID"}{$data->{ID}} && AttrVal($name,"showAssignedBy",0)==1);
 		readingsBulkUpdate($hash,"Task_".sprintf("%03s",$i)."_priority",$hash->{helper}{"PRIORITY"}{$data->{ID}}) if ($hash->{helper}{"PRIORITY"}{$data->{ID}} && AttrVal($name,"showPriority",0)==1);
 		readingsBulkUpdate($hash,"Task_".sprintf("%03s",$i)."_recurrenceType",$hash->{helper}{"RECURRENCE_TYPE"}{$data->{ID}}) if ($hash->{helper}{"RECURRENCE_TYPE"}{$data->{ID}});
 		readingsBulkUpdate($hash,"Task_".sprintf("%03s",$i)."_completedAt",$hash->{helper}{"COMPLETED_AT"}{$data->{ID}}) if ($hash->{helper}{"COMPLETED_AT"}{$data->{ID}});
@@ -1379,6 +1379,12 @@ sub todoist_RestartGetTimer($) {
 		<li>0: don't sort the tasks (default)</li>
 		<li>1: sorts Tasks alphabetically after every update</li>
 		<!--<li>2: sorts Tasks in todoist order</li>-->
+		</ul>
+		<br />
+		<li>hideId</li>
+		<ul>
+		<li>0: show todoist-Task-ID (default)</li>
+		<li>1: hide the todoist-Task-ID</li>
 		</ul>
 		<br />
 		<li>showPriority</li>
