@@ -1,4 +1,4 @@
-﻿# $Id: 98_todoist.pm 0087 Version 0.4.7 2017-11-07 16:16:10Z marvin1978 $
+﻿# $Id: 98_todoist.pm 0029 Version 0.4.8 2017-11-10 11:25:10Z marvin1978 $
 
 package main;
 
@@ -33,6 +33,7 @@ sub todoist_Initialize($) {
 												"showPriority:1,0 ".
 												"showAssignedBy:1,0 ".
 												"showResponsible:1,0 ".
+												"hideId:1,0 ".
 												"autoGetUsers:1,0 ".
 												$readingFnAttributes;
 	
@@ -644,7 +645,7 @@ sub todoist_GetTasksCallback($$$){
 					my $taskID = $task->{id};
 					
 					readingsBulkUpdate($hash, "Task_".$t,$title);
-					readingsBulkUpdate($hash, "Task_".$t."_ID",$taskID);
+					readingsBulkUpdate($hash, "Task_".$t."_ID",$taskID) if (AttrVal($name,"hideId",0)!=1);
 
 					## a few helper for ID and revision
 					$hash->{helper}{"IDS"}{"Task_".$i}=$taskID;
@@ -887,7 +888,7 @@ sub todoist_sort($) {
 			my @temp = split("_",$key);
 			my $tid = int($temp[1]);
 			my $val = $readings->{$key}{VAL};
-			my $id = ReadingsVal($name,$key."_ID",0);
+			my $id = $hash->{helper}{IDS}{'Task_'.$tid};
 			$list{$tid} = {content => $val, ID => $id};
 		}
 	}
@@ -910,7 +911,7 @@ sub todoist_sort($) {
 		readingsBulkUpdate($hash,"Task_".sprintf("%03s",$i)."_recurrenceType",$hash->{helper}{"RECURRENCE_TYPE"}{$data->{ID}}) if ($hash->{helper}{"RECURRENCE_TYPE"}{$data->{ID}});
 		readingsBulkUpdate($hash,"Task_".sprintf("%03s",$i)."_completedAt",$hash->{helper}{"COMPLETED_AT"}{$data->{ID}}) if ($hash->{helper}{"COMPLETED_AT"}{$data->{ID}});
 		readingsBulkUpdate($hash,"Task_".sprintf("%03s",$i)."_completedById",$hash->{helper}{"COMPLETED_BY_ID"}{$data->{ID}}) if ($hash->{helper}{"COMPLETED_BY_ID"}{$data->{ID}});
-		readingsBulkUpdate($hash,"Task_".sprintf("%03s",$i)."_ID",$data->{ID});
+		readingsBulkUpdate($hash,"Task_".sprintf("%03s",$i)."_ID",$data->{ID}) if (AttrVal($name,"hideId",0)!=1);
 		
 		$hash->{helper}{"IDS"}{"Task_".$i} = $data->{ID};
 		$hash->{helper}{"WID"}{$data->{ID}} = $i;
@@ -1069,7 +1070,7 @@ sub todoist_Attr($@) {
 		todoist_RestartGetTimer($hash);
 	}
 	
-	if ( $attrName eq "sortTasks" ||  $attrName =~ /(show(Priority|AssignedBy|Responsible)|getCompleted)/) {
+	if ( $attrName eq "sortTasks" ||  $attrName =~ /(show(Priority|AssignedBy|Responsible)|getCompleted|hideId)/) {
 		if ( $cmd eq "set" ) {
 			return "$name: $attrName has to be 0 or 1" if ($attrVal !~ /^(0|1)$/);
 			Log3 $name, 4, "todoist ($name): set attribut $attrName to $attrVal";
