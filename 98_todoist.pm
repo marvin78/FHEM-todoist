@@ -1,4 +1,4 @@
-﻿# $Id: 98_todoist.pm 0029 Version 0.4.8 2017-11-10 12:35:10Z marvin1978 $
+﻿# $Id: 98_todoist.pm 0031 Version 0.5.0 2017-11-11 17:21:10Z marvin1978 $
 
 package main;
 
@@ -233,8 +233,10 @@ sub todoist_UpdateTask($$$) {
 				$args{'content'} = $h->{"title"} if($h->{'title'});
 				## change dueDate
 				$args{'date_string'} = $h->{"dueDate"} if($h->{'dueDate'});
+				$args{'date_string'} = "" if ($h->{'dueDate'} =~ /(null|none|nix|leer|del)/);
 				## change dueDate (if someone uses due_date in stead of dueDate)
 				$args{'date_string'} = $h->{"due_date"} if ($h->{'due_date'});
+				$args{'date_string'} = "" if ($h->{'due_date'} =~ /(null|none|nix|leer|del)/);
 				## change priority
 				$args{'priority'} = int($h->{"priority"}) if ($h->{"priority"});
 				## Who is responsible for the task
@@ -243,6 +245,19 @@ sub todoist_UpdateTask($$$) {
 				## who assigned the task? 
 				$args{'assigned_by_uid'} = $h->{"assignedByUid"} if ($h->{"assignedByUid"});
 				$args{'assigned_by_uid'} = $h->{"assignedBy"} if ($h->{"assignedByUid"});
+				
+				## remove attribute
+				if ($h->{"remove"}) {
+					my @temp;
+					my @rem = split(",",$h->{"remove"});
+					foreach my $r (@rem) {
+						$args{'date_string'} = "" if ($r eq "dueDate" || $r eq "due_date");
+						$args{'responsible_uid'} = "" if ($r eq "responsibleUid" || $r eq "responsible");
+						$args{'assigned_by_uid'} = 0 if ($r eq "assignedByUid" || $r eq "assignedBy");
+					}
+					## Debug
+					#Log3 $name, 1, "wunderlist ($name): Debug: ".Dumper($datas{'remove'});
+				}
 					
 				## Debug
 				#Log3 $name, 1, "todoist ($name): Debug: ".Dumper(%datas);
@@ -1348,6 +1363,7 @@ sub todoist_RestartGetTimer($) {
 		 <li>title=&lt;TITLE&gt; (string)</li>
 		 <li>responsibleUid=the todoist-ID of the user who is responsible for accomplishing the current task</li>
 		 <li>assignedByUid=the todoist-ID of the user who assigned the current task</li>
+		 <li>remove=&lt;TYPE&gt; (comma seperated list of attributes which should be removed from the task)
 		</ul><br />
 		Examples: <br /><br />
 		<code>set &lt;DEVICE&gt; updateTask ID:12345678 dueDate=2017-01-15 priority=1</code><br />
