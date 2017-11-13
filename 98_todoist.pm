@@ -1,4 +1,4 @@
-﻿# $Id: 98_todoist.pm 0031 Version 0.5.0 2017-11-11 17:21:10Z marvin1978 $
+﻿# $Id: 98_todoist.pm 0032 Version 0.5.5 2017-11-12 12:14:10Z marvin1978 $
 
 package main;
 
@@ -626,7 +626,31 @@ sub todoist_GetTasksCallback($$$){
 			InternalTimer(gettimeofday()+0.2, "todoist_ErrorReadings",$hash, 0); 
 		}
 		else {
+			## items data
 			my @taskseries = @{$decoded_json->{items}};
+			
+			## project data
+			my $project = $decoded_json->{project};
+			
+			if ($project) {
+				$hash->{PROJECT_NAME}=$project->{name};
+				$hash->{PROJECT_INDENT}=$project->{indent};
+				$hash->{PROJECT_COLOR}=$project->{color};
+				$hash->{PROJECT_ORDER}=$project->{item_order};
+				if ($project->{user_id}) {
+					$hash->{PROJECT_USER}=$project->{user_id};
+				}
+				else {
+					delete($hash->{PROJECT_USER});
+				}
+				if ($project->{parent_id}) {
+					$hash->{PROJECT_PARENT}=$project->{parent_id};
+				}
+				else {
+					delete($hash->{PROJECT_PARENT});
+				}
+			}
+			
 			## do some logging
 			Log3 $name,5, "todoist ($name):  Task Callback data (taskseries): ".Dumper(@taskseries );
 			
