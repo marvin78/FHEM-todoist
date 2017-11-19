@@ -1,4 +1,4 @@
-﻿# $Id: 98_todoist.pm 0032 Version 0.5.5 2017-11-12 12:14:10Z marvin1978 $
+﻿# $Id: 98_todoist.pm 0033 Version 0.5.7 2017-11-19 11:51:10Z marvin1978 $
 
 package main;
 
@@ -433,7 +433,7 @@ sub todoist_HandleTaskCallback($$$){
 	my $hash = $param->{hash};
 	my $title = $param->{tTitle};
 	
-	my $taskId = $param->{taskId};
+	my $taskId = $param->{taskId} if ($param->{taskId});
 	
 	my $reading = $title;
 	
@@ -463,7 +463,7 @@ sub todoist_HandleTaskCallback($$$){
 				## do some logging
 				Log3 $name,4, "todoist ($name):  Task Callback data (decoded JSON): ".Dumper($decoded_json );
 				
-				Log3 $name,4, "todoist ($name): Callback-ID: $taskId";
+				Log3 $name,4, "todoist ($name): Callback-ID: $taskId" if ($taskId);
 			}
 			Log3 $name,4, "todoist ($name):  Task Callback error(s): ".Dumper($err);
 			Log3 $name,5, "todoist ($name):  Task Callback param: ".Dumper($param);
@@ -477,7 +477,7 @@ sub todoist_HandleTaskCallback($$$){
 			
 			## some Logging
 			Log3 $name, 4, "todoist ($name): successfully created new task $title" if ($param->{wType} eq "create");
-			Log3 $name, 4, "todoist ($name): successfully ".$param->{wType}."ed task $title";
+			Log3 $name, 4, "todoist ($name): success: ".$param->{wType}." task $title";
 			
 			readingsEndUpdate( $hash, 1 );
 		}
@@ -687,9 +687,12 @@ sub todoist_GetTasksCallback($$$){
 					readingsBulkUpdate($hash, "Task_".$t."_ID",$taskID) if (AttrVal($name,"hideId",0)!=1);
 
 					## a few helper for ID and revision
-					$hash->{helper}{"IDS"}{"Task_".$i}=$taskID;
-					$hash->{helper}{"TITLE"}{$taskID}=$title;
-					$hash->{helper}{"WID"}{$taskID}=$i;
+					$hash->{helper}{"IDS"}{"Task_".$i}=$taskID; # todoist Task-ID
+					$hash->{helper}{"TITLE"}{$taskID}=$title; # Task title (content)
+					$hash->{helper}{"WID"}{$taskID}=$i; # FHEM Task-ID
+					$hash->{helper}{"INDENT"}{$taskID}=$task->{indent}; # todoist Task indent
+					$hash->{helper}{"ORDER"}{$taskID}=$task->{item_order}; # todoist Task indent					
+					
 					
 					## set completed_date if present
 					if (defined($task->{completed_date})) {
@@ -732,6 +735,11 @@ sub todoist_GetTasksCallback($$$){
 						## if there is a task with recurrence_type, we create new readings
 						readingsBulkUpdate($hash, "Task_".$t."_recurrenceType",$task->{date_string});
 						$hash->{helper}{"RECURRENCE_TYPE"}{$taskID}=$task->{date_string};
+					}
+					
+					## get parent_id if available (only internals)
+					if (defined($task->{parent_id})) {
+						$hash->{helper}{"PARENT_ID"}{$taskID}=$task->{parent_id};
 					}
 					
 					if ($param->{completed} != 1) {
@@ -868,8 +876,7 @@ sub todoist_GetUsersCallback($$$){
 			
 			## no data
 			if ($count==0) {
-				readingsBulkUpdate($hash, "error","no data");
-				readingsBulkUpdate($hash, "lastError","no data");
+				readingsBulkUpdate($hash, "error","none");
 				readingsBulkUpdate($hash, "countUsers",0);
 			}
 			else {
