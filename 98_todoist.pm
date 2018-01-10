@@ -211,6 +211,17 @@ sub todoist_UpdateTask($$$) {
 				Log3 $name,5, "$name: Args: ".Dumper(%args);
 				$method="POST";
 			}
+			## close a task
+			elsif ($type eq "close") {
+
+				# variables for the commands parameter
+				$tType = "item_close";
+				%args = (
+					id => $taskId,
+				);
+				Log3 $name,5, "$name: Args: ".Dumper(%args);
+				$method="POST";
+			}
 			## uncomplete a task
 			elsif ($type eq "uncomplete") {
 
@@ -1140,6 +1151,7 @@ sub todoist_Set ($@) {
 	if (!IsDisabled($name) && !$hash->{helper}{PWD_NEEDED}) {
 		push @sets, "addTask";
 		push @sets, "completeTask";
+		push @sets, "closeTask";
 		push @sets, "uncompleteTask";
 		push @sets, "deleteTask";
 		push @sets, "updateTask";
@@ -1187,14 +1199,15 @@ sub todoist_Set ($@) {
 		}
 		return "new Task needs a title" if ($count==0);
 	}
-	elsif ($cmd eq "completeTask") {
+	elsif ($cmd eq "completeTask" || $cmd eq "closeTask") {
+		my $term=$cmd eq "completeTask"?"complete":"close";
 		my $count=@args;
 		if ($count!=0) {
 			my $exp=decode_utf8(join(" ",@args));
-			Log3 $name,5, "todoist ($name): Completed startet with exp: $exp";
-			todoist_UpdateTask ($hash,$exp,"complete");
+			Log3 $name,5, "todoist ($name): ".$term."d startet with exp: $exp";
+			todoist_UpdateTask ($hash,$exp,$term);
 		}
-		return "in order to complete a task, we need it's ID" if ($count==0);
+		return "in order to complete or close a task, we need it's ID" if ($count==0);
 	}
 	elsif ($cmd eq "uncompleteTask") {
 		my $count=@args;
@@ -1405,6 +1418,12 @@ sub todoist_RestartGetTimer($) {
 		todoist-Task-ID (ID:<ID>) as parameter</li><br />
 		<code>set &lt;DEVICE&gt; completeTask &lt;TASK-ID&gt;</code> - completes a task by number<br >
 		<code>set &lt;DEVICE&gt; completeTask ID:&lt;todoist-TASK-ID&gt;</code> - completes a task by todoist-Task-ID<br ><br />
+		<li><b>closeTask</b> - closes a task. Needs number of task (reading 'Task_NUMBER') or the 
+		todoist-Task-ID (ID:<ID>) as parameter<br />
+		Difference to complete is: regular task is completed and moved to history, subtask is checked (marked as done, but not moved to history),<br /> 
+		recurring task is moved forward (due date is updated).</li><br />
+		<code>set &lt;DEVICE&gt; closeTask &lt;TASK-ID&gt;</code> - completes a task by number<br >
+		<code>set &lt;DEVICE&gt; closeTask ID:&lt;todoist-TASK-ID&gt;</code> - completes a task by todoist-Task-ID<br ><br />
 		<li><b>uncompleteTask</b> - uncompletes a Task. Use it like complete.<br /><br />
 		<li><b>deleteTask</b> - deletes a task. Needs number of task (reading 'Task_NUMBER') or the todoist-Task-ID (ID:<ID>) as parameter</li><br />
 		<code>set &lt;DEVICE&gt; deleteTask &lt;TASK-ID&gt;</code> - deletes a task by number<br >
