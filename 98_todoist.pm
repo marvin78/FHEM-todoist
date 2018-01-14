@@ -1371,7 +1371,7 @@ sub todoist_RestartGetTimer($) {
 	</ul>
 	<br /><br />
 	<a name="todoist_Define"></a>
-  <b>Define</b><br />
+  <h4>Define</h4>
   <ul>
     <code>define &lt;name&gt; todoist &lt;PROJECT-ID&gt;</code><br />
     <br />
@@ -1385,7 +1385,7 @@ sub todoist_RestartGetTimer($) {
   </ul><br />
 	<br />
 	<a name="todoist_Set"></a>
-  <b>Set</b>
+  <h4>Set</h4>
   <ul>
 		<li><b>accessToken</b> - set the API Symbol for your todoist app</li><br />
 		<li><b>active</b> - set the device active (starts the timer for reading task-list periodically)</li><br />
@@ -1439,7 +1439,7 @@ sub todoist_RestartGetTimer($) {
 	</ul>
 	<br />
 	<a name="todoist_Attributes"></a>
-  <b>Attributes</b><br />
+  <h4>Attributes</h4>
   <ul>
 		<li><a href="#readingFnAttributes">readingFnAttributes</a></li><br />
 		<li><a href="#do_not_notify">do_not_notify</a></li><br />
@@ -1477,6 +1477,12 @@ sub todoist_RestartGetTimer($) {
 		<li>1: show indent</li>
 		</ul>
 		<br />
+		<li>showOrder</li>
+		<ul>
+		<li>0: don't show order no. of the task (default)</li>
+		<li>1: show order number</li>
+		</ul>
+		<br />
 		<li>showResponsible</li>
 		<ul>
 		<li>0: don't show responsibleUid (default)</li>
@@ -1499,7 +1505,7 @@ sub todoist_RestartGetTimer($) {
 	</ul><br />
 	
 	<a name="todoist_Readings"></a>
-  <b>Readings</b><br />
+  <h4>Readings</h4>
   <ul>
 		<li>Task_XXX<br />
       the tasks are listet as Task_000, Task_001 [...].</li><br />
@@ -1517,6 +1523,8 @@ sub todoist_RestartGetTimer($) {
       the user this task was assigned by.</li><br />
     <li>Task_XXX_indent<br />
       shows the indent of the task (attribute showIndent).</li><br />
+    <li>Task_XXX_order<br />
+      shows the order no. of the task (attribute showOrder).</li><br />
 		<li>Task_XXX_responsibleUid<br />
       the user this task was assigned to.</li><br />
 		<li>User_XXX<br />
