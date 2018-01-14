@@ -258,6 +258,10 @@ sub todoist_UpdateTask($$$) {
 				## who assigned the task? 
 				$args{'assigned_by_uid'} = $h->{"assignedByUid"} if ($h->{"assignedByUid"});
 				$args{'assigned_by_uid'} = $h->{"assignedBy"} if ($h->{"assignedByUid"});
+				## order of the task
+				$args{'item_order'} = $h->{"order"} if ($h->{"order"});
+				## indent of the task
+				$args{'indent'} = $h->{"indent"} if ($h->{"indent"});
 				
 				## remove attribute
 				if ($h->{"remove"}) {
@@ -400,6 +404,12 @@ sub todoist_CreateTask($$) {
 			## who assigned the task? 
 			$data->{'assigned_by_uid'} = $h->{"assignedByUid"} if ($h->{"assignedByUid"});
 			$data->{'assigned_by_uid'} = $h->{"assignedBy"} if ($h->{"assignedByUid"});
+			
+			## order of the task
+			$data->{'item_order'} = $h->{"order"} if ($h->{"order"});
+			
+			## indent of the task
+			$data->{'indent'} = $h->{"indent"} if ($h->{"indent"});
 			
 			
 			
@@ -707,7 +717,7 @@ sub todoist_GetTasksCallback($$$){
 					$hash->{helper}{"ORDER"}{$taskID}=$task->{item_order}; # todoist Task order					
 					
 					readingsBulkUpdate($hash, "Task_".$t."_indent",$task->{indent}) if (AttrVal($name,"showIndent",0)==1);
-					readingsBulkUpdate($hash, "Task_".$t."_order",$task->{indent}) if (AttrVal($name,"showOrder",0)==1);					
+					readingsBulkUpdate($hash, "Task_".$t."_order",$task->{item_order}) if (AttrVal($name,"showOrder",0)==1);					
 					
 					## set completed_date if present
 					if (defined($task->{completed_date})) {
