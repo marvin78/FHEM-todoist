@@ -34,6 +34,7 @@ sub todoist_Initialize($) {
 												"showAssignedBy:1,0 ".
 												"showResponsible:1,0 ".
 												"showIndent:1,0 ".
+												"showOrder:1,0 ".
 												"hideId:1,0 ".
 												"autoGetUsers:1,0 ".
 												$readingFnAttributes;
@@ -703,11 +704,10 @@ sub todoist_GetTasksCallback($$$){
 					$hash->{helper}{"TITLE"}{$taskID}=$title; # Task title (content)
 					$hash->{helper}{"WID"}{$taskID}=$i; # FHEM Task-ID
 					$hash->{helper}{"INDENT"}{$taskID}=$task->{indent}; # todoist Task indent
-					$hash->{helper}{"ORDER"}{$taskID}=$task->{item_order}; # todoist Task indent					
+					$hash->{helper}{"ORDER"}{$taskID}=$task->{item_order}; # todoist Task order					
 					
-					readingsBulkUpdate($hash, ".Task_".$t."_indent",$task->{indent});
 					readingsBulkUpdate($hash, "Task_".$t."_indent",$task->{indent}) if (AttrVal($name,"showIndent",0)==1);
-					
+					readingsBulkUpdate($hash, "Task_".$t."_order",$task->{indent}) if (AttrVal($name,"showOrder",0)==1);					
 					
 					## set completed_date if present
 					if (defined($task->{completed_date})) {
@@ -973,6 +973,7 @@ sub todoist_sort($) {
 		readingsBulkUpdate($hash,"Task_".sprintf("%03s",$i)."_completedAt",$hash->{helper}{"COMPLETED_AT"}{$data->{ID}}) if ($hash->{helper}{"COMPLETED_AT"}{$data->{ID}});
 		readingsBulkUpdate($hash,"Task_".sprintf("%03s",$i)."_completedById",$hash->{helper}{"COMPLETED_BY_ID"}{$data->{ID}}) if ($hash->{helper}{"COMPLETED_BY_ID"}{$data->{ID}});
 		readingsBulkUpdate($hash,"Task_".sprintf("%03s",$i)."_indent",$hash->{helper}{"INDENT"}{$data->{ID}}) if ($hash->{helper}{"INDENT"}{$data->{ID}} && AttrVal($name,"showIndent",0)==1);
+		readingsBulkUpdate($hash,"Task_".sprintf("%03s",$i)."_order",$hash->{helper}{"ORDER"}{$data->{ID}}) if ($hash->{helper}{"ORDER"}{$data->{ID}} && AttrVal($name,"showOrder",0)==1);
 		readingsBulkUpdate($hash,"Task_".sprintf("%03s",$i)."_ID",$data->{ID}) if (AttrVal($name,"hideId",0)!=1);
 		
 		$hash->{helper}{"IDS"}{"Task_".$i} = $data->{ID};
@@ -1132,7 +1133,7 @@ sub todoist_Attr($@) {
 		todoist_RestartGetTimer($hash);
 	}
 	
-	if ( $attrName eq "sortTasks" ||  $attrName =~ /(show(Priority|AssignedBy|Responsible|Indent)|getCompleted|hideId)/) {
+	if ( $attrName eq "sortTasks" ||  $attrName =~ /(show(Priority|AssignedBy|Responsible|Indent|Order)|getCompleted|hideId)/) {
 		if ( $cmd eq "set" ) {
 			return "$name: $attrName has to be 0 or 1" if ($attrVal !~ /^(0|1)$/);
 			Log3 $name, 4, "todoist ($name): set attribut $attrName to $attrVal";
