@@ -33,6 +33,7 @@ sub todoist_Initialize($) {
 												"showPriority:1,0 ".
 												"showAssignedBy:1,0 ".
 												"showResponsible:1,0 ".
+												"showIndent:1,0 ".
 												"hideId:1,0 ".
 												"autoGetUsers:1,0 ".
 												$readingFnAttributes;
@@ -704,6 +705,9 @@ sub todoist_GetTasksCallback($$$){
 					$hash->{helper}{"INDENT"}{$taskID}=$task->{indent}; # todoist Task indent
 					$hash->{helper}{"ORDER"}{$taskID}=$task->{item_order}; # todoist Task indent					
 					
+					readingsBulkUpdate($hash, ".Task_".$t."_indent",$task->{indent});
+					readingsBulkUpdate($hash, "Task_".$t."_indent",$task->{indent}) if (AttrVal($name,"showIndent",0)==1);
+					
 					
 					## set completed_date if present
 					if (defined($task->{completed_date})) {
@@ -968,6 +972,7 @@ sub todoist_sort($) {
 		readingsBulkUpdate($hash,"Task_".sprintf("%03s",$i)."_recurrenceType",$hash->{helper}{"RECURRENCE_TYPE"}{$data->{ID}}) if ($hash->{helper}{"RECURRENCE_TYPE"}{$data->{ID}});
 		readingsBulkUpdate($hash,"Task_".sprintf("%03s",$i)."_completedAt",$hash->{helper}{"COMPLETED_AT"}{$data->{ID}}) if ($hash->{helper}{"COMPLETED_AT"}{$data->{ID}});
 		readingsBulkUpdate($hash,"Task_".sprintf("%03s",$i)."_completedById",$hash->{helper}{"COMPLETED_BY_ID"}{$data->{ID}}) if ($hash->{helper}{"COMPLETED_BY_ID"}{$data->{ID}});
+		readingsBulkUpdate($hash,"Task_".sprintf("%03s",$i)."_indent",$hash->{helper}{"INDENT"}{$data->{ID}}) if ($hash->{helper}{"INDENT"}{$data->{ID}} && AttrVal($name,"showIndent",0)==1);
 		readingsBulkUpdate($hash,"Task_".sprintf("%03s",$i)."_ID",$data->{ID}) if (AttrVal($name,"hideId",0)!=1);
 		
 		$hash->{helper}{"IDS"}{"Task_".$i} = $data->{ID};
@@ -1127,7 +1132,7 @@ sub todoist_Attr($@) {
 		todoist_RestartGetTimer($hash);
 	}
 	
-	if ( $attrName eq "sortTasks" ||  $attrName =~ /(show(Priority|AssignedBy|Responsible)|getCompleted|hideId)/) {
+	if ( $attrName eq "sortTasks" ||  $attrName =~ /(show(Priority|AssignedBy|Responsible|Indent)|getCompleted|hideId)/) {
 		if ( $cmd eq "set" ) {
 			return "$name: $attrName has to be 0 or 1" if ($attrVal !~ /^(0|1)$/);
 			Log3 $name, 4, "todoist ($name): set attribut $attrName to $attrVal";
@@ -1465,6 +1470,12 @@ sub todoist_RestartGetTimer($) {
 		<li>1: show assignedByUid</li>
 		</ul>
 		<br />
+		<li>showIndent</li>
+		<ul>
+		<li>0: don't show indent of the task (default)</li>
+		<li>1: show indent</li>
+		</ul>
+		<br />
 		<li>showResponsible</li>
 		<ul>
 		<li>0: don't show responsibleUid (default)</li>
@@ -1503,6 +1514,8 @@ sub todoist_RestartGetTimer($) {
       only for completed Tasks (attribute getCompleted).</li><br />
     <li>Task_XXX_assignedByUid<br />
       the user this task was assigned by.</li><br />
+    <li>Task_XXX_indent<br />
+      shows the indent of the task (attribute showIndent).</li><br />
 		<li>Task_XXX_responsibleUid<br />
       the user this task was assigned to.</li><br />
 		<li>User_XXX<br />
