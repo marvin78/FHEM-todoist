@@ -271,6 +271,7 @@ sub todoist_UpdateTask($$$) {
 						$args{'date_string'} = "" if ($r eq "dueDate" || $r eq "due_date");
 						$args{'responsible_uid'} = "" if ($r eq "responsibleUid" || $r eq "responsible");
 						$args{'assigned_by_uid'} = 0 if ($r eq "assignedByUid" || $r eq "assignedBy");
+						$args{'indent'} = 1 if ($r eq "indent");
 					}
 					## Debug
 					#Log3 $name, 1, "wunderlist ($name): Debug: ".Dumper($datas{'remove'});
@@ -1411,6 +1412,8 @@ sub todoist_RestartGetTimer($) {
 		 <li>priority=the priority of the task (a number between 1 and 4, 4 for very urgent and 1 for natural).</li>
 		 <li>responsibleUid=the todoist-ID of the user who is responsible for accomplishing the current task</li>
 		 <li>assignedByUid=the todoist-ID of the user who assigned the current task</li>
+		 <li>order=the order of the task inside a project (the smallest value would place the task at the top)</li>
+		 <li>indent=the indent of the task (a number between 1 and 4, where 1 is top-level)</li>
 		</ul><br />
 		Examples: <br /><br />
 			<code>set &lt;DEVICE&gt; addTask &lt;TASK_TITLE&gt; dueDate=2017-01-15 priority=2</code><br /><br />
@@ -1423,6 +1426,8 @@ sub todoist_RestartGetTimer($) {
 		 <li>title=&lt;TITLE&gt; (string)</li>
 		 <li>responsibleUid=the todoist-ID of the user who is responsible for accomplishing the current task</li>
 		 <li>assignedByUid=the todoist-ID of the user who assigned the current task</li>
+		 <li>order=the order of the task inside a project (the smallest value would place the task at the top)</li>
+		 <li>indent=the indent of the task (a number between 1 and 4, where 1 is top-level)</li>
 		 <li>remove=&lt;TYPE&gt; (comma seperated list of attributes which should be removed from the task)
 		</ul><br />
 		Examples: <br /><br />
