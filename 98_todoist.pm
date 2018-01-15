@@ -723,9 +723,9 @@ sub todoist_GetTasksCallback($$$){
 					readingsBulkUpdate($hash, "Task_".$t."_indent",$task->{indent}) if (AttrVal($name,"showIndent",0)==1);
 					readingsBulkUpdate($hash, "Task_".$t."_order",$task->{item_order}) if (AttrVal($name,"showOrder",0)==1);			
 					
-					## set due_date if present
+					## set parent_id if not null
 					if (defined($task->{parent_id}) && $task->{parent_id} ne 'null') {
-						## if there is a task with due date, we create a new reading
+						## if this task has a parent_id we set the reading
 						readingsBulkUpdate($hash, "Task_".$t."_parentID",$task->{parent_id});
 						$hash->{helper}{"PARENT_ID"}{$taskID}=$task->{parent_id};
 					}		
