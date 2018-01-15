@@ -262,6 +262,19 @@ sub todoist_UpdateTask($$$) {
 				$args{'item_order'} = $h->{"order"} if ($h->{"order"});
 				## indent of the task
 				$args{'indent'} = $h->{"indent"} if ($h->{"indent"});
+				## parent_id
+				$args{'parent_id'} = $h->{"parent_id"} if ($h->{"parent_id"});
+				$args{'parent_id'} = $h->{"parentID"} if ($h->{"parentID"});
+				$args{'parent_id'} = $h->{"parentId"} if ($h->{"parentId"});
+				
+				if ($args{'parent_id'}) {
+					my $pid=$args{'parent_id'};
+					if ($hash->{helper}{"INDENT"}{$pid}) {
+						$args{'indent'} = int($hash->{helper}{"INDENT"}{$pid})+1;
+					}
+				}
+				
+				$args{'parent_id'} = "" if ($h->{"indent"}==1);
 				
 				## remove attribute
 				if ($h->{"remove"}) {
@@ -272,6 +285,7 @@ sub todoist_UpdateTask($$$) {
 						$args{'responsible_uid'} = "" if ($r eq "responsibleUid" || $r eq "responsible");
 						$args{'assigned_by_uid'} = 0 if ($r eq "assignedByUid" || $r eq "assignedBy");
 						$args{'indent'} = 1 if ($r eq "indent");
+						$args{'parent_id'} = "" if ($r eq "parent_id" || $r eq "parentID" || $r eq "parentId" || $r eq "indent");
 					}
 					## Debug
 					#Log3 $name, 1, "wunderlist ($name): Debug: ".Dumper($datas{'remove'});
@@ -395,8 +409,9 @@ sub todoist_CreateTask($$) {
 			$data->{'date_string'} = $h->{"due_date"} if ($h->{"due_date"});
 			
 			## Task parent_id
-			#$data->{'parent_id'} = $h->{"parent_id"} if (int($h->{"parent_id"}));
-			#$data->{'parent_id'} = $h->{"parent_id"} if (int($h->{"parentID"}));
+			$data->{'parent_id'} = int($h->{"parent_id"}) if ($h->{"parent_id"});
+			$data->{'parent_id'} = int($h->{"parentID"}) if ($h->{"parentID"});
+			$data->{'parent_id'} = int($h->{"parentId"}) if ($h->{"parentId"});
 			
 			## Task priority
 			$data->{'priority'} = $h->{"priority"} if ($h->{"priority"});
@@ -1439,6 +1454,7 @@ sub todoist_RestartGetTimer($) {
 		 <li>assignedByUid=the todoist-ID of the user who assigned the current task</li>
 		 <li>order=the order of the task inside a project (the smallest value would place the task at the top)</li>
 		 <li>indent=the indent of the task (a number between 1 and 4, where 1 is top-level)</li>
+		 <li>parentID=parent_id of the parent task. indent will be updated automatically.</li>
 		 <li>remove=&lt;TYPE&gt; (comma seperated list of attributes which should be removed from the task)
 		</ul><br />
 		Examples: <br /><br />
