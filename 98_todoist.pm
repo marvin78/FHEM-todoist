@@ -284,8 +284,10 @@ sub todoist_UpdateTask($$$) {
 						$args{'date_string'} = "" if ($r eq "dueDate" || $r eq "due_date");
 						$args{'responsible_uid'} = "" if ($r eq "responsibleUid" || $r eq "responsible");
 						$args{'assigned_by_uid'} = 0 if ($r eq "assignedByUid" || $r eq "assignedBy");
-						$args{'indent'} = 1 if ($r eq "indent");
-						$args{'parent_id'} = "" if ($r eq "parent_id" || $r eq "parentID" || $r eq "parentId" || $r eq "indent");
+						if ($r eq "parent_id" || $r eq "parentID" || $r eq "parentId" || $r eq "indent") {
+							$args{'indent'} = 1;
+							$args{'parent_id'} = "";
+						}
 					}
 					## Debug
 					#Log3 $name, 1, "wunderlist ($name): Debug: ".Dumper($datas{'remove'});
@@ -571,17 +573,18 @@ sub todoist_GetTasks($;$) {
 		
 			Log3 $name,5, "$name: hash: ".Dumper($hash);
 			
+			my $data= {
+				token						=> $pwd,
+				project_id			=> $hash->{PID}
+			};
+			
 			## check if we get also the completed Tasks
 			my $url = "https://todoist.com/api/v7/projects/get_data";
 			
 			if ($completed == 1) {
 				$url = "https://todoist.com/api/v7/completed/get_all";
+				$data->{'limit'}=50;
 			}
-			
-			my $data= {
-				token						=> $pwd,
-				project_id			=> $hash->{PID}
-			};
 			
 			Log3 $name,4, "todoist ($name): Curl Data: ".Dumper($data);
 			
