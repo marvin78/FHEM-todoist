@@ -37,6 +37,7 @@ sub todoist_Initialize($) {
 												"showOrder:1,0 ".
 												"hideId:1,0 ".
 												"autoGetUsers:1,0 ".
+												"avoidDuplicates:1,0 ".
 												$readingFnAttributes;
 	
 	return undef;
@@ -375,96 +376,107 @@ sub todoist_CreateTask($$) {
 	## we try to send a due_date (in developement)
 	my @tmp = split( ":", join(" ",@$a) );
 	
-	my $title=$tmp[0];
+	my $title=encode_utf8($tmp[0]);
 	
+	my $check=1;
 	
-	## if no token is needed and device is not disabled, check token and get list vom todoist
-	if (!$hash->{helper}{PWD_NEEDED} && !IsDisabled($name)) {
-		
-		## get password
-		$pwd=todoist_GetPwd($hash);
-		
-		if ($pwd) {
-		
-			Log3 $name,5, "$name: hash: ".Dumper($hash);
+	if (AttrVal($name,"avoidDuplicates",0) == 1 && todoist_inArray(\@{$hash->{helper}{"TIDS"}},$title)) {
+		$check=-1;
+	}
+	
+	if ($check==1) {
+	
+		## if no token is needed and device is not disabled, check token and get list vom todoist
+		if (!$hash->{helper}{PWD_NEEDED} && !IsDisabled($name)) {
 			
-			# data array for API - we could transfer more data
+			## get password
+			$pwd=todoist_GetPwd($hash);
 			
-			my $data = {
-									 project_id	        	=> int($hash->{PID}),
-									 content 	        		=> encode_utf8($title),
-									 token								=> $pwd,
-			};
+			if ($pwd) {
 			
-			## check for dueDate as Parameter or part of title - push to hash
-			if (!$tmp[1] && $h->{"dueDate"}) { ## parameter
-				$data->{'date_string'} = $h->{"dueDate"};
-			}
-			elsif ($tmp[1]) { ## title
-				$data->{'date_string'} = $tmp[1];
+				Log3 $name,5, "$name: hash: ".Dumper($hash);
+				
+				# data array for API - we could transfer more data
+				
+				my $data = {
+										 project_id	        	=> int($hash->{PID}),
+										 content 	        		=> $title,
+										 token								=> $pwd,
+				};
+				
+				## check for dueDate as Parameter or part of title - push to hash
+				if (!$tmp[1] && $h->{"dueDate"}) { ## parameter
+					$data->{'date_string'} = $h->{"dueDate"};
+				}
+				elsif ($tmp[1]) { ## title
+					$data->{'date_string'} = $tmp[1];
+				}
+				else {
+				
+				}
+				
+				## if someone uses due_date - no problem
+				$data->{'date_string'} = $h->{"due_date"} if ($h->{"due_date"});
+				
+				## Task parent_id
+				$data->{'parent_id'} = int($h->{"parent_id"}) if ($h->{"parent_id"});
+				$data->{'parent_id'} = int($h->{"parentID"}) if ($h->{"parentID"});
+				$data->{'parent_id'} = int($h->{"parentId"}) if ($h->{"parentId"});
+				
+				## Task priority
+				$data->{'priority'} = $h->{"priority"} if ($h->{"priority"});
+				
+				## who is responsible for the task?
+				$data->{'responsible_uid'} = $h->{"responsibleUid"} if ($h->{"responsibleUid"});
+				$data->{'responsible_uid'} = $h->{"responsible"} if ($h->{"responsible"});
+				
+				## who assigned the task? 
+				$data->{'assigned_by_uid'} = $h->{"assignedByUid"} if ($h->{"assignedByUid"});
+				$data->{'assigned_by_uid'} = $h->{"assignedBy"} if ($h->{"assignedByUid"});
+				
+				## order of the task
+				$data->{'item_order'} = $h->{"order"} if ($h->{"order"});
+				
+				## indent of the task
+				$data->{'indent'} = $h->{"indent"} if ($h->{"indent"});
+				
+				
+				
+				Log3 $name,4, "todoist ($name): Data Array sent to todoist API: ".Dumper($data);
+			
+				
+				$param = {
+					url        => "https://todoist.com/api/v7/items/add",
+					data			 => $data,
+					tTitle		 => encode_utf8($title),
+					method		 => "POST",
+					wType			 => "create",
+					timeout    => 7,
+					header		 => "Content-Type: application/x-www-form-urlencoded",
+					hash 			 => $hash,
+					callback   => \&todoist_HandleTaskCallback,  ## call callback sub to work with the data we get
+				};
+				
+				Log3 $name,5, "todoist ($name): Param: ".Dumper($param);
+				
+				## non-blocking access to todoist API
+				InternalTimer(gettimeofday()+1, "HttpUtils_NonblockingGet", $param, 0);
 			}
 			else {
-			
+				todoist_ErrorReadings($hash,"access token empty");
 			}
-			
-			## if someone uses due_date - no problem
-			$data->{'date_string'} = $h->{"due_date"} if ($h->{"due_date"});
-			
-			## Task parent_id
-			$data->{'parent_id'} = int($h->{"parent_id"}) if ($h->{"parent_id"});
-			$data->{'parent_id'} = int($h->{"parentID"}) if ($h->{"parentID"});
-			$data->{'parent_id'} = int($h->{"parentId"}) if ($h->{"parentId"});
-			
-			## Task priority
-			$data->{'priority'} = $h->{"priority"} if ($h->{"priority"});
-			
-			## who is responsible for the task?
-			$data->{'responsible_uid'} = $h->{"responsibleUid"} if ($h->{"responsibleUid"});
-			$data->{'responsible_uid'} = $h->{"responsible"} if ($h->{"responsible"});
-			
-			## who assigned the task? 
-			$data->{'assigned_by_uid'} = $h->{"assignedByUid"} if ($h->{"assignedByUid"});
-			$data->{'assigned_by_uid'} = $h->{"assignedBy"} if ($h->{"assignedByUid"});
-			
-			## order of the task
-			$data->{'item_order'} = $h->{"order"} if ($h->{"order"});
-			
-			## indent of the task
-			$data->{'indent'} = $h->{"indent"} if ($h->{"indent"});
-			
-			
-			
-			Log3 $name,4, "todoist ($name): Data Array sent to todoist API: ".Dumper($data);
-		
-			
-			$param = {
-				url        => "https://todoist.com/api/v7/items/add",
-				data			 => $data,
-				tTitle		 => encode_utf8($title),
-				method		 => "POST",
-				wType			 => "create",
-				timeout    => 7,
-				header		 => "Content-Type: application/x-www-form-urlencoded",
-				hash 			 => $hash,
-				callback   => \&todoist_HandleTaskCallback,  ## call callback sub to work with the data we get
-			};
-			
-			Log3 $name,5, "todoist ($name): Param: ".Dumper($param);
-			
-			## non-blocking access to todoist API
-			InternalTimer(gettimeofday()+1, "HttpUtils_NonblockingGet", $param, 0);
 		}
 		else {
-			todoist_ErrorReadings($hash,"access token empty");
+			if (!IsDisabled($name)) {
+				todoist_ErrorReadings($hash,"no access token set");
+			}
+			else {
+					todoist_ErrorReadings($hash,"device is disabled");
+			}
 		}
 	}
 	else {
-		if (!IsDisabled($name)) {
-			todoist_ErrorReadings($hash,"no access token set");
-		}
-		else {
-			todoist_ErrorReadings($hash,"device is disabled");
-		}
+		todoist_ErrorReadings($hash,"duplicate detected","duplicate detected");
 	}
 	
 	
@@ -737,6 +749,7 @@ sub todoist_GetTasksCallback($$$){
 					$hash->{helper}{"WID"}{$taskID}=$i; # FHEM Task-ID
 					$hash->{helper}{"INDENT"}{$taskID}=$task->{indent}; # todoist Task indent
 					$hash->{helper}{"ORDER"}{$taskID}=$task->{item_order}; # todoist Task order					
+					push @{$hash->{helper}{"TIDS"}},$title;
 					
 					readingsBulkUpdate($hash, "Task_".$t."_indent",$task->{indent}) if (AttrVal($name,"showIndent",0)==1);
 					readingsBulkUpdate($hash, "Task_".$t."_order",$task->{item_order}) if (AttrVal($name,"showOrder",0)==1);			
@@ -1389,6 +1402,14 @@ sub todoist_RestartGetTimer($) {
 	return undef;
 }
 
+sub todoist_inArray {
+  my ($arr,$search_for) = @_;
+  foreach (@$arr) {
+  	return 1 if ($_ eq $search_for);
+  }
+  return 0;
+}
+
 
 1;
 
@@ -1546,8 +1567,13 @@ sub todoist_RestartGetTimer($) {
 		<li>0: don't get users automatically</li>
 		<li>1: get users after every "getTasks" (default)</li>
 		</ul>
-		<br /><br />
-	</ul><br />
+		<br />
+		<li>avoidDuplicates</li>
+		<ul>
+		<li>0: don't check for duplicates (default)s</li>
+		<li>1: check for duplicates</li>
+		</ul>
+	</ul>
 	
 	<a name="todoist_Readings"></a>
   <h4>Readings</h4>
