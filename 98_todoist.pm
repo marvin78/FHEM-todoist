@@ -394,6 +394,9 @@ sub todoist_CreateTask($$) {
 			## if someone uses due_date - no problem
 			$data->{'date_string'} = $h->{"due_date"} if ($h->{"due_date"});
 			
+			## Task parent_id
+			#$data->{'parent_id'} = $h->{"parent_id"} if (int($h->{"parent_id"}));
+			#$data->{'parent_id'} = $h->{"parent_id"} if (int($h->{"parentID"}));
 			
 			## Task priority
 			$data->{'priority'} = $h->{"priority"} if ($h->{"priority"});
@@ -718,7 +721,14 @@ sub todoist_GetTasksCallback($$$){
 					$hash->{helper}{"ORDER"}{$taskID}=$task->{item_order}; # todoist Task order					
 					
 					readingsBulkUpdate($hash, "Task_".$t."_indent",$task->{indent}) if (AttrVal($name,"showIndent",0)==1);
-					readingsBulkUpdate($hash, "Task_".$t."_order",$task->{item_order}) if (AttrVal($name,"showOrder",0)==1);					
+					readingsBulkUpdate($hash, "Task_".$t."_order",$task->{item_order}) if (AttrVal($name,"showOrder",0)==1);			
+					
+					## set due_date if present
+					if (defined($task->{parent_id}) && $task->{parent_id} ne 'null') {
+						## if there is a task with due date, we create a new reading
+						readingsBulkUpdate($hash, "Task_".$t."_parentID",$task->{parent_id});
+						$hash->{helper}{"PARENT_ID"}{$taskID}=$task->{parent_id};
+					}		
 					
 					## set completed_date if present
 					if (defined($task->{completed_date})) {
@@ -1524,6 +1534,8 @@ sub todoist_RestartGetTimer($) {
   <ul>
 		<li>Task_XXX<br />
       the tasks are listet as Task_000, Task_001 [...].</li><br />
+    <li>Task_XXX_parentID<br />
+      parent ID of task XXX if not null</li><br />
 		<li>Task_XXX_dueDate<br />
       if a task has a due date, this reading should be filled with the date.</li><br />
     <li>Task_XXX_priority<br />
