@@ -1424,8 +1424,10 @@ sub todoist_RestartGetTimer($) {
 	return undef;
 }
 
-sub todoist_Html($) {
-	my ($name) = @_;
+sub todoist_Html($;$) {
+	my ($name,$showDueDate) = @_;
+	
+	$showDueDate=0 if (!defined($showDueDate));
 	
 	my $hash = $defs{$name};
   my $id   = $defs{$name}{NR};
@@ -1442,6 +1444,14 @@ sub todoist_Html($) {
   
   my $i=1;
   my $eo;
+  my $cs=2;
+  
+  if ($showDueDate) {
+		$ret .= "<tr>\n".
+						" <td class=\"col1\"> </td>\n".
+						" <td class=\"col1\">Task</td>\n".
+						" <td class=\"col3\">Due date</td>\n";
+	}
   
   foreach (@{$hash->{helper}{TIDS}}) {
   	
@@ -1454,16 +1464,24 @@ sub todoist_Html($) {
   	
   	$ret .= "<tr id=\"".$name."_".$_."\" data-data=\"true\" data-line-id=\"".$_."\" class=\"".$eo."\">\n".
   					"	<td class=\"col1\"><input class=\"todoist_checkbox_".$name."\" type=\"checkbox\" id=\"check_".$_."\" data-id=\"".$_."\" /></td>\n".
-  					"	<td class=\"col1\">".$hash->{helper}{TITLE}{$_}."</td>\n".
-           	"</tr>\n";
+  					"	<td class=\"col1\">".$hash->{helper}{TITLE}{$_}."</td>\n";
+  	
+  	if ($showDueDate) {
+  		$ret .= "<td class=\"col3\">".$hash->{helper}{DUE_DATE}{$_}."</td>\n";
+  		$cs=3;
+  	}					
+  					
+    $ret .= "</tr>\n";
     
   	$i++;
   }
   
   $ret .= "<tr class=\"".$eo."\">";
   
-  $ret .= "<td colspan=\"2\">".
-  				"	<input type=\"hidden\" id=\"todoist_name\" value=\"".$name."\"><input type=\"text\" id=\"newEntry_".$name."\">".
+  
+  $ret .= "<td colspan=\"".$cs."\">".
+  				"	<input type=\"hidden\" id=\"todoist_name\" value=\"".$name."\" />\n".
+  				" <input type=\"text\" id=\"newEntry_".$name."\" style=\"width:100%;\" />\n".
   				"</td>";
   
   $ret .= "</tr>";
