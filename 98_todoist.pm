@@ -1,4 +1,4 @@
-﻿# $Id: 98_todoist.pm 0033 Version 0.5.7 2017-11-19 11:51:10Z marvin1978 $
+﻿# $Id: 98_todoist.pm 0113 2018-11-17 11:13:10Z marvin1978 $
 
 package main;
 
@@ -11,6 +11,9 @@ use Encode;
 use Date::Parse;
 use Data::UUID;
 
+#########################
+# Global variables
+my $version = "0.6.5";
 
 
 sub todoist_Initialize($) {
@@ -38,6 +41,7 @@ sub todoist_Initialize($) {
 												"hideId:1,0 ".
 												"autoGetUsers:1,0 ".
 												"avoidDuplicates:1,0 ".
+												"listDivider ".
 												$readingFnAttributes;
 	
 	return undef;
@@ -61,6 +65,7 @@ sub todoist_Define($$) {
 	## set internal variables
 	$hash->{PID}=$a[2];
 	$hash->{INTERVAL}=AttrVal($name,"pollInterval",undef)?AttrVal($name,"pollInterval",undef):1800;
+	$hash->{VERSION}=$version;
 	
 	## check if Access Token is needed
 	my $index = $hash->{TYPE}."_".$hash->{NAME}."_passwd";
@@ -340,7 +345,7 @@ sub todoist_UpdateTask($$$) {
 			Log3 $name,5, "todoist ($name): Param: ".Dumper($param);
 			
 			## non-blocking access to todoist API
-			InternalTimer(gettimeofday()+1, "HttpUtils_NonblockingGet", $param, 0);
+			InternalTimer(gettimeofday()+0.1, "HttpUtils_NonblockingGet", $param, 0);
 		}
 		else {
 			todoist_ErrorReadings($hash,"access token empty");
@@ -380,7 +385,7 @@ sub todoist_CreateTask($$) {
 	
 	my $check=1;
 	
-	if (AttrVal($name,"avoidDuplicates",0) == 1 && todoist_inArray(\@{$hash->{helper}{"TIDS"}},$title)) {
+	if (AttrVal($name,"avoidDuplicates",0) == 1 && todoist_inArray(\@{$hash->{helper}{"TITS"}},$title)) {
 		$check=-1;
 	}
 	
@@ -448,7 +453,7 @@ sub todoist_CreateTask($$) {
 				$param = {
 					url        => "https://todoist.com/api/v7/items/add",
 					data			 => $data,
-					tTitle		 => encode_utf8($title),
+					tTitle		 => $title,
 					method		 => "POST",
 					wType			 => "create",
 					timeout    => 7,
@@ -460,7 +465,7 @@ sub todoist_CreateTask($$) {
 				Log3 $name,5, "todoist ($name): Param: ".Dumper($param);
 				
 				## non-blocking access to todoist API
-				InternalTimer(gettimeofday()+1, "HttpUtils_NonblockingGet", $param, 0);
+				InternalTimer(gettimeofday()+0.1, "HttpUtils_NonblockingGet", $param, 0);
 			}
 			else {
 				todoist_ErrorReadings($hash,"access token empty");
@@ -476,6 +481,8 @@ sub todoist_CreateTask($$) {
 		}
 	}
 	else {
+		#map {FW_directNotify("#FHEMWEB:$_", "FW_okDialog('$title is already in the list')", "")} devspec2array("WEB.*");
+		map {FW_directNotify("#FHEMWEB:$_", "if (typeof todoist_ErrorDialog === \"function\") todoist_ErrorDialog('$title is already in the list')", "")} devspec2array("WEB.*");
 		todoist_ErrorReadings($hash,"duplicate detected","duplicate detected");
 	}
 	
@@ -513,8 +520,9 @@ sub todoist_HandleTaskCallback($$$){
 			if ($data ne "") {
 				my $decoded_json = decode_json($data);
 				
-				$reading .= " - ".$taskId if (!$decoded_json->{id});
-				$reading .= " - ".$decoded_json->{id} if ($decoded_json->{id});
+				$taskId = $decoded_json->{id} if ($decoded_json->{id});
+				
+				$reading .= " - ".$taskId;
 				
 				## do some logging
 				Log3 $name,4, "todoist ($name):  Task Callback data (decoded JSON): ".Dumper($decoded_json );
@@ -526,7 +534,7 @@ sub todoist_HandleTaskCallback($$$){
 			
 			readingsBulkUpdate($hash, "error","none");
 			readingsBulkUpdate($hash, "lastCreatedTask",$reading) if ($param->{wType} eq "create");
-			readingsBulkUpdate($hash, "lastCompletedTask",$reading) if ($param->{wType} eq "complete");
+			readingsBulkUpdate($hash, "lastCompletedTask",$reading) if ($param->{wType} eq "complete" || $param->{wType} eq "close");
 			readingsBulkUpdate($hash, "lastUncompletedTask",$reading) if ($param->{wType} eq "uncomplete");
 			readingsBulkUpdate($hash, "lastUpdatedTask",$reading) if ($param->{wType} eq "update");
 			readingsBulkUpdate($hash, "lastDeletedTask",$reading) if ($param->{wType} eq "delete");
@@ -536,6 +544,13 @@ sub todoist_HandleTaskCallback($$$){
 			Log3 $name, 4, "todoist ($name): success: ".$param->{wType}." task $title";
 			
 			readingsEndUpdate( $hash, 1 );
+			
+			if ($param->{wType} eq "complete") {
+				map {FW_directNotify("#FHEMWEB:$_", "if (typeof removeLine === \"function\") removeLine('$name','$taskId')", "")} devspec2array("WEB.*");
+			}
+			if ($param->{wType} eq "create") {
+				map {FW_directNotify("#FHEMWEB:$_", "if (typeof addLine === \"function\") addLine('$name','$taskId','$title')", "")} devspec2array("WEB.*");
+			}
 		}
 		## we got an error from the API
 		else {
@@ -749,7 +764,8 @@ sub todoist_GetTasksCallback($$$){
 					$hash->{helper}{"WID"}{$taskID}=$i; # FHEM Task-ID
 					$hash->{helper}{"INDENT"}{$taskID}=$task->{indent}; # todoist Task indent
 					$hash->{helper}{"ORDER"}{$taskID}=$task->{item_order}; # todoist Task order					
-					push @{$hash->{helper}{"TIDS"}},$title;
+					push @{$hash->{helper}{"TIDS"}},$taskID; # simple ID list
+					push @{$hash->{helper}{"TITS"}},$title; # simple ID list
 					
 					readingsBulkUpdate($hash, "Task_".$t."_indent",$task->{indent}) if (AttrVal($name,"showIndent",0)==1);
 					readingsBulkUpdate($hash, "Task_".$t."_order",$task->{item_order}) if (AttrVal($name,"showOrder",0)==1);			
@@ -810,7 +826,7 @@ sub todoist_GetTasksCallback($$$){
 					}
 					
 					if ($param->{completed} != 1) {
-						$lText.=", " if ($i != 0);
+						$lText.=AttrVal($name,"listDivider",", ") if ($i != 0);
 						$lText.=$title;
 					}
 					$i++;
@@ -838,6 +854,8 @@ sub todoist_GetTasksCallback($$$){
 	
 	RemoveInternalTimer($hash,"todoist_GetTasks");
 	InternalTimer(gettimeofday()+$hash->{INTERVAL}, "todoist_GetTasks", $hash, 0); ## loop with Interval
+	
+	#map {FW_directNotify("#FHEMWEB:WEB", "location.reload('true')", "")} devspec2array("WEB.*");
 	
 	return undef;
 }
@@ -1172,7 +1190,7 @@ sub todoist_Attr($@) {
 		}
 	}
 	
-	if ( $attrName eq "pollInterval" ) {
+	if ( $attrName eq "pollInterval") {
 		if ( $cmd eq "set" ) {
 			return "$name: pollInterval has to be a number (seconds)" if ($attrVal!~ /\d+/);
 			return "$name: pollInterval has to be greater than or equal 600" if ($attrVal < 60);
@@ -1183,6 +1201,10 @@ sub todoist_Attr($@) {
 			$hash->{INTERVAL}=1800;
 			Log3 $name, 4, "todoist ($name): set new pollInterval to 1800 (standard)";
 		}
+		todoist_RestartGetTimer($hash);
+	}
+	
+	if ($attrName eq "listDivider") {
 		todoist_RestartGetTimer($hash);
 	}
 	
@@ -1397,9 +1419,60 @@ sub todoist_RestartGetTimer($) {
 	my $name = $hash->{NAME};
 	
 	RemoveInternalTimer($hash, "todoist_GetTasks");
-	InternalTimer(gettimeofday()+1, "todoist_GetTasks", $hash, 0) if (!IsDisabled($name) && !$hash->{helper}{PWD_NEEDED});
+	InternalTimer(gettimeofday()+0.2, "todoist_GetTasks", $hash, 0) if (!IsDisabled($name) && !$hash->{helper}{PWD_NEEDED});
 	
 	return undef;
+}
+
+sub todoist_Html($) {
+	my ($name) = @_;
+	
+	my $hash = $defs{$name};
+  my $id   = $defs{$name}{NR};
+  
+  my $ret="";
+  
+  # Javascript
+  $ret.="<script type=\"text/javascript\" src=\"$FW_ME/pgm2/todoist.js\"></script>";
+  
+  $ret .= "<table class=\"roomoverview\">\n";
+  
+  $ret .= "<tr><td colspan=\"3\"><div class=\"devType\">".$name."</div></td></tr>";
+  $ret .= "<tr><td colspan=\"3\"><table class=\"block wide\" id=\"todoist_".$name."_table\">\n"; 
+  
+  my $i=1;
+  my $eo;
+  
+  foreach (@{$hash->{helper}{TIDS}}) {
+  	
+  	if ($i%2==0) {
+  		$eo="even";
+  	}
+  	else {
+  		$eo="odd";
+  	}
+  	
+  	$ret .= "<tr id=\"".$name."_".$_."\" data-data=\"true\" data-line-id=\"".$_."\" class=\"".$eo."\">\n".
+  					"	<td class=\"col1\"><input onclick=\"todoist_check('".$hash->{helper}{TITLE}{$_}."','".$name."','".$_."')\" type=\"checkbox\" id=\"check_".$_."\" data-id=\"".$_."\" /></td>\n".
+  					"	<td class=\"col1\">".$hash->{helper}{TITLE}{$_}."</td>\n".
+           	"</tr>\n";
+    
+  	$i++;
+  }
+  
+  $ret .= "<tr class=\"".$eo."\">";
+  
+  $ret .= "<td colspan=\"2\">".
+  				"	<input type=\"hidden\" id=\"todoist_name\" value=\"".$name."\"><input type=\"text\" id=\"newEntry\">".
+  				"</td>";
+  
+  $ret .= "</tr>";
+  
+  $ret .= "</table></td></tr>\n";
+  
+  $ret .= "</table>\n";
+  
+  return $ret;
 }
 
 sub todoist_inArray {
@@ -1573,6 +1646,9 @@ sub todoist_inArray {
 		<li>0: don't check for duplicates (default)s</li>
 		<li>1: check for duplicates</li>
 		</ul>
+		<br />
+		<li>listDivider</li>
+		set the divider for the Reading listText. Default ist ", ".
 	</ul>
 	
 	<a name="todoist_Readings"></a>
@@ -1621,6 +1697,14 @@ sub todoist_inArray {
 		<li>state<br />
 			state of the todoist-Device</li>
   </ul><br />
+  <a name="todoist_Weblink"></a>
+  <h4>Weblink</h4>
+  <ul>
+		Defines a simple weblink for a Task list.
+		<br /><br />
+		Usage:<br /><br />
+		<code>define &lt;NAME&gt; weblink htmlCode {todoist_Html("&lt;TODOIST-DEVCICENAME&gt;")}</code>
+	</ul>
 </ul>
 
 =end html
