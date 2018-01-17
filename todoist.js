@@ -70,8 +70,8 @@ function addLine(name,id,title) {
 	var cl = $(lastEl).attr('class');
 	if (cl=="even") cl="odd";
 	else cl="even"
-	$(lastEl).after('<tr id="'+ name + "_" + id +'" data-line-id="' + id +'" class="' + cl +'">\n' +
-  					'	<td class="col1"><input onclick="todoist_check(\'' + title + '\',\'' + name + '\',\'' + id + '\')" type="checkbox" id="check_' + id + '" data-id="' + id + '" /></td>\n' +
+	$(lastEl).after('<tr id="'+ name + "_" + id +'" data-data="true" data-line-id="' + id +'" class="' + cl +'">\n' +
+  					'	<td class="col1"><input class="todoist_checkbox_' + name + '" type="checkbox" id="check_' + id + '" data-id="' + id + '" /></td>\n' +
   					'	<td class="col1">' + title + '</td>\n' +
            	'</tr>\n'
   );
@@ -89,7 +89,7 @@ $(document).ready(function(){
 			}
 		}
 	});
-	$('#todoist_' + name + '_table input[type="checkbox"]').on('click',function(e) {
+	$('#todoist_' + name + '_table').on('click','input[type="checkbox"]',function(e) {
 		var val=$(this).attr('checked');
 		if (!val) {
 			var id=$(this).attr('data-id');
