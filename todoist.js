@@ -31,6 +31,9 @@ function dialog(message) {
             $(this).remove();
         }
     });
+    setTimeout(function(){
+			$('.ui-dialog').remove();
+		},10000);
 };
 
 function sendCommand(cmd) {
