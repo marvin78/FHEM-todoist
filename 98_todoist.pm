@@ -13,7 +13,7 @@ use Data::UUID;
 
 #########################
 # Global variables
-my $version = "0.6.5";
+my $version = "0.6.7";
 
 
 sub todoist_Initialize($) {
