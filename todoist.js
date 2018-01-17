@@ -42,6 +42,7 @@ function sendCommand(cmd) {
   FW_cmd(url + '?XHR=1&fwcsrf=' + csrfToken + '&cmd.' + name + '=' + cmd);
 }
 
+
 function todoist_check(title,name,id) {
 	var location = document.location.pathname;
   if (location.substr(location.length -1, 1) == '/') {
@@ -82,7 +83,7 @@ function addLine(name,id,title) {
 
 $(document).ready(function(){
 	var name = $('#todoist_name').val();
-	$('#newEntry').on('blur keypress',function(e) {
+	$('#newEntry_' + name).on('blur keypress',function(e) {
 		if (e.type!='keypress' || e.which==13) {
 			e.preventDefault()
 			var v=encodeParm($(this).val());
@@ -90,6 +91,13 @@ $(document).ready(function(){
 				sendCommand('set '+ name +' addTask ' + v);
 				$(this).val("");
 			}
+		}
+	});
+	$('#todoist_' + name + '_table input[type="checkbox"]').on('click',function(e) {
+		var val=$(this).attr('checked');
+		if (!val) {
+			var id=$(this).attr('data-id');
+			sendCommand('set ' + name + ' completeTask ID:'+ id);
 		}
 	});
 });

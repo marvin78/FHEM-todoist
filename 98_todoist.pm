@@ -1453,7 +1453,7 @@ sub todoist_Html($) {
   	}
   	
   	$ret .= "<tr id=\"".$name."_".$_."\" data-data=\"true\" data-line-id=\"".$_."\" class=\"".$eo."\">\n".
-  					"	<td class=\"col1\"><input onclick=\"todoist_check('".$hash->{helper}{TITLE}{$_}."','".$name."','".$_."')\" type=\"checkbox\" id=\"check_".$_."\" data-id=\"".$_."\" /></td>\n".
+  					"	<td class=\"col1\"><input class=\"todoist_checkbox_".$name."\" type=\"checkbox\" id=\"check_".$_."\" data-id=\"".$_."\" /></td>\n".
   					"	<td class=\"col1\">".$hash->{helper}{TITLE}{$_}."</td>\n".
            	"</tr>\n";
     
@@ -1463,7 +1463,7 @@ sub todoist_Html($) {
   $ret .= "<tr class=\"".$eo."\">";
   
   $ret .= "<td colspan=\"2\">".
-  				"	<input type=\"hidden\" id=\"todoist_name\" value=\"".$name."\"><input type=\"text\" id=\"newEntry\">".
+  				"	<input type=\"hidden\" id=\"todoist_name\" value=\"".$name."\"><input type=\"text\" id=\"newEntry_".$name."\">".
   				"</td>";
   
   $ret .= "</tr>";
