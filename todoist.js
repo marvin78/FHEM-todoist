@@ -43,13 +43,6 @@ function sendCommand(cmd) {
 }
 
 
-function todoist_check(title,name,id) {
-	var location = document.location.pathname;
-  if (location.substr(location.length -1, 1) == '/') {
-      location = location.substr(0, location.length -1);
-  }
-  sendCommand('set ' + name + ' completeTask ID:'+ id);
-}
 
 function todoist_ErrorDialog($text) {
 	dialog($text);
