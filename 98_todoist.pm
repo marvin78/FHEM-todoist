@@ -1439,7 +1439,7 @@ sub todoist_RestartGetTimer($) {
 	my $name = $hash->{NAME};
 	
 	RemoveInternalTimer($hash, "todoist_GetTasks");
-	InternalTimer(gettimeofday()+0.2, "todoist_GetTasks", $hash, 0) if (!IsDisabled($name) && !$hash->{helper}{PWD_NEEDED});
+	InternalTimer(gettimeofday()+0.3, "todoist_GetTasks", $hash, 0) if (!IsDisabled($name) && !$hash->{helper}{PWD_NEEDED});
 	
 	return undef;
 }
