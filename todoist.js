@@ -118,20 +118,24 @@ if (typeof todoist_checkVar === 'undefined') {
 			});
 			$('#todoist_' + name + '_table').on('click','span.todoist_task_text',function(e) {
 				var id = $(this).attr("data-id");
+				var val=$(this).html();
 				$(this).hide();
+				$("input[data-id='" + id +"']").val(val);
 				$("input[data-id='" + id +"']").show();
 				$("input[data-id='" + id +"']").focus();
 			});
 			$('#todoist_' + name + '_table').on('blur keypress','input.todoist_input',function(e) {
 				if (e.type!='keypress' || e.which==13) {
-					e.preventDefault()
+					e.preventDefault();
+					var comp = $(this).prev().html();
 					var id = $(this).attr("data-id");
 					var val = $(this).val();
-					
 					$(this).hide();
-					$("span.todoist_task_text[data-id='" + id +"']").html(val);
 					$("span.todoist_task_text[data-id='" + id +"']").show();
-					todoist_sendCommand('set ' + name + ' updateTask ID:'+ id + ' title="' + val + '"');
+					if (val != "" && comp!=val) {
+						$("span.todoist_task_text[data-id='" + id +"']").html(val);
+						todoist_sendCommand('set ' + name + ' updateTask ID:'+ id + ' title="' + val + '"');
+					}
 				}
 			});
 		});
