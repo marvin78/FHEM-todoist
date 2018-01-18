@@ -1,4 +1,4 @@
-﻿# $Id: 98_todoist.pm 0117 2018-11-17 11:13:10Z marvin1978 $
+﻿# $Id: 98_todoist.pm 0119 2018-11-18 09:00:10Z marvin1978 $
 
 package main;
 
@@ -13,7 +13,7 @@ use Data::UUID;
 
 #########################
 # Global variables
-my $version = "0.6.8";
+my $version = "0.7.0";
 
 
 sub todoist_Initialize($) {
