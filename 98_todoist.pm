@@ -1879,12 +1879,18 @@ sub todoist_inArray {
 			state of the todoist-Device</li>
   </ul><br />
   <a name="todoist_Weblink"></a>
-  <h4>Weblink</h4>
+  <h4>Weblinks</h4>
   <ul>
 		Defines a simple weblink for a Task list.
 		<br /><br />
 		Usage:<br /><br />
 		<code>define &lt;NAME&gt; weblink htmlCode {todoist_Html("&lt;TODOIST-DEVCICENAME&gt;")}</code>
+	</ul>
+	<ul>
+		Defines a simple weblink for all Task lists.
+		<br /><br />
+		Usage:<br /><br />
+		<code>define &lt;NAME&gt; weblink htmlCode {todoist_AllHtml()}</code>
 	</ul>
 </ul>
 
