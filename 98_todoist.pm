@@ -1543,6 +1543,119 @@ sub todoist_Html($;$$) {
   return $ret;
 }
 
+sub todoist_AllHtml(;$$) {
+	my ($showDueDate,$showIndent) = @_;
+	
+	$showDueDate=0 if (!defined($showDueDate));
+	$showIndent=0 if (!defined($showIndent));
+	
+	my @devs = devspec2array("TYPE=todoist");
+	my $ret="";
+	
+	# Javascript
+	my $rot .= "<script type=\"text/javascript\" src=\"$FW_ME/www/pgm2/todoist.js\"></script>";
+	
+	my $r=0;
+	
+	my $count = @devs;
+	my $width = 100/$count;
+	
+	my $style="float:left;margin-right:10px;width:".$width;
+	
+	foreach my $name (@devs) {
+		
+		$r++;
+	
+		my $hash = $defs{$name};
+	  my $id   = $defs{$name}{NR};
+	  
+	  if ($r==$count) {
+	  	$style="float:none;";	
+	  }	
+	    
+	  $ret .= "<div style=\"".$style."\"><table class=\"roomoverview\">\n";
+	  
+	  $ret .= "<tr><td colspan=\"3\"><div class=\"devType\">".$name."</div></td></tr>";
+	  $ret .= "<tr><td colspan=\"3\"><table class=\"block wide\" id=\"todoist_".$name."_table\">\n"; 
+	  
+	  my $i=1;
+	  my $eo;
+	  my $cs=3;
+	  
+	  if ($showDueDate) {
+			$ret .= "<tr>\n".
+							" <td class=\"col1\"> </td>\n".
+							" <td class=\"col1\">Task</td>\n".
+							" <td class=\"col3\">Due date</td>\n";
+		}
+	  
+	  foreach (@{$hash->{helper}{TIDS}}) {
+	  	
+	  	if ($i%2==0) {
+	  		$eo="even";
+	  	}
+	  	else {
+	  		$eo="odd";
+	  	}
+	  	
+	  	my $ind=0;
+	  	
+	  	if ($showIndent) {
+	  		$ind=$hash->{helper}{INDENT}{$_}-1;
+	  	}
+	  	
+	  	my $indent="";
+	  	
+	  	if ($ind!=0) {
+		  	for (my $z=0;$z<=$ind;$z++) {
+		  		$indent.="&nbsp;&nbsp;";
+		  	}
+		  }
+	  	
+	  	$ret .= "<tr id=\"".$name."_".$_."\" data-data=\"true\" data-line-id=\"".$_."\" class=\"".$eo."\">\n".
+	  					"	<td class=\"col1\">\n".
+	  					"		<input class=\"todoist_checkbox_".$name."\" type=\"checkbox\" id=\"check_".$_."\" data-id=\"".$_."\" />\n".
+	  					"	</td>\n".
+	  					"	<td class=\"col1\">\n".
+	  							"<span class=\"todoist_task_text\" data-id=\"".$_."\">".$indent.$hash->{helper}{TITLE}{$_}."</span>\n".
+	  							"<input type=\"text\" data-id=\"".$_."\" style=\"display:none;\" class=\"todoist_input\" value=\"".$hash->{helper}{TITLE}{$_}."\" />\n".
+	  					"	</td>\n";
+	  	
+	  	if ($showDueDate) {
+	  		$ret .= "<td class=\"col3\">".$hash->{helper}{DUE_DATE}{$_}."</td>\n";
+	  		$cs=4;
+	  	}					
+	  	
+	  	$ret .= "<td class=\"col2\">\n".
+	  					" <a href=\"#\" class=\"todoist_delete_".$name."\" data-id=\"".$_."\">\n".
+	  					"		x\n".
+	  					" </a>\n".
+	  					"</td>\n";
+	  					
+	    $ret .= "</tr>\n";
+	    
+	  	$i++;
+	  }
+  
+	  $ret .= "<tr class=\"".$eo."\">";
+	  
+	  
+	  $ret .= "<td colspan=\"".$cs."\">".
+	  				"	<input type=\"hidden\" class=\"todoist_name\" id=\"todoist_name_".$name."\" value=\"".$name."\" />\n".
+	  				" <input type=\"text\" id=\"newEntry_".$name."\" />\n".
+	  				"</td>";
+	  
+	  $ret .= "</tr>";
+	  
+	  $ret .= "</table></td></tr>\n";
+	  
+	  $ret .= "</table></div>\n";
+	}
+  
+  return $rot.$ret;
+}
+
+
 sub todoist_inArray {
   my ($arr,$search_for) = @_;
   foreach (@$arr) {
