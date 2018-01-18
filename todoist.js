@@ -127,7 +127,7 @@ $(document).ready(function(){
 			$(this).hide();
 			$("span.todoist_task_text[data-id='" + id +"']").html(val);
 			$("span.todoist_task_text[data-id='" + id +"']").show();
-			todoist_sendCommand('set ' + name + ' updateTask ID:'+ id + ' title=' + val);
+			todoist_sendCommand('set ' + name + ' updateTask ID:'+ id + ' title="' + val + '"');
 		}
 	});
 });
