@@ -11,15 +11,20 @@ use Encode;
 use Date::Parse;
 use Data::UUID;
 
-#########################
+#######################
 # Global variables
-my $version = "0.7.0";
+my $version = "0.7.1";
+
+my %gets = (
+  "version:noArg"     => "",
+); 
 
 
 sub todoist_Initialize($) {
     my ($hash) = @_;
 
     $hash->{SetFn}    = "todoist_Set";
+    $hash->{GetFn}    = "todoist_Get";
 		$hash->{DefFn}    = "todoist_Define";
 		$hash->{UndefFn}  = "todoist_Undefine";
 		$hash->{AttrFn}   = "todoist_Attr";
@@ -1327,6 +1332,21 @@ sub todoist_Set ($@) {
 
 	return undef;
 	
+}
+
+sub todoist_Get($@) {
+  my ($hash, $name, $cmd, @args) = @_;
+  my $ret = undef;
+  
+  if ( $cmd eq "version") {
+  	$hash->{VERSION} = $version;
+    return "Version: ".$version;
+  }
+  else {
+    $ret ="$name get with unknown argument $cmd, choose one of " . join(" ", sort keys %gets);
+  }
+ 
+  return $ret;
 }
 
 #####################################
