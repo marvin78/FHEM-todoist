@@ -70,11 +70,15 @@ if (typeof todoist_checkVar === 'undefined') {
 	}
 
 	function todoist_addLine(name,id,title) {
-		var lastEl=$('table#todoist_' + name + '_table').find('tr').last().prev();
-		var cl = $(lastEl).attr('class');
-		if (cl=="even") cl="odd";
-		else cl="even"
-		$(lastEl).after('<tr id="'+ name + "_" + id +'" data-data="true" data-line-id="' + id +'" class="' + cl +'">\n' +
+		var lastEl=$('table#todoist_' + name + '_table').find('tr').last();
+		var prevEl=$(lastEl).prev('tr');
+		var cl="odd";
+		if (prevEl != 'undefined') {
+			cl = $(prevEl).attr('class');
+			if (cl=="odd") cl="even";
+			else cl="odd"
+		}
+		$(lastEl).before('<tr id="'+ name + "_" + id +'" data-data="true" data-line-id="' + id +'" class="' + cl +'">\n' +
 	  					'	<td class="col1"><input class="todoist_checkbox_' + name + '" type="checkbox" id="check_' + id + '" data-id="' + id + '" /></td>\n' +
 	  					'	<td class="col1">\n'+
 	  					' 	<span class="todoist_task_text" data-id="' + id + '">' + title + '</span>\n'+
