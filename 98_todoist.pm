@@ -545,11 +545,11 @@ sub todoist_HandleTaskCallback($$$){
 			
 			readingsEndUpdate( $hash, 1 );
 			
-			if ($param->{wType} eq "complete") {
-				map {FW_directNotify("#FHEMWEB:$_", "if (typeof removeLine === \"function\") removeLine('$name','$taskId')", "")} devspec2array("WEB.*");
+			if ($param->{wType} =~ /(complete|delete|close)/) {
+				map {FW_directNotify("#FHEMWEB:$_", "if (typeof todoist_removeLine === \"function\") todoist_removeLine('$name','$taskId')", "")} devspec2array("WEB.*");
 			}
 			if ($param->{wType} eq "create") {
-				map {FW_directNotify("#FHEMWEB:$_", "if (typeof addLine === \"function\") addLine('$name','$taskId','$title')", "")} devspec2array("WEB.*");
+				map {FW_directNotify("#FHEMWEB:$_", "if (typeof todoist_addLine === \"function\") todoist_addLine('$name','$taskId','$title')", "")} devspec2array("WEB.*");
 			}
 		}
 		## we got an error from the API
@@ -1424,10 +1424,11 @@ sub todoist_RestartGetTimer($) {
 	return undef;
 }
 
-sub todoist_Html($;$) {
-	my ($name,$showDueDate) = @_;
+sub todoist_Html($;$$) {
+	my ($name,$showDueDate,$showIndent) = @_;
 	
 	$showDueDate=0 if (!defined($showDueDate));
+	$showIndent=0 if (!defined($showIndent));
 	
 	my $hash = $defs{$name};
   my $id   = $defs{$name}{NR};
@@ -1444,7 +1445,7 @@ sub todoist_Html($;$) {
   
   my $i=1;
   my $eo;
-  my $cs=2;
+  my $cs=3;
   
   if ($showDueDate) {
 		$ret .= "<tr>\n".
@@ -1462,14 +1463,39 @@ sub todoist_Html($;$) {
   		$eo="odd";
   	}
   	
+  	my $ind=0;
+  	
+  	if ($showIndent) {
+  		$ind=$hash->{helper}{INDENT}{$_}-1;
+  	}
+  	
+  	my $indent="";
+  	
+  	if ($ind!=0) {
+	  	for (my $z=0;$z<=$ind;$z++) {
+	  		$indent.="&nbsp;&nbsp;";
+	  	}
+	  }
+  	
   	$ret .= "<tr id=\"".$name."_".$_."\" data-data=\"true\" data-line-id=\"".$_."\" class=\"".$eo."\">\n".
-  					"	<td class=\"col1\"><input class=\"todoist_checkbox_".$name."\" type=\"checkbox\" id=\"check_".$_."\" data-id=\"".$_."\" /></td>\n".
-  					"	<td class=\"col1\">".$hash->{helper}{TITLE}{$_}."</td>\n";
+  					"	<td class=\"col1\">\n".
+  					"		<input class=\"todoist_checkbox_".$name."\" type=\"checkbox\" id=\"check_".$_."\" data-id=\"".$_."\" />\n".
+  					"	</td>\n".
+  					"	<td class=\"col1\">\n".
+  							"<span class=\"todoist_task_text\" data-id=\"".$_."\">".$indent.$hash->{helper}{TITLE}{$_}."</span>\n".
+  							"<input type=\"text\" data-id=\"".$_."\" style=\"display:none;\" class=\"todoist_input\" value=\"".$indent.$hash->{helper}{TITLE}{$_}."\" />\n".
+  					"	</td>\n";
   	
   	if ($showDueDate) {
   		$ret .= "<td class=\"col3\">".$hash->{helper}{DUE_DATE}{$_}."</td>\n";
-  		$cs=3;
+  		$cs=4;
   	}					
+  	
+  	$ret .= "<td class=\"col2\">\n".
+  					" <a href=\"#\" class=\"todoist_delete\" data-id=\"".$_."\">\n".
+  					"		x\n".
+  					" </a>\n".
+  					"</td>\n";
   					
     $ret .= "</tr>\n";
     
@@ -1481,7 +1507,7 @@ sub todoist_Html($;$) {
   
   $ret .= "<td colspan=\"".$cs."\">".
   				"	<input type=\"hidden\" id=\"todoist_name\" value=\"".$name."\" />\n".
-  				" <input type=\"text\" id=\"newEntry_".$name."\" style=\"width:100%;\" />\n".
+  				" <input type=\"text\" id=\"newEntry_".$name."\" />\n".
   				"</td>";
   
   $ret .= "</tr>";

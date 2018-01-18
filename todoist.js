@@ -3,22 +3,22 @@ req.open('GET', document.location, false);
 req.send(null);
 var csrfToken = req.getResponseHeader('X-FHEM-csrfToken');
 
-function encodeParm(oldval) {
-    var newval;
-    newval = oldval.replace(/\$/g, '\\%24');
-    newval = newval.replace(/"/g, '%27');
-    newval = newval.replace(/#/g, '%23');
-    newval = newval.replace(/\+/g, '%2B');
-    newval = newval.replace(/&/g, '%26');
-    newval = newval.replace(/'/g, '%27');
-    newval = newval.replace(/=/g, '%3D');
-    newval = newval.replace(/\?/g, '%3F');
-    newval = newval.replace(/\|/g, '%7C');
-    newval = newval.replace(/\s/g, '%20');
-    return newval;
+function todoist_encodeParm(oldVal) {
+    var newVal;
+    newVal = oldVal.replace(/\$/g, '\\%24');
+    newVal = newVal.replace(/"/g, '%27');
+    newVal = newVal.replace(/#/g, '%23');
+    newVal = newVal.replace(/\+/g, '%2B');
+    newVal = newVal.replace(/&/g, '%26');
+    newVal = newVal.replace(/'/g, '%27');
+    newVal = newVal.replace(/=/g, '%3D');
+    newVal = newVal.replace(/\?/g, '%3F');
+    newVal = newVal.replace(/\|/g, '%7C');
+    newVal = newVal.replace(/\s/g, '%20');
+    return newVal;
 };
 
-function dialog(message) {
+function todoist_dialog(message) {
     $('<div></div>').appendTo('body').html('<div>' + message + '</div>').dialog({
         modal: true, title: 'Todoist Error', zIndex: 10000, autoOpen: true,
         width: 'auto', resizable: false,
@@ -36,7 +36,7 @@ function dialog(message) {
 		},10000);
 };
 
-function sendCommand(cmd) {
+function todoist_sendCommand(cmd) {
 	var location = document.location.pathname;
   if (location.substr(location.length -1, 1) == '/') {
       location = location.substr(0, location.length -1);
@@ -48,10 +48,10 @@ function sendCommand(cmd) {
 
 
 function todoist_ErrorDialog($text) {
-	dialog($text);
+	todoist_dialog($text);
 }
 
-function removeLine(name,id) {
+function todoist_removeLine(name,id) {
 	var i=1;
 	$('table#todoist_' + name + '_table').find('tr').each(function() {
 		var tid = $(this).attr("data-line-id");
@@ -65,14 +65,22 @@ function removeLine(name,id) {
 	});
 }
 
-function addLine(name,id,title) {
+function todoist_addLine(name,id,title) {
 	var lastEl=$('table#todoist_' + name + '_table').find('tr').last().prev();
 	var cl = $(lastEl).attr('class');
 	if (cl=="even") cl="odd";
 	else cl="even"
 	$(lastEl).after('<tr id="'+ name + "_" + id +'" data-data="true" data-line-id="' + id +'" class="' + cl +'">\n' +
   					'	<td class="col1"><input class="todoist_checkbox_' + name + '" type="checkbox" id="check_' + id + '" data-id="' + id + '" /></td>\n' +
-  					'	<td class="col1">' + title + '</td>\n' +
+  					'	<td class="col1">\n'+
+  					' 	<span class="todoist_task_text" data-id="' + id + '">' + title + '</span>\n'+
+  					'   <input type="text" data-id="' + id + '" style="display:none;" class="todoist_input" value="' + title + '" />'+
+  					' </td>\n' +
+  					' <td class="col2">\n' +
+  					' 	<a href="#" class="todoist_delete" data-id="' + id +'">\n'+
+  					'			x\n'+
+  					' 	</a>\n'+
+  					'	</td>\n'+
            	'</tr>\n'
   );
 }
@@ -82,9 +90,9 @@ $(document).ready(function(){
 	$('#newEntry_' + name).on('blur keypress',function(e) {
 		if (e.type!='keypress' || e.which==13) {
 			e.preventDefault()
-			var v=encodeParm($(this).val());
+			var v=todoist_encodeParm($(this).val());
 			if (v!="") {
-				sendCommand('set '+ name +' addTask ' + v);
+				todoist_sendCommand('set '+ name +' addTask ' + v);
 				$(this).val("");
 			}
 		}
@@ -93,7 +101,33 @@ $(document).ready(function(){
 		var val=$(this).attr('checked');
 		if (!val) {
 			var id=$(this).attr('data-id');
-			sendCommand('set ' + name + ' completeTask ID:'+ id);
+			todoist_sendCommand('set ' + name + ' closeTask ID:'+ id);
+		}
+		return false;
+	});
+	$('#todoist_' + name + '_table').on('click','a.todoist_delete',function(e) {
+		if (confirm('Are you sure?')) {
+			var id=$(this).attr('data-id');
+			todoist_sendCommand('set ' + name + ' deleteTask ID:'+ id);
+		}
+		return false;
+	});
+	$('#todoist_' + name + '_table').on('click','span.todoist_task_text',function(e) {
+		var id = $(this).attr("data-id");
+		$(this).hide();
+		$("input[data-id='" + id +"']").show();
+		$("input[data-id='" + id +"']").focus();
+	});
+	$('#todoist_' + name + '_table').on('blur keypress','input.todoist_input',function(e) {
+		if (e.type!='keypress' || e.which==13) {
+			e.preventDefault()
+			var id = $(this).attr("data-id");
+			var val = $(this).val();
+			
+			$(this).hide();
+			$("span.todoist_task_text[data-id='" + id +"']").html(val);
+			$("span.todoist_task_text[data-id='" + id +"']").show();
+			todoist_sendCommand('set ' + name + ' updateTask ID:'+ id + ' title=' + val);
 		}
 	});
 });
