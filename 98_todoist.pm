@@ -1886,6 +1886,7 @@ sub todoist_inArray {
 		Usage:<br /><br />
 		<code>define &lt;NAME&gt; weblink htmlCode {todoist_Html("&lt;TODOIST-DEVCICENAME&gt;")}</code>
 	</ul>
+	<br /><br />
 	<ul>
 		Defines a simple weblink for all Task lists.
 		<br /><br />
