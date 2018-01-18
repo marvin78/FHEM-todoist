@@ -13,7 +13,7 @@ use Data::UUID;
 
 #######################
 # Global variables
-my $version = "0.7.1";
+my $version = "0.7.2";
 
 my %gets = (
   "version:noArg"     => "",
@@ -574,7 +574,7 @@ sub todoist_HandleTaskCallback($$$){
 		}
 		
 	}	
-	
+
 	todoist_RestartGetTimer($hash);
 	
 	return undef;
@@ -1456,7 +1456,11 @@ sub todoist_Html($;$$) {
   my $ret="";
   
   # Javascript
-  $ret.="<script type=\"text/javascript\" src=\"$FW_ME/pgm2/todoist.js\"></script>";
+  $ret .= "<script type=\"text/javascript\" src=\"$FW_ME/www/pgm2/todoist.js\"></script>";
+  				
+  #$ret .= "<script type=\"text/javascript\">\n".
+  #				"	loadScript(\"$FW_ME/www/pgm2/todoist.js\");\n".
+  #				"</script>";
   
   $ret .= "<table class=\"roomoverview\">\n";
   
@@ -1503,7 +1507,7 @@ sub todoist_Html($;$$) {
   					"	</td>\n".
   					"	<td class=\"col1\">\n".
   							"<span class=\"todoist_task_text\" data-id=\"".$_."\">".$indent.$hash->{helper}{TITLE}{$_}."</span>\n".
-  							"<input type=\"text\" data-id=\"".$_."\" style=\"display:none;\" class=\"todoist_input\" value=\"".$indent.$hash->{helper}{TITLE}{$_}."\" />\n".
+  							"<input type=\"text\" data-id=\"".$_."\" style=\"display:none;\" class=\"todoist_input\" value=\"".$hash->{helper}{TITLE}{$_}."\" />\n".
   					"	</td>\n";
   	
   	if ($showDueDate) {
@@ -1512,7 +1516,7 @@ sub todoist_Html($;$$) {
   	}					
   	
   	$ret .= "<td class=\"col2\">\n".
-  					" <a href=\"#\" class=\"todoist_delete\" data-id=\"".$_."\">\n".
+  					" <a href=\"#\" class=\"todoist_delete_".$name."\" data-id=\"".$_."\">\n".
   					"		x\n".
   					" </a>\n".
   					"</td>\n";
@@ -1526,7 +1530,7 @@ sub todoist_Html($;$$) {
   
   
   $ret .= "<td colspan=\"".$cs."\">".
-  				"	<input type=\"hidden\" id=\"todoist_name\" value=\"".$name."\" />\n".
+  				"	<input type=\"hidden\" class=\"todoist_name\" id=\"todoist_name_".$name."\" value=\"".$name."\" />\n".
   				" <input type=\"text\" id=\"newEntry_".$name."\" />\n".
   				"</td>";
   
