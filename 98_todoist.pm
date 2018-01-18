@@ -487,7 +487,7 @@ sub todoist_CreateTask($$) {
 	}
 	else {
 		#map {FW_directNotify("#FHEMWEB:$_", "FW_okDialog('$title is already in the list')", "")} devspec2array("WEB.*");
-		map {FW_directNotify("#FHEMWEB:$_", "if (typeof todoist_ErrorDialog === \"function\") todoist_ErrorDialog('$title is already in the list')", "")} devspec2array("WEB.*");
+		map {FW_directNotify("#FHEMWEB:$_", "if (typeof todoist_ErrorDialog === \"function\") todoist_ErrorDialog('$title is already on the list')", "")} devspec2array("WEB.*");
 		todoist_ErrorReadings($hash,"duplicate detected","duplicate detected");
 	}
 	
