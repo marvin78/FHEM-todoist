@@ -94,7 +94,7 @@ if (typeof todoist_checkVar === 'undefined') {
 			var name = $(this).val();
 			$('#newEntry_' + name).on('blur keypress',function(e) {
 				if (e.type!='keypress' || e.which==13) {
-					e.preventDefault()
+					e.preventDefault();
 					var v=todoist_encodeParm($(this).val());
 					if (v!="") {
 						todoist_sendCommand('set '+ name +' addTask ' + v);
