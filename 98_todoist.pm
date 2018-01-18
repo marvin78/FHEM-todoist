@@ -1,4 +1,4 @@
-﻿# $Id: 98_todoist.pm 0119 2018-11-18 09:00:10Z marvin1978 $
+﻿# $Id: 98_todoist.pm 0119 2018-11-18 16:17:10Z marvin1978 $
 
 package main;
 
@@ -13,7 +13,7 @@ use Data::UUID;
 
 #######################
 # Global variables
-my $version = "0.7.2";
+my $version = "0.7.5";
 
 my %gets = (
   "version:noArg"     => "",
