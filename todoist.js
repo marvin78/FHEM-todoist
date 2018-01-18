@@ -103,7 +103,6 @@ $(document).ready(function(){
 			var id=$(this).attr('data-id');
 			todoist_sendCommand('set ' + name + ' closeTask ID:'+ id);
 		}
-		return false;
 	});
 	$('#todoist_' + name + '_table').on('click','a.todoist_delete',function(e) {
 		if (confirm('Are you sure?')) {
