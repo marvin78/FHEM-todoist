@@ -39,6 +39,10 @@ if (typeof todoist_checkVar === 'undefined') {
 				$('.ui-dialog').remove();
 			},10000);
 	};
+	
+	function todoist_refreshTable() {
+		
+	}
 
 	function todoist_sendCommand(cmd) {
 		var location = document.location.pathname;
@@ -67,6 +71,7 @@ if (typeof todoist_checkVar === 'undefined') {
 				i++;
 			}
 		});
+		todoist_getSizes();
 	}
 
 	function todoist_addLine(name,id,title) {
@@ -82,7 +87,7 @@ if (typeof todoist_checkVar === 'undefined') {
 	  					'	<td class="col1"><input class="todoist_checkbox_' + name + '" type="checkbox" id="check_' + id + '" data-id="' + id + '" /></td>\n' +
 	  					'	<td class="col1">\n'+
 	  					' 	<span class="todoist_task_text" data-id="' + id + '">' + title + '</span>\n'+
-	  					'   <input type="text" data-id="' + id + '" style="display:none;" class="todoist_input" value="' + title + '" />'+
+	  					'   <input type="text" data-id="' + id + '" style="display:none;" class="todoist_input_' + name +'" value="' + title + '" />'+
 	  					' </td>\n' +
 	  					' <td class="col2">\n' +
 	  					' 	<a href="#" class="todoist_delete_' + name + '" data-id="' + id +'">\n'+
@@ -91,9 +96,26 @@ if (typeof todoist_checkVar === 'undefined') {
 	  					'	</td>\n'+
 	           	'</tr>\n'
 	  );
+	  todoist_getSizes();
+	}
+	
+	function todoist_getSizes() {
+		var height = 0;
+		var width = 0;
+		$('.sortable .sortit').each(function() {
+			var tHeight = $(this).outerHeight();
+			if (tHeight > height) height = tHeight;
+			//var tWidth = $(this).outerWidth();
+			//width+=tWidth;
+			//$(this).css('width',tWidth+'px');
+		});
+		$('.sortable').css('max-height',height);
+		$('.sortable').css('height',height);
+		//$('.sortable').css('width',width+35+"px");
 	}
 
 	$(document).ready(function(){
+		todoist_getSizes();
 		$('.todoist_name').each(function() {
 			var name = $(this).val();
 			$('#newEntry_' + name).on('blur keypress',function(e) {
@@ -128,20 +150,41 @@ if (typeof todoist_checkVar === 'undefined') {
 				$("input[data-id='" + id +"']").show();
 				$("input[data-id='" + id +"']").focus();
 			});
-			$('#todoist_' + name + '_table').on('blur keypress','input.todoist_input',function(e) {
+			$('#todoist_' + name + '_table').on('blur keypress','input.todoist_input_'+name,function(e) {
 				if (e.type!='keypress' || e.which==13) {
 					e.preventDefault();
+					var val = $(this).val();
+					
 					var comp = $(this).prev().html();
 					var id = $(this).attr("data-id");
 					var val = $(this).val();
 					$(this).hide();
 					$("span.todoist_task_text[data-id='" + id +"']").show();
-					if (val != "" && comp!=val) {
+					if (val != "" && comp != val) {
 						$("span.todoist_task_text[data-id='" + id +"']").html(val);
 						todoist_sendCommand('set ' + name + ' updateTask ID:'+ id + ' title="' + val + '"');
+					}
+					
+					if (val == "" && e.which==13) {
+						if (confirm('Are you sure?')) {
+							$('#newEntry_' + name).focus();
+							todoist_sendCommand('set ' + name + ' deleteTask ID:'+ id);
+						}
 					}
 				}
 			});
 		});
+		/*$( ".sortable" ).sortable({
+			axis: 'x',
+			revert: true,
+			placeholder: "sortable-placeholder",
+			start: function( event, ui ) { 
+				var width = ui.item.innerWidth();
+				ui.placeholder.css("width",width); 
+				var height = ui.item.innerHeight();
+				ui.placeholder.css("height",height); 
+			}
+		}).disableSelection();*/
 	});
+
 }

@@ -1507,7 +1507,7 @@ sub todoist_Html($;$$) {
   					"	</td>\n".
   					"	<td class=\"col1\">\n".
   							"<span class=\"todoist_task_text\" data-id=\"".$_."\">".$indent.$hash->{helper}{TITLE}{$_}."</span>\n".
-  							"<input type=\"text\" data-id=\"".$_."\" style=\"display:none;\" class=\"todoist_input\" value=\"".$hash->{helper}{TITLE}{$_}."\" />\n".
+  							"<input type=\"text\" data-id=\"".$_."\" style=\"display:none;\" class=\"todoist_input_".$name."\" value=\"".$hash->{helper}{TITLE}{$_}."\" />\n".
   					"	</td>\n";
   	
   	if ($showDueDate) {
@@ -1543,24 +1543,46 @@ sub todoist_Html($;$$) {
   return $ret;
 }
 
-sub todoist_AllHtml(;$$) {
-	my ($showDueDate,$showIndent) = @_;
+sub todoist_AllHtml(;$$$) {
+	my ($regEx,$showDueDate,$showIndent) = @_;
 	
 	$showDueDate=0 if (!defined($showDueDate));
 	$showIndent=0 if (!defined($showIndent));
+	$regEx="" if (!defined($regEx));
 	
-	my @devs = devspec2array("TYPE=todoist");
+	my $filter="";
+	
+	$filter.=":FILTER=".$regEx;
+	
+	my @devs = devspec2array("TYPE=todoist".$filter);
 	my $ret="";
 	
 	# Javascript
-	my $rot .= "<script type=\"text/javascript\" src=\"$FW_ME/www/pgm2/todoist.js\"></script>";
+	my $rot .= "<script type=\"text/javascript\" src=\"$FW_ME/www/pgm2/todoist.js\"></script>
+							<style>
+								.sortable {
+								    display: block;
+								    padding: 0;
+								}
+								.sortit {
+								    float: left;
+								    margin-right: 10px;
+								}
+								.sortable-placeholder {
+									display:inline-block;
+									background-color: grey;
+								}
+							</style> 
+	";
 	
 	my $r=0;
 	
 	my $count = @devs;
-	my $width = 100/$count;
+	my $width = 95/$count;
 	
-	my $style="float:left;margin-right:10px;width:".$width;
+	my $style="float:left;vertical-align: top;margin-right:10px;width:".$width;
+	
+	$ret .= "<div class=\"sortable\">\n";
 	
 	foreach my $name (@devs) {
 		
@@ -1569,11 +1591,11 @@ sub todoist_AllHtml(;$$) {
 		my $hash = $defs{$name};
 	  my $id   = $defs{$name}{NR};
 	  
-	  if ($r==$count) {
-	  	$style="float:none;";	
-	  }	
+	  #if ($r==$count) {
+	  #	$style="float:none;";	
+	  #}	
 	    
-	  $ret .= "<div style=\"".$style."\"><table class=\"roomoverview\">\n";
+	  $ret .= "<table class=\"roomoverview sortit\">\n";
 	  
 	  $ret .= "<tr><td colspan=\"3\"><div class=\"devType\">".$name."</div></td></tr>";
 	  $ret .= "<tr><td colspan=\"3\"><table class=\"block wide\" id=\"todoist_".$name."_table\">\n"; 
@@ -1618,7 +1640,7 @@ sub todoist_AllHtml(;$$) {
 	  					"	</td>\n".
 	  					"	<td class=\"col1\">\n".
 	  							"<span class=\"todoist_task_text\" data-id=\"".$_."\">".$indent.$hash->{helper}{TITLE}{$_}."</span>\n".
-	  							"<input type=\"text\" data-id=\"".$_."\" style=\"display:none;\" class=\"todoist_input\" value=\"".$hash->{helper}{TITLE}{$_}."\" />\n".
+	  							"<input type=\"text\" data-id=\"".$_."\" style=\"display:none;\" class=\"todoist_input_".$name."\" value=\"".$hash->{helper}{TITLE}{$_}."\" />\n".
 	  					"	</td>\n";
 	  	
 	  	if ($showDueDate) {
@@ -1649,8 +1671,10 @@ sub todoist_AllHtml(;$$) {
 	  
 	  $ret .= "</table></td></tr>\n";
 	  
-	  $ret .= "</table></div>\n";
+	  $ret .= "</table>\n";
 	}
+	
+	$ret .= "</div>\n";
   
   return $rot.$ret;
 }
