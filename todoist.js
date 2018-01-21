@@ -40,8 +40,16 @@ if (typeof todoist_checkVar === 'undefined') {
 			},10000);
 	};
 	
-	function todoist_refreshTable() {
-		
+	function todoist_refreshTable(name) {
+		var i=1;
+		$('table#todoist_' + name + '_table').find('tr').each(function() {
+			var tid = $(this).attr("data-line-id");
+				$(this).removeClass("odd even");
+				if (i%2==0) $(this).addClass("even");
+				else $(this).addClass("odd");
+				todoist_sendCommand('set ' + name + ' updateTask ID:'+ tid + ' order="' + i + '"');
+				i++;
+		});
 	}
 
 	function todoist_sendCommand(cmd) {
@@ -105,13 +113,9 @@ if (typeof todoist_checkVar === 'undefined') {
 		$('.sortable .sortit').each(function() {
 			var tHeight = $(this).outerHeight();
 			if (tHeight > height) height = tHeight;
-			//var tWidth = $(this).outerWidth();
-			//width+=tWidth;
-			//$(this).css('width',tWidth+'px');
 		});
 		$('.sortable').css('max-height',height);
 		$('.sortable').css('height',height);
-		//$('.sortable').css('width',width+35+"px");
 	}
 
 	$(document).ready(function(){
@@ -174,17 +178,25 @@ if (typeof todoist_checkVar === 'undefined') {
 				}
 			});
 		});
-		/*$( ".sortable" ).sortable({
-			axis: 'x',
+		$( ".sortable" ).sortable({
+			axis: 'y',
 			revert: true,
+			items: "> tbody > tr.sortit",
+			handle: ".todoist_sortit_handler",
 			placeholder: "sortable-placeholder",
 			start: function( event, ui ) { 
 				var width = ui.item.innerWidth();
 				ui.placeholder.css("width",width); 
 				var height = ui.item.innerHeight();
 				ui.placeholder.css("height",height); 
+			},
+			stop: function (event,ui) {
+				var parent = ui.item.parent().parent();
+				var id = $(parent).attr('id');
+				var name = id.split("_")[1];
+				todoist_refreshTable(name);
 			}
-		}).disableSelection();*/
+		}).disableSelection();
 	});
 
 }

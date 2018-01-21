@@ -1,4 +1,4 @@
-﻿# $Id: 98_todoist.pm 0119 2018-11-18 16:17:10Z marvin1978 $
+﻿# $Id: 98_todoist.pm 0225 2018-11-21 11:54:10Z marvin1978 $
 
 package main;
 
@@ -13,7 +13,7 @@ use Data::UUID;
 
 #######################
 # Global variables
-my $version = "0.7.7";
+my $version = "0.8.0";
 
 my %gets = (
   "version:noArg"     => "",
@@ -1456,26 +1456,67 @@ sub todoist_Html($;$$) {
   my $ret="";
   
   # Javascript
-  $ret .= "<script type=\"text/javascript\" src=\"$FW_ME/www/pgm2/todoist.js\"></script>";
+  $ret .= "<script type=\"text/javascript\" src=\"$FW_ME/www/pgm2/todoist.js\"></script>
+  				 <style>
+								.todoist_container {
+								    display: block;
+								    padding: 0;
+								}
+								.todoist_table {
+								    float: left;
+								    margin-right: 10px;
+								}
+								.sortable-placeholder {
+									background-color: grey;
+								}
+								.todoist_col1 {
+									width:10px;
+								}
+								.todoist_col1 input {
+									margin-top:4px;
+								}
+								.todoist_sortit_handler {
+									padding-top: 0px!important;
+								  content: '....';
+								  width: 10px;
+								  height: 20px;
+								  //display: inline-block;
+								  overflow: hidden;
+								  line-height: 5px;
+								  padding: 3px 4px;
+								  cursor: move;
+								  vertical-align: middle;
+								  margin-top: -.2em;
+								  margin-right: 0!important;
+								  font-size: 12px;
+								  font-family: sans-serif;
+								  letter-spacing: 2px;
+								  color: #cccccc;
+								  text-shadow: 1px 0 1px black;
+								}
+								.todoist_sortit_handler::after {
+								  content: '.. .. ..';
+								}
+							</style> 
+						";
   				
-  #$ret .= "<script type=\"text/javascript\">\n".
-  #				"	loadScript(\"$FW_ME/www/pgm2/todoist.js\");\n".
-  #				"</script>";
   
-  $ret .= "<table class=\"roomoverview\">\n";
+  $ret .= "<table class=\"roomoverview  todoist_table\">\n";
   
   $ret .= "<tr><td colspan=\"3\"><div class=\"devType\">".$name."</div></td></tr>";
-  $ret .= "<tr><td colspan=\"3\"><table class=\"block wide\" id=\"todoist_".$name."_table\">\n"; 
+  $ret .= "<tr><td colspan=\"3\"><table class=\"block wide sortable\" id=\"todoist_".$name."_table\">\n"; 
   
   my $i=1;
   my $eo;
-  my $cs=3;
+  my $cs=4;
   
   if ($showDueDate) {
-		$ret .= "<tr>\n".
+		$ret .= "<th>\n".
+						" <td> </td>".
 						" <td class=\"col1\"> </td>\n".
 						" <td class=\"col1\">Task</td>\n".
-						" <td class=\"col3\">Due date</td>\n";
+						" <td class=\"col3\">Due date</td>\n".
+						"</th>\n";
 	}
   
   foreach (@{$hash->{helper}{TIDS}}) {
@@ -1501,18 +1542,19 @@ sub todoist_Html($;$$) {
 	  	}
 	  }
   	
-  	$ret .= "<tr id=\"".$name."_".$_."\" data-data=\"true\" data-line-id=\"".$_."\" class=\"".$eo."\">\n".
-  					"	<td class=\"col1\">\n".
-  					"		<input class=\"todoist_checkbox_".$name."\" type=\"checkbox\" id=\"check_".$_."\" data-id=\"".$_."\" />\n".
-  					"	</td>\n".
-  					"	<td class=\"col1\">\n".
-  							"<span class=\"todoist_task_text\" data-id=\"".$_."\">".$indent.$hash->{helper}{TITLE}{$_}."</span>\n".
-  							"<input type=\"text\" data-id=\"".$_."\" style=\"display:none;\" class=\"todoist_input_".$name."\" value=\"".$hash->{helper}{TITLE}{$_}."\" />\n".
-  					"	</td>\n";
+  	$ret .= "<tr id=\"".$name."_".$_."\" data-data=\"true\" data-line-id=\"".$_."\" class=\"sortit ".$eo."\">\n".
+	  					" <td class=\"todoist_sortit_handler\"> .. </td>".
+	  					"	<td class=\"col1 todoist_col1\">\n".
+	  					"		<input class=\"todoist_checkbox_".$name."\" type=\"checkbox\" id=\"check_".$_."\" data-id=\"".$_."\" />\n".
+	  					"	</td>\n".
+	  					"	<td class=\"col1\">\n".
+	  							"<span class=\"todoist_task_text\" data-id=\"".$_."\">".$indent.$hash->{helper}{TITLE}{$_}."</span>\n".
+	  							"<input type=\"text\" data-id=\"".$_."\" style=\"display:none;\" class=\"todoist_input_".$name."\" value=\"".$hash->{helper}{TITLE}{$_}."\" />\n".
+	  					"	</td>\n";
   	
   	if ($showDueDate) {
   		$ret .= "<td class=\"col3\">".$hash->{helper}{DUE_DATE}{$_}."</td>\n";
-  		$cs=4;
+  		$cs++;
   	}					
   	
   	$ret .= "<td class=\"col2\">\n".
@@ -1560,17 +1602,44 @@ sub todoist_AllHtml(;$$$) {
 	# Javascript
 	my $rot .= "<script type=\"text/javascript\" src=\"$FW_ME/www/pgm2/todoist.js\"></script>
 							<style>
-								.sortable {
+								.todoist_container {
 								    display: block;
 								    padding: 0;
 								}
-								.sortit {
+								.todoist_table {
 								    float: left;
 								    margin-right: 10px;
 								}
 								.sortable-placeholder {
-									display:inline-block;
 									background-color: grey;
+								}
+								.todoist_col1 {
+									width:10px;
+								}
+								.todoist_col1 input {
+									margin-top:4px;
+								}
+								.todoist_sortit_handler {
+									padding-top: 0px!important;
+								  content: '....';
+								  width: 10px;
+								  height: 20px;
+								  //display: inline-block;
+								  overflow: hidden;
+								  line-height: 5px;
+								  padding: 3px 4px;
+								  cursor: move;
+								  vertical-align: middle;
+								  margin-top: -.2em;
+								  margin-right: 0!important;
+								  font-size: 12px;
+								  font-family: sans-serif;
+								  letter-spacing: 2px;
+								  color: #cccccc;
+								  text-shadow: 1px 0 1px black;
+								}
+								.todoist_sortit_handler::after {
+								  content: '.. .. ..';
 								}
 							</style> 
 	";
@@ -1582,7 +1651,7 @@ sub todoist_AllHtml(;$$$) {
 	
 	my $style="float:left;vertical-align: top;margin-right:10px;width:".$width;
 	
-	$ret .= "<div class=\"sortable\">\n";
+	$ret .= "<div class=\"todoist_container\">\n";
 	
 	foreach my $name (@devs) {
 		
@@ -1595,20 +1664,22 @@ sub todoist_AllHtml(;$$$) {
 	  #	$style="float:none;";	
 	  #}	
 	    
-	  $ret .= "<table class=\"roomoverview sortit\">\n";
+	  $ret .= "<table class=\"roomoverview todoist_table\">\n";
 	  
 	  $ret .= "<tr><td colspan=\"3\"><div class=\"devType\">".$name."</div></td></tr>";
-	  $ret .= "<tr><td colspan=\"3\"><table class=\"block wide\" id=\"todoist_".$name."_table\">\n"; 
+	  $ret .= "<tr><td colspan=\"3\"><table class=\"block wide sortable\" id=\"todoist_".$name."_table\">\n"; 
 	  
 	  my $i=1;
 	  my $eo;
-	  my $cs=3;
+	  my $cs=4;
 	  
 	  if ($showDueDate) {
-			$ret .= "<tr>\n".
+			$ret .= "<th>\n".
+							" <td> </td>".
 							" <td class=\"col1\"> </td>\n".
 							" <td class=\"col1\">Task</td>\n".
-							" <td class=\"col3\">Due date</td>\n";
+							" <td class=\"col3\">Due date</td>\n".
+							"</th>\n";
 		}
 	  
 	  foreach (@{$hash->{helper}{TIDS}}) {
@@ -1634,8 +1705,9 @@ sub todoist_AllHtml(;$$$) {
 		  	}
 		  }
 	  	
-	  	$ret .= "<tr id=\"".$name."_".$_."\" data-data=\"true\" data-line-id=\"".$_."\" class=\"".$eo."\">\n".
-	  					"	<td class=\"col1\">\n".
+	  	$ret .= "<tr id=\"".$name."_".$_."\" data-data=\"true\" data-line-id=\"".$_."\" class=\"sortit ".$eo."\">\n".
+	  					" <td class=\"todoist_sortit_handler\"> .. </td>".
+	  					"	<td class=\"col1 todoist_col1\">\n".
 	  					"		<input class=\"todoist_checkbox_".$name."\" type=\"checkbox\" id=\"check_".$_."\" data-id=\"".$_."\" />\n".
 	  					"	</td>\n".
 	  					"	<td class=\"col1\">\n".
@@ -1645,7 +1717,7 @@ sub todoist_AllHtml(;$$$) {
 	  	
 	  	if ($showDueDate) {
 	  		$ret .= "<td class=\"col3\">".$hash->{helper}{DUE_DATE}{$_}."</td>\n";
-	  		$cs=4;
+	  		$cs++;
 	  	}					
 	  	
 	  	$ret .= "<td class=\"col2\">\n".
