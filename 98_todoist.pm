@@ -1,4 +1,4 @@
-﻿# $Id: 98_todoist.pm 0225 2018-11-21 11:54:10Z marvin1978 $
+﻿# $Id: 98_todoist.pm 0227 2018-11-21 20:54:10Z marvin1978 $
 
 package main;
 
@@ -13,7 +13,7 @@ use Data::UUID;
 
 #######################
 # Global variables
-my $version = "0.8.0";
+my $version = "0.8.1";
 
 my %gets = (
   "version:noArg"     => "",
@@ -1470,20 +1470,26 @@ sub todoist_Html($;$$) {
 									background-color: grey;
 								}
 								.todoist_col1 {
-									width:10px;
+									width:31px;
+									text-align:right;
+									padding: 4px 1px!important;
 								}
 								.todoist_col1 input {
 									margin-top:4px;
 								}
+								.todoist_move {
+									width:10px;
+									float:left;
+								}
 								.todoist_sortit_handler {
 									padding-top: 0px!important;
 								  content: '....';
-								  width: 10px;
+								  width: 5px;
 								  height: 20px;
 								  //display: inline-block;
 								  overflow: hidden;
 								  line-height: 5px;
-								  padding: 3px 4px;
+								  padding: 0px 3px!important;
 								  cursor: move;
 								  vertical-align: middle;
 								  margin-top: -.2em;
@@ -1495,7 +1501,7 @@ sub todoist_Html($;$$) {
 								  text-shadow: 1px 0 1px black;
 								}
 								.todoist_sortit_handler::after {
-								  content: '.. .. ..';
+								  content: '.. .. .. ..';
 								}
 							</style> 
 						";
@@ -1508,12 +1514,11 @@ sub todoist_Html($;$$) {
   
   my $i=1;
   my $eo;
-  my $cs=4;
+  my $cs=3;
   
   if ($showDueDate) {
 		$ret .= "<th>\n".
-						" <td> </td>".
-						" <td class=\"col1\"> </td>\n".
+						" <td class=\"col1\"></td>\n".
 						" <td class=\"col1\">Task</td>\n".
 						" <td class=\"col3\">Due date</td>\n".
 						"</th>\n";
@@ -1543,8 +1548,8 @@ sub todoist_Html($;$$) {
 	  }
   	
   	$ret .= "<tr id=\"".$name."_".$_."\" data-data=\"true\" data-line-id=\"".$_."\" class=\"sortit ".$eo."\">\n".
-	  					" <td class=\"todoist_sortit_handler\"> .. </td>".
 	  					"	<td class=\"col1 todoist_col1\">\n".
+	  					"		<div class=\"todoist_move\"></div>\n".
 	  					"		<input class=\"todoist_checkbox_".$name."\" type=\"checkbox\" id=\"check_".$_."\" data-id=\"".$_."\" />\n".
 	  					"	</td>\n".
 	  					"	<td class=\"col1\">\n".
@@ -1557,12 +1562,11 @@ sub todoist_Html($;$$) {
   		$cs++;
   	}					
   	
-  	$ret .= "<td class=\"col2\">\n".
-  					" <a href=\"#\" class=\"todoist_delete_".$name."\" data-id=\"".$_."\">\n".
-  					"		x\n".
-  					" </a>\n".
-  					"</td>\n";
-  					
+  	$ret .= "	<td class=\"col2\">\n".
+  					" 	<a href=\"#\" class=\"todoist_delete_".$name."\" data-id=\"".$_."\">\n".
+  					"			x\n".
+  					" 	</a>\n".
+  					"	</td>\n";  					
     $ret .= "</tr>\n";
     
   	$i++;
@@ -1614,20 +1618,26 @@ sub todoist_AllHtml(;$$$) {
 									background-color: grey;
 								}
 								.todoist_col1 {
-									width:10px;
+									width:31px;
+									text-align:right;
+									padding: 4px 1px!important;
 								}
 								.todoist_col1 input {
 									margin-top:4px;
 								}
+								.todoist_move {
+									width:10px;
+									float:left;
+								}
 								.todoist_sortit_handler {
 									padding-top: 0px!important;
 								  content: '....';
-								  width: 10px;
+								  width: 5px;
 								  height: 20px;
 								  //display: inline-block;
 								  overflow: hidden;
 								  line-height: 5px;
-								  padding: 3px 4px;
+								  padding: 0px 3px!important;
 								  cursor: move;
 								  vertical-align: middle;
 								  margin-top: -.2em;
@@ -1639,7 +1649,7 @@ sub todoist_AllHtml(;$$$) {
 								  text-shadow: 1px 0 1px black;
 								}
 								.todoist_sortit_handler::after {
-								  content: '.. .. ..';
+								  content: '.. .. .. ..';
 								}
 							</style> 
 	";
@@ -1671,7 +1681,7 @@ sub todoist_AllHtml(;$$$) {
 	  
 	  my $i=1;
 	  my $eo;
-	  my $cs=4;
+	  my $cs=3;
 	  
 	  if ($showDueDate) {
 			$ret .= "<th>\n".
@@ -1706,8 +1716,8 @@ sub todoist_AllHtml(;$$$) {
 		  }
 	  	
 	  	$ret .= "<tr id=\"".$name."_".$_."\" data-data=\"true\" data-line-id=\"".$_."\" class=\"sortit ".$eo."\">\n".
-	  					" <td class=\"todoist_sortit_handler\"> .. </td>".
 	  					"	<td class=\"col1 todoist_col1\">\n".
+	  					"		<div class=\"todoist_move\"></div>\n".
 	  					"		<input class=\"todoist_checkbox_".$name."\" type=\"checkbox\" id=\"check_".$_."\" data-id=\"".$_."\" />\n".
 	  					"	</td>\n".
 	  					"	<td class=\"col1\">\n".

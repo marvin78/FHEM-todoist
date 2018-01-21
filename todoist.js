@@ -91,8 +91,11 @@ if (typeof todoist_checkVar === 'undefined') {
 			if (cl=="odd") cl="even";
 			else cl="odd"
 		}
-		$(lastEl).before('<tr id="'+ name + "_" + id +'" data-data="true" data-line-id="' + id +'" class="' + cl +'">\n' +
-	  					'	<td class="col1"><input class="todoist_checkbox_' + name + '" type="checkbox" id="check_' + id + '" data-id="' + id + '" /></td>\n' +
+		$(lastEl).before('<tr id="'+ name + "_" + id +'" data-data="true" data-line-id="' + id +'" class="sortit ' + cl +'">\n' +
+	  					'	<td class="col1  todoist_col1">\n'+
+	  					'   <div class=\"todoist_move\"></div>\n'+
+	  					'		<input class="todoist_checkbox_' + name + '" type="checkbox" id="check_' + id + '" data-id="' + id + '" />\n'+
+	  					' </td>\n' +
 	  					'	<td class="col1">\n'+
 	  					' 	<span class="todoist_task_text" data-id="' + id + '">' + title + '</span>\n'+
 	  					'   <input type="text" data-id="' + id + '" style="display:none;" class="todoist_input_' + name +'" value="' + title + '" />'+
@@ -122,6 +125,12 @@ if (typeof todoist_checkVar === 'undefined') {
 		todoist_getSizes();
 		$('.todoist_name').each(function() {
 			var name = $(this).val();
+			$('#todoist_' + name + '_table').on('mouseover','tr.sortit',function(e) {
+				$(this).find('div.todoist_move').addClass('todoist_sortit_handler');
+			});
+			$('#todoist_' + name + '_table').on('mouseout','tr.sortit',function(e) {
+				$(this).find('div.todoist_move').removeClass('todoist_sortit_handler');
+			});
 			$('#newEntry_' + name).on('blur keypress',function(e) {
 				if (e.type!='keypress' || e.which==13) {
 					e.preventDefault();
@@ -178,13 +187,23 @@ if (typeof todoist_checkVar === 'undefined') {
 				}
 			});
 		});
+		var fixHelper = function(e, ui) {  
+		  ui.children().each(function() {  
+		  console.log(e);
+		    $(this).width($(this).width());  
+		  });  
+		  return ui;  
+		};
 		$( ".sortable" ).sortable({
 			axis: 'y',
 			revert: true,
 			items: "> tbody > tr.sortit",
 			handle: ".todoist_sortit_handler",
+			forceHelperSize: true,
 			placeholder: "sortable-placeholder",
+			helper: fixHelper,
 			start: function( event, ui ) { 
+				ui.item.css('background','#111111');
 				var width = ui.item.innerWidth();
 				ui.placeholder.css("width",width); 
 				var height = ui.item.innerHeight();
@@ -194,6 +213,7 @@ if (typeof todoist_checkVar === 'undefined') {
 				var parent = ui.item.parent().parent();
 				var id = $(parent).attr('id');
 				var name = id.split("_")[1];
+				ui.item.css('background','');
 				todoist_refreshTable(name);
 			}
 		}).disableSelection();
