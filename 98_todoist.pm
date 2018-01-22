@@ -1,4 +1,4 @@
-﻿# $Id: 98_todoist.pm 0229 2018-11-22 08:55:10Z marvin1978 $
+﻿# $Id: 98_todoist.pm 0230 2018-11-22 13:24:10Z marvin1978 $
 
 package main;
 
@@ -13,7 +13,7 @@ use Data::UUID;
 
 #######################
 # Global variables
-my $version = "0.8.2";
+my $version = "0.8.3";
 
 my %gets = (
   "version:noArg"     => "",
@@ -1503,6 +1503,10 @@ sub todoist_Html($;$$) {
 								.todoist_sortit_handler::after {
 								  content: '.. .. .. ..';
 								}
+								.todoist_delete {
+									padding-right:15px!important;
+									padding-left:15px!important;
+								}
 							</style> 
 						";
   				
@@ -1562,7 +1566,7 @@ sub todoist_Html($;$$) {
   		$cs++;
   	}					
   	
-  	$ret .= "	<td class=\"col2\">\n".
+  	$ret .= "	<td class=\"col2 todoist_delete\">\n".
   					" 	<a href=\"#\" class=\"todoist_delete_".$name."\" data-id=\"".$_."\">\n".
   					"			x\n".
   					" 	</a>\n".
@@ -1651,6 +1655,10 @@ sub todoist_AllHtml(;$$$) {
 								.todoist_sortit_handler::after {
 								  content: '.. .. .. ..';
 								}
+								.todoist_delete {
+									padding-right:15px!important;
+									padding-left:15px!important;
+								}
 							</style> 
 	";
 	
@@ -1730,7 +1738,7 @@ sub todoist_AllHtml(;$$$) {
 	  		$cs++;
 	  	}					
 	  	
-	  	$ret .= "<td class=\"col2\">\n".
+	  	$ret .= "<td class=\"col2 todoist_delete\">\n".
 	  					" <a href=\"#\" class=\"todoist_delete_".$name."\" data-id=\"".$_."\">\n".
 	  					"		x\n".
 	  					" </a>\n".
