@@ -40,15 +40,21 @@ if (typeof todoist_checkVar === 'undefined') {
 			},10000);
 	};
 	
-	function todoist_refreshTable(name) {
+	function todoist_refreshTable(name,sortit) {
 		var i=1;
 		$('table#todoist_' + name + '_table').find('tr').each(function() {
+			// sizes of inputs
+			var input = $(this).find('td.todoist_input').find('input[type=text]');
+			var sizeVal = $(this).find('td.todoist_input').find('span.todoist_task_text').width();
+			var size = sizeVal+5;
+			$(input).width(size);
+			// order
 			var tid = $(this).attr("data-line-id");
-				$(this).removeClass("odd even");
-				if (i%2==0) $(this).addClass("even");
-				else $(this).addClass("odd");
-				todoist_sendCommand('set ' + name + ' updateTask ID:'+ tid + ' order="' + i + '"');
-				i++;
+			$(this).removeClass("odd even");
+			if (i%2==0) $(this).addClass("even");
+			else $(this).addClass("odd");
+			if (typeof sortit != 'undefined') todoist_sendCommand('set ' + name + ' updateTask ID:'+ tid + ' order="' + i + '"');
+			i++;
 		});
 	}
 
@@ -111,6 +117,15 @@ if (typeof todoist_checkVar === 'undefined') {
 	  todoist_getSizes();
 	}
 	
+	function resizable (el, factor) {
+	  var int = Number(factor) || 7.7;
+	  function resize() {el.style.width = ((el.value.length+1) * int) + 'px'}
+	  var e = 'keyup,keypress,focus,blur,change'.split(',');
+	  for (var i in e) el.addEventListener(e[i],resize,false);
+	  resize();
+	}
+
+	
 	function todoist_getSizes() {
 		var height = 0;
 		var width = 0;
@@ -126,6 +141,7 @@ if (typeof todoist_checkVar === 'undefined') {
 		todoist_getSizes();
 		$('.todoist_name').each(function() {
 			var name = $(this).val();
+			todoist_refreshTable(name);
 			$('#todoist_' + name + '_table').on('mouseover','tr.sortit',function(e) {
 				$(this).find('div.todoist_move').addClass('todoist_sortit_handler');
 			});
@@ -188,6 +204,9 @@ if (typeof todoist_checkVar === 'undefined') {
 						}
 					}
 				}
+				if (e.type=='keypress') {
+					resizable(this,7);
+				}
 			});
 		});
 		var fixHelper = function(e, ui) {  
@@ -217,7 +236,7 @@ if (typeof todoist_checkVar === 'undefined') {
 				var id = $(parent).attr('id');
 				var name = id.split("_")[1];
 				ui.item.css('background','');
-				todoist_refreshTable(name);
+				todoist_refreshTable(name,1);
 			}
 		}).disableSelection();
 	});

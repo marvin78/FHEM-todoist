@@ -1,4 +1,4 @@
-﻿# $Id: 98_todoist.pm 0227 2018-11-21 20:54:10Z marvin1978 $
+﻿# $Id: 98_todoist.pm 0229 2018-11-22 08:55:10Z marvin1978 $
 
 package main;
 
@@ -13,7 +13,7 @@ use Data::UUID;
 
 #######################
 # Global variables
-my $version = "0.8.1";
+my $version = "0.8.2";
 
 my %gets = (
   "version:noArg"     => "",
@@ -1552,7 +1552,7 @@ sub todoist_Html($;$$) {
 	  					"		<div class=\"todoist_move\"></div>\n".
 	  					"		<input class=\"todoist_checkbox_".$name."\" type=\"checkbox\" id=\"check_".$_."\" data-id=\"".$_."\" />\n".
 	  					"	</td>\n".
-	  					"	<td class=\"col1\">\n".
+	  					"	<td class=\"col1 todoist_input\">\n".
 	  							"<span class=\"todoist_task_text\" data-id=\"".$_."\">".$indent.$hash->{helper}{TITLE}{$_}."</span>\n".
 	  							"<input type=\"text\" data-id=\"".$_."\" style=\"display:none;\" class=\"todoist_input_".$name."\" value=\"".$hash->{helper}{TITLE}{$_}."\" />\n".
 	  					"	</td>\n";
@@ -1720,7 +1720,7 @@ sub todoist_AllHtml(;$$$) {
 	  					"		<div class=\"todoist_move\"></div>\n".
 	  					"		<input class=\"todoist_checkbox_".$name."\" type=\"checkbox\" id=\"check_".$_."\" data-id=\"".$_."\" />\n".
 	  					"	</td>\n".
-	  					"	<td class=\"col1\">\n".
+	  					"	<td class=\"col1 todoist_input\">\n".
 	  							"<span class=\"todoist_task_text\" data-id=\"".$_."\">".$indent.$hash->{helper}{TITLE}{$_}."</span>\n".
 	  							"<input type=\"text\" data-id=\"".$_."\" style=\"display:none;\" class=\"todoist_input_".$name."\" value=\"".$hash->{helper}{TITLE}{$_}."\" />\n".
 	  					"	</td>\n";
