@@ -13,7 +13,7 @@ use Data::UUID;
 
 #######################
 # Global variables
-my $version = "0.8.5";
+my $version = "0.8.6";
 
 my %gets = (
   "version:noArg"     => "",
@@ -1513,9 +1513,9 @@ sub todoist_Html($;$$) {
 						";
   				
   
-  $ret .= "<table class=\"roomoverview todoist_table\">\n";
+  $ret .= "<table class=\"roomoverview\">\n";
   
-  $ret .= "<tr><td colspan=\"3\"><div class=\"devType\">".$name."</div></td></tr>";
+  $ret .= "<tr><td colspan=\"3\"><div class=\"devType\">".$name."</div></td></tr>\n";
   $ret .= "<tr><td colspan=\"3\"><table class=\"block wide sortable\" id=\"todoist_".$name."_table\">\n"; 
   
   my $i=1;
