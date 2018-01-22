@@ -13,7 +13,7 @@ use Data::UUID;
 
 #######################
 # Global variables
-my $version = "0.8.6";
+my $version = "0.8.7";
 
 my %gets = (
   "version:noArg"     => "",
@@ -1616,6 +1616,7 @@ sub todoist_AllHtml(;$$$) {
 								.todoist_container {
 								    display: block;
 								    padding: 0;
+								    float:none;
 								}
 								.todoist_table {
 								    float: left;
@@ -1771,6 +1772,7 @@ sub todoist_AllHtml(;$$$) {
 	}
 	
 	$ret .= "</div>\n";
+	$ret .= "<br style=\"clear:both;\" />";
   
   return $rot.$ret;
 }
