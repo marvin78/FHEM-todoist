@@ -1470,12 +1470,12 @@ sub todoist_Html($;$$) {
 									background-color: grey;
 								}
 								.todoist_col1 {
-									width:31px;
+									width:32px;
 									text-align:right;
-									padding: 4px 1px!important;
+									padding: 4px 4px 4px 1px!important;
 								}
 								.todoist_col1 input {
-									margin-top:4px;
+									//margin-top:4px;
 								}
 								.todoist_move {
 									width:10px;
@@ -1489,14 +1489,14 @@ sub todoist_Html($;$$) {
 								  //display: inline-block;
 								  overflow: hidden;
 								  line-height: 5px;
-								  padding: 0px 3px!important;
+								  padding: 0px 2px!important;
 								  cursor: move;
 								  vertical-align: middle;
 								  margin-top: -.2em;
 								  margin-right: 0!important;
 								  font-size: 12px;
 								  font-family: sans-serif;
-								  letter-spacing: 2px;
+								  letter-spacing: 1px;
 								  color: #cccccc;
 								  text-shadow: 1px 0 1px black;
 								}
@@ -1618,12 +1618,12 @@ sub todoist_AllHtml(;$$$) {
 									background-color: grey;
 								}
 								.todoist_col1 {
-									width:31px;
+									width:32px;
 									text-align:right;
-									padding: 4px 1px!important;
+									padding: 4px 4px 4px 1px!important;
 								}
 								.todoist_col1 input {
-									margin-top:4px;
+									//margin-top:4px;
 								}
 								.todoist_move {
 									width:10px;
@@ -1637,14 +1637,14 @@ sub todoist_AllHtml(;$$$) {
 								  //display: inline-block;
 								  overflow: hidden;
 								  line-height: 5px;
-								  padding: 0px 3px!important;
+								  padding: 0px 2px!important;
 								  cursor: move;
 								  vertical-align: middle;
 								  margin-top: -.2em;
 								  margin-right: 0!important;
 								  font-size: 12px;
 								  font-family: sans-serif;
-								  letter-spacing: 2px;
+								  letter-spacing: 1px;
 								  color: #cccccc;
 								  text-shadow: 1px 0 1px black;
 								}

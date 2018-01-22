@@ -107,6 +107,7 @@ if (typeof todoist_checkVar === 'undefined') {
 	  					'	</td>\n'+
 	           	'</tr>\n'
 	  );
+	  todoist_refreshTable(name);
 	  todoist_getSizes();
 	}
 	
@@ -158,9 +159,11 @@ if (typeof todoist_checkVar === 'undefined') {
 			$('#todoist_' + name + '_table').on('click','span.todoist_task_text',function(e) {
 				var id = $(this).attr("data-id");
 				var val=$(this).html();
+				var width=$(this).width()+20;
 				$(this).hide();
 				$("input[data-id='" + id +"']").val(val);
 				$("input[data-id='" + id +"']").show();
+				//$("input[data-id='" + id +"']").width(width);
 				$("input[data-id='" + id +"']").focus();
 			});
 			$('#todoist_' + name + '_table').on('blur keypress','input.todoist_input_'+name,function(e) {
