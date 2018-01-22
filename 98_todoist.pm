@@ -1,4 +1,4 @@
-﻿# $Id: 98_todoist.pm 0230 2018-11-22 14:25:10Z marvin1978 $
+﻿# $Id: 98_todoist.pm $
 
 package main;
 
@@ -13,7 +13,7 @@ use Data::UUID;
 
 #######################
 # Global variables
-my $version = "0.8.4";
+my $version = "0.8.5";
 
 my %gets = (
   "version:noArg"     => "",
@@ -1463,7 +1463,6 @@ sub todoist_Html($;$$) {
 								    padding: 0;
 								}
 								.todoist_table {
-								    float: left;
 								    margin-right: 10px;
 								}
 								.sortable-placeholder {
