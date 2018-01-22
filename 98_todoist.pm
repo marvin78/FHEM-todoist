@@ -1,4 +1,4 @@
-﻿# $Id: 98_todoist.pm 0230 2018-11-22 13:24:10Z marvin1978 $
+﻿# $Id: 98_todoist.pm 0230 2018-11-22 14:25:10Z marvin1978 $
 
 package main;
 
@@ -13,7 +13,7 @@ use Data::UUID;
 
 #######################
 # Global variables
-my $version = "0.8.3";
+my $version = "0.8.4";
 
 my %gets = (
   "version:noArg"     => "",
@@ -146,7 +146,7 @@ sub todoist_ErrorReadings($;$$) {
 	readingsEndUpdate( $hash, 1 );
 	
 	Log3 $name,2, "todoist ($name): Error Message: ".$errorMessage;
-	Log3 $name,3, "todoist ($name): Api-Error Callback-data: ".$errorLog;
+	Log3 $name,4, "todoist ($name): Api-Error Callback-data: ".$errorLog;
 	
 	$hash->{helper}{errorData}="";
 	$hash->{helper}{errorMessage}="";
@@ -699,7 +699,7 @@ sub todoist_GetTasksCallback($$$){
 		
 		if ((ref($decoded_json) eq "HASH" && !$decoded_json->{items}) || $decoded_json eq "") {
 			$hash->{helper}{errorData} = Dumper($data);
-			$hash->{helper}{errorMessage} = "Response was damaged or empty. See log for details.";
+			$hash->{helper}{errorMessage} = "GetTasks: Response was damaged or empty. See log for details.";
 			InternalTimer(gettimeofday()+0.2, "todoist_ErrorReadings",$hash, 0); 
 		}
 		else {
@@ -1507,6 +1507,9 @@ sub todoist_Html($;$$) {
 									padding-right:15px!important;
 									padding-left:15px!important;
 								}
+								tr.ui-sortable-helper {
+									background-color:#111111;
+								}
 							</style> 
 						";
   				
@@ -1525,6 +1528,7 @@ sub todoist_Html($;$$) {
 						" <td class=\"col1\"></td>\n".
 						" <td class=\"col1\">Task</td>\n".
 						" <td class=\"col3\">Due date</td>\n".
+						" <td class=\"col3\"></td>\n".
 						"</th>\n";
 	}
   
@@ -1659,6 +1663,9 @@ sub todoist_AllHtml(;$$$) {
 									padding-right:15px!important;
 									padding-left:15px!important;
 								}
+								tr.ui-sortable-helper {
+									background-color:#111111;
+								}
 							</style> 
 	";
 	
@@ -1693,10 +1700,10 @@ sub todoist_AllHtml(;$$$) {
 	  
 	  if ($showDueDate) {
 			$ret .= "<th>\n".
-							" <td> </td>".
 							" <td class=\"col1\"> </td>\n".
 							" <td class=\"col1\">Task</td>\n".
 							" <td class=\"col3\">Due date</td>\n".
+							" <td class=\"col3\"></td>\n".
 							"</th>\n";
 		}
 	  

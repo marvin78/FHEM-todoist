@@ -56,6 +56,13 @@ if (typeof todoist_checkVar === 'undefined') {
 			if (typeof sortit != 'undefined') todoist_sendCommand('set ' + name + ' updateTask ID:'+ tid + ' order="' + i + '"');
 			i++;
 		});
+		refreshInput(name);
+	}
+	
+	function refreshInput(name) {
+		$('#newEntry_'+name).width(0);
+		var w = $('#newEntry_'+name).parent('td').width()-4;
+		$('#newEntry_'+name).width(w); 
 	}
 
 	function todoist_sendCommand(cmd) {
@@ -66,8 +73,6 @@ if (typeof todoist_checkVar === 'undefined') {
 	  var url = document.location.protocol + "//" + document.location.host + location;
 	  FW_cmd(url + '?XHR=1&fwcsrf=' + csrfToken + '&cmd.' + name + '=' + cmd);
 	}
-
-
 
 	function todoist_ErrorDialog($text) {
 		todoist_dialog($text);
@@ -85,6 +90,7 @@ if (typeof todoist_checkVar === 'undefined') {
 				i++;
 			}
 		});
+		todoist_refreshTable(name);
 		todoist_getSizes();
 	}
 
@@ -133,8 +139,7 @@ if (typeof todoist_checkVar === 'undefined') {
 			var tHeight = $(this).outerHeight();
 			if (tHeight > height) height = tHeight;
 		});
-		$('.sortable').css('max-height',height);
-		$('.sortable').css('height',height);
+		$('.sortable').css('max-height',height).css('height',height);
 	}
 
 	$(document).ready(function(){
@@ -200,9 +205,11 @@ if (typeof todoist_checkVar === 'undefined') {
 							todoist_sendCommand('set ' + name + ' deleteTask ID:'+ id);
 						}
 					}
+					todoist_refreshTable(name);
 				}
 				if (e.type=='keypress') {
 					resizable(this,7);
+					refreshInput(name);
 				}
 			});
 		});
@@ -222,17 +229,14 @@ if (typeof todoist_checkVar === 'undefined') {
 			placeholder: "sortable-placeholder",
 			helper: fixHelper,
 			start: function( event, ui ) { 
-				ui.item.css('background','#111111');
 				var width = ui.item.innerWidth();
-				ui.placeholder.css("width",width); 
 				var height = ui.item.innerHeight();
-				ui.placeholder.css("height",height); 
+				ui.placeholder.css("width",width).css("height",height); 
 			},
 			stop: function (event,ui) {
 				var parent = ui.item.parent().parent();
 				var id = $(parent).attr('id');
 				var name = id.split("_")[1];
-				ui.item.css('background','');
 				todoist_refreshTable(name,1);
 			}
 		}).disableSelection();
