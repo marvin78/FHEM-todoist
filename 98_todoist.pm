@@ -13,7 +13,7 @@ use Data::UUID;
 
 #######################
 # Global variables
-my $version = "0.8.7";
+my $version = "0.9.0";
 
 my %gets = (
   "version:noArg"     => "",
@@ -1444,159 +1444,12 @@ sub todoist_RestartGetTimer($) {
 	return undef;
 }
 
-sub todoist_Html($;$$) {
-	my ($name,$showDueDate,$showIndent) = @_;
-	
-	$showDueDate=0 if (!defined($showDueDate));
-	$showIndent=0 if (!defined($showIndent));
-	
-	my $hash = $defs{$name};
-  my $id   = $defs{$name}{NR};
-  
-  my $ret="";
-  
-  # Javascript
-  $ret .= "<script type=\"text/javascript\" src=\"$FW_ME/www/pgm2/todoist.js\"></script>
-  				 <style>
-								.todoist_container {
-								    display: block;
-								    padding: 0;
-								}
-								.todoist_table {
-								    margin-right: 10px;
-								}
-								.sortable-placeholder {
-									background-color: grey;
-								}
-								.todoist_col1 {
-									width:32px;
-									text-align:right;
-									padding: 4px 4px 4px 1px!important;
-								}
-								.todoist_col1 input {
-									//margin-top:4px;
-								}
-								.todoist_move {
-									width:10px;
-									float:left;
-								}
-								.todoist_sortit_handler {
-									padding-top: 0px!important;
-								  content: '....';
-								  width: 5px;
-								  height: 20px;
-								  //display: inline-block;
-								  overflow: hidden;
-								  line-height: 5px;
-								  padding: 0px 2px!important;
-								  cursor: move;
-								  vertical-align: middle;
-								  margin-top: -.2em;
-								  margin-right: 0!important;
-								  font-size: 12px;
-								  font-family: sans-serif;
-								  letter-spacing: 1px;
-								  color: #cccccc;
-								  text-shadow: 1px 0 1px black;
-								}
-								.todoist_sortit_handler::after {
-								  content: '.. .. .. ..';
-								}
-								.todoist_delete {
-									padding-right:15px!important;
-									padding-left:15px!important;
-								}
-								tr.ui-sortable-helper {
-									background-color:#111111;
-								}
-							</style> 
-						";
-  				
-  
-  $ret .= "<table class=\"roomoverview\">\n";
-  
-  $ret .= "<tr><td colspan=\"3\"><div class=\"devType\">".$name."</div></td></tr>\n";
-  $ret .= "<tr><td colspan=\"3\"><table class=\"block wide sortable\" id=\"todoist_".$name."_table\">\n"; 
-  
-  my $i=1;
-  my $eo;
-  my $cs=3;
-  
-  if ($showDueDate) {
-		$ret .= "<th>\n".
-						" <td class=\"col1\"></td>\n".
-						" <td class=\"col1\">Task</td>\n".
-						" <td class=\"col3\">Due date</td>\n".
-						" <td class=\"col3\"></td>\n".
-						"</th>\n";
-	}
-  
-  foreach (@{$hash->{helper}{TIDS}}) {
-  	
-  	if ($i%2==0) {
-  		$eo="even";
-  	}
-  	else {
-  		$eo="odd";
-  	}
-  	
-  	my $ind=0;
-  	
-  	if ($showIndent) {
-  		$ind=$hash->{helper}{INDENT}{$_}-1;
-  	}
-  	
-  	my $indent="";
-  	
-  	if ($ind!=0) {
-	  	for (my $z=0;$z<=$ind;$z++) {
-	  		$indent.="&nbsp;&nbsp;";
-	  	}
-	  }
-  	
-  	$ret .= "<tr id=\"".$name."_".$_."\" data-data=\"true\" data-line-id=\"".$_."\" class=\"sortit ".$eo."\">\n".
-	  					"	<td class=\"col1 todoist_col1\">\n".
-	  					"		<div class=\"todoist_move\"></div>\n".
-	  					"		<input class=\"todoist_checkbox_".$name."\" type=\"checkbox\" id=\"check_".$_."\" data-id=\"".$_."\" />\n".
-	  					"	</td>\n".
-	  					"	<td class=\"col1 todoist_input\">\n".
-	  							"<span class=\"todoist_task_text\" data-id=\"".$_."\">".$indent.$hash->{helper}{TITLE}{$_}."</span>\n".
-	  							"<input type=\"text\" data-id=\"".$_."\" style=\"display:none;\" class=\"todoist_input_".$name."\" value=\"".$hash->{helper}{TITLE}{$_}."\" />\n".
-	  					"	</td>\n";
-  	
-  	if ($showDueDate) {
-  		$ret .= "<td class=\"col3\">".$hash->{helper}{DUE_DATE}{$_}."</td>\n";
-  		$cs++;
-  	}					
-  	
-  	$ret .= "	<td class=\"col2 todoist_delete\">\n".
-  					" 	<a href=\"#\" class=\"todoist_delete_".$name."\" data-id=\"".$_."\">\n".
-  					"			x\n".
-  					" 	</a>\n".
-  					"	</td>\n";  					
-    $ret .= "</tr>\n";
-    
-  	$i++;
-  }
-  
-  $ret .= "<tr class=\"".$eo."\">";
-  
-  
-  $ret .= "<td colspan=\"".$cs."\">".
-  				"	<input type=\"hidden\" class=\"todoist_name\" id=\"todoist_name_".$name."\" value=\"".$name."\" />\n".
-  				" <input type=\"text\" id=\"newEntry_".$name."\" />\n".
-  				"</td>";
-  
-  $ret .= "</tr>";
-  
-  $ret .= "</table></td></tr>\n";
-  
-  $ret .= "</table>\n";
-  
-  return $ret;
+sub todoist_AllHtml(;$$$) {
+	my ($regEx,$showDueDate,$showIndent) = @_;
+	return todoist_Html($regEx,$showDueDate,$showIndent);
 }
 
-sub todoist_AllHtml(;$$$) {
+sub todoist_Html(;$$$) {
 	my ($regEx,$showDueDate,$showIndent) = @_;
 	
 	$showDueDate=0 if (!defined($showDueDate));
@@ -1691,7 +1544,7 @@ sub todoist_AllHtml(;$$$) {
 	    
 	  $ret .= "<table class=\"roomoverview todoist_table\">\n";
 	  
-	  $ret .= "<tr><td colspan=\"3\"><div class=\"devType\">".$name."</div></td></tr>";
+	  $ret .= "<tr><td colspan=\"3\"><div class=\"devType\">".AttrVal($name,"alias",$name)."</div></td></tr>";
 	  $ret .= "<tr><td colspan=\"3\"><table class=\"block wide sortable\" id=\"todoist_".$name."_table\">\n"; 
 	  
 	  my $i=1;
