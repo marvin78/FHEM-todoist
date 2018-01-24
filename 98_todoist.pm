@@ -13,7 +13,7 @@ use Data::UUID;
 
 #######################
 # Global variables
-my $version = "0.9.0";
+my $version = "0.9.1";
 
 my %gets = (
   "version:noArg"     => "",
@@ -1464,7 +1464,7 @@ sub todoist_Html(;$$$) {
 	my $ret="";
 	
 	# Javascript
-	my $rot .= "<script type=\"text/javascript\" src=\"$FW_ME/www/pgm2/todoist.js\"></script>
+	my $rot .= "<script type=\"text/javascript\" src=\"$FW_ME/www/pgm2/todoist.js?version=".$version."\"></script>
 							<style>
 								.todoist_container {
 								    display: block;
@@ -1544,7 +1544,7 @@ sub todoist_Html(;$$$) {
 	    
 	  $ret .= "<table class=\"roomoverview todoist_table\">\n";
 	  
-	  $ret .= "<tr><td colspan=\"3\"><div class=\"devType\">".AttrVal($name,"alias",$name)."</div></td></tr>";
+	  $ret .= "<tr class=\"devTypeTr\"><td colspan=\"3\"><div class=\"devType\">".AttrVal($name,"alias",$name)."</div></td></tr>";
 	  $ret .= "<tr><td colspan=\"3\"><table class=\"block wide sortable\" id=\"todoist_".$name."_table\">\n"; 
 	  
 	  my $i=1;
