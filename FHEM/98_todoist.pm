@@ -1527,8 +1527,6 @@ sub todoist_Html(;$$$) {
 	my $count = @devs;
 	my $width = 95/$count;
 	
-	my $style="float:left;vertical-align: top;margin-right:10px;width:".$width;
-	
 	$ret .= "<div class=\"todoist_container\">\n";
 	
 	foreach my $name (@devs) {
@@ -1538,9 +1536,6 @@ sub todoist_Html(;$$$) {
 		my $hash = $defs{$name};
 	  my $id   = $defs{$name}{NR};
 	  
-	  #if ($r==$count) {
-	  #	$style="float:none;";	
-	  #}	
 	    
 	  $ret .= "<table class=\"roomoverview todoist_table\">\n";
 	  
