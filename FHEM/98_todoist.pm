@@ -1,4 +1,4 @@
-﻿# $Id: 98_todoist.pm 3960 2018-01-24 13:45:10Z marvin1978 $
+﻿# $Id: 98_todoist.pm  $
 
 package main;
 

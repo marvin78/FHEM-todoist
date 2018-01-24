@@ -147,6 +147,7 @@
 		$('.todoist_name').each(function() {
 			var name = $(this).val();
 			todoist_refreshTable(name);
+			
 			$('#todoist_' + name + '_table').on('mouseover','tr.sortit',function(e) {
 				$(this).find('div.todoist_move').addClass('todoist_sortit_handler');
 			});
