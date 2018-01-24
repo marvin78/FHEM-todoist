@@ -13,7 +13,7 @@ use Data::UUID;
 
 #######################
 # Global variables
-my $version = "0.9.2";
+my $version = "0.9.3";
 
 my %gets = (
   "version:noArg"     => "",
@@ -1859,10 +1859,12 @@ sub todoist_inArray {
         <ul>
                 Define a simple weblink for a Task list.
                 <br /><br />
-                <code>define &lt;NAME&gt; weblink htmlCode {todoist_Html("&lt;TODOIST-DEVCICENAME&gt;")}</code>
+                <code>define &lt;NAME&gt; weblink htmlCode {todoist_Html("&lt;TODOIST-DEVCICENAME&gt;")}</code><br /><br />
                 Define a simple weblink for all Task lists.
                 <br /><br />
-                <code>define &lt;NAME&gt; weblink htmlCode {todoist_Html()}</code>
+                <code>define &lt;NAME&gt; weblink htmlCode {todoist_Html()}</code><br /><br />
+                Define a simple weblink for a group of Task lists.
+                <br /><br />
                 <code>define &lt;NAME&gt; weblink htmlCode {todoist_Html('&lt;REGEX-FILTER&gt;')}</code>
         </ul>
 </ul>
