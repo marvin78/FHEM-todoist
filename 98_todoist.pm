@@ -1865,8 +1865,8 @@ sub todoist_inArray {
 	<ul>
 		Define a simple weblink for all Task lists.
 		<br /><br />
-		<code>define &lt;NAME&gt; weblink htmlCode {todoist_AllHtml()}</code>
-		<code>define &lt;NAME&gt; weblink htmlCode {todoist_AllHtml('<REGEX-FILTER>')}</code>
+		<code>define &lt;NAME&gt; weblink htmlCode {todoist_Html()}</code>
+		<code>define &lt;NAME&gt; weblink htmlCode {todoist_Html('<REGEX-FILTER>')}</code>
 	</ul>
 </ul>
 
