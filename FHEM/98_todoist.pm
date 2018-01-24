@@ -1877,6 +1877,7 @@ sub todoist_inArray {
     Ein Modul für die Verwaltung einer todoist-Taskliste. Tasks können hinzugefügt, geändert, komplettiert, gelöscht und geschlossen werden.
     Ein widget für die Bearbeitung von Tasks ist im Lieferumpfang enthalten.
     <br /><br />
+    Für die Voraussetzungen, Beschreibung und Dokumentation der Befehle, Readings und Attribute, bitte die englische Commandref konsultieren.
 </ul>
 
 =end html_DE
