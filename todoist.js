@@ -220,7 +220,7 @@ if (typeof todoist_checkVar === 'undefined') {
 		  });  
 		  return ui;  
 		};
-		$( ".sortable" ).sortable({
+		$( ".todoist_table table.sortable" ).sortable({
 			axis: 'y',
 			revert: true,
 			items: "> tbody > tr.sortit",
