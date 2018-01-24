@@ -1645,8 +1645,8 @@ sub todoist_inArray {
 =item device
 =item summary    uses todoist API to add, read, complete and delete tasks in a  todoist tasklist
 =item summary_DE Taskverwaltung einer todoist Taskliste über die todoist API
-
 =begin html
+
 <a name="todoist"></a>
 <h3>todoist</h3>
 <ul>
@@ -1869,7 +1869,6 @@ sub todoist_inArray {
 
 
 =end html
-
 =begin html_DE
 
 <a name="todoist"></a>
