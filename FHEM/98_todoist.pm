@@ -1648,8 +1648,232 @@ sub todoist_inArray {
 
 =begin html
 <a name="todoist"></a>
+<h3>todoist</h3>
+<ul>
+    A module to get a task list as readings from todoist. Tasks can be completed, updated and deleted.
+    <br /><br />
+    As preparation to use this module, you need to get your API Symbol (API ID) from the
+    preferences of your account. 
+    <br /><br />
+    Notes:<br />
+    <ul>
+        <li>JSON, Data::Dumper, MIME::Base64, Date::Parse and Data::UUID have to be installed on the FHEM host.</li>
+    </ul>
+    <br /><br />
+    <a name="todoist_Define"></a>
+    <h4>Define</h4>
+    <ul>
+        <code>define &lt;name&gt; todoist &lt;PROJECT-ID&gt;</code><br />
+        <br />
+        <b>PROJECT-ID:</b> The ID of your project (=list).<br />
+        <br /><br />
+
+        Example:
+        <ul>
+            <code>define Einkaufsliste todoist 257528237</code><br />
+        </ul>
+    </ul><br />
+    <br />
+    <a name="todoist_Set"></a>
+    <h4>Set</h4>
+    <ul>
+        <li><b>accessToken</b> - set the API Symbol for your todoist app</li><br />
+        <li><b>active</b> - set the device active (starts the timer for reading task-list periodically)</li><br />
+        <li><b>inactive</b> - set the device inactive (deletes the timer, polling is off)</li><br />
+        <li><b>newAccessToken</b> - replace the saved token with a new one.</li><br />
+        <li><b>getTasks</b> - get the task list immediately, reset timer.</li><br />
+        <li><b>getUsers</b> - get the projects users immediately.</li><br />
+        <li><b>addTask</b> - create a new task. Needs title as parameter.</li><br /><br />
+        <code>set &lt;DEVICE&gt; addTask &lt;TASK_TITLE&gt;[:&lt;DUE_DATE&gt;]</code><br ><br />
+        Additional Parameters are:<br />
+        <ul>
+         <li>dueDate (due_date)=&lt;DUE_DATE&gt; (can be free form text or format: YYYY-MM-DDTHH:MM)</li>
+         <li>priority=the priority of the task (a number between 1 and 4, 4 for very urgent and 1 for natural).</li>
+         <li>responsibleUid=the todoist-ID of the user who is responsible for accomplishing the current task</li>
+         <li>assignedByUid=the todoist-ID of the user who assigned the current task</li>
+         <li>order=the order of the task inside a project (the smallest value would place the task at the top)</li>
+         <li>indent=the indent of the task (a number between 1 and 4, where 1 is top-level)</li>
+        </ul><br />
+        Examples: <br /><br />
+            <code>set &lt;DEVICE&gt; addTask &lt;TASK_TITLE&gt; dueDate=2017-01-15 priority=2</code><br /><br />
+            <code>set &lt;DEVICE&gt; addTask &lt;TASK_TITLE&gt; dueDate=morgen</code><br /><br />
+        <li><b>updateTask</b> - update a task. Needs Task-ID or todoist-Task-ID as parameter<br /><br />
+        Possible additional parameters are:<br />
+            <ul>
+             <li>dueDate (due_date)=&lt;DUE_DATE&gt; (can be free form text or format: YYYY-MM-DDTHH:MM)</li>
+             <li>priority=(1..4) (string)</li>
+             <li>title=&lt;TITLE&gt; (string)</li>
+             <li>responsibleUid=the todoist-ID of the user who is responsible for accomplishing the current task</li>
+             <li>assignedByUid=the todoist-ID of the user who assigned the current task</li>
+             <li>order=the order of the task inside a project (the smallest value would place the task at the top)</li>
+             <li>indent=the indent of the task (a number between 1 and 4, where 1 is top-level)</li>
+             <li>parentID=parent_id of the parent task. indent will be updated automatically.</li>
+             <li>remove=&lt;TYPE&gt; (comma seperated list of attributes which should be removed from the task)</li>
+            </ul><br />
+        Examples: <br /><br />
+        <code>set &lt;DEVICE&gt; updateTask ID:12345678 dueDate=2017-01-15 priority=1</code><br />
+        <code>set &lt;DEVICE&gt; updateTask 1 dueDate=übermorgen</code></li>
+        
+        <br /><br />
+        <li><b>completeTask</b> - completes a task. Needs number of task (reading 'Task_NUMBER') or the 
+        todoist-Task-ID (ID:&lt;ID&gt;) as parameter<br />
+        <code>set &lt;DEVICE&gt; completeTask &lt;TASK-ID&gt;</code> - completes a task by number<br >
+        <code>set &lt;DEVICE&gt; completeTask ID:&lt;todoist-TASK-ID&gt;</code> - completes a task by todoist-Task-ID</li>
+        <li><b>closeTask</b> - closes a task. Needs number of task (reading 'Task_NUMBER') or the 
+        todoist-Task-ID (ID:<ID>) as parameter<br />
+        Difference to complete is: regular task is completed and moved to history, subtask is checked (marked as done, but not moved to history),<br /> 
+        recurring task is moved forward (due date is updated).<br />
+        <code>set &lt;DEVICE&gt; closeTask &lt;TASK-ID&gt;</code> - completes a task by number<br >
+        <code>set &lt;DEVICE&gt; closeTask ID:&lt;todoist-TASK-ID&gt;</code> - completes a task by todoist-Task-ID</li>
+        <li><b>uncompleteTask</b> - uncompletes a Task. Use it like complete.</li>
+        <li><b>deleteTask</b> - deletes a task. Needs number of task (reading 'Task_NUMBER') or the todoist-Task-ID (ID:&lt;ID&gt;) as parameter</li>
+        <code>set &lt;DEVICE&gt; deleteTask &lt;TASK-ID&gt;</code> - deletes a task by number<br />
+        <code>set &lt;DEVICE&gt; deleteTask ID:&lt;todoist-TASK-ID&gt;</code> - deletes a task by todoist-Task-ID<br ><br />
+        <li><b>sortTasks</b> - sort Tasks alphabetically</li>
+        <li><b>clearList</b> - <b><u>deletes</u></b> all Tasks from the list (only FHEM listed Tasks can be deleted)</li>
+    </ul>
+    <br />
+    <a name="todoist_Attributes"></a>
+    <h4>Attributes</h4>
+    <ul>
+        <li><a href="#readingFnAttributes">readingFnAttributes</a></li>
+        <li><a href="#do_not_notify">do_not_notify</a></li>
+        <li><a name="#disable">disable</a></li>
+        <li>pollInterval
+        get the list every pollInterval seconds. Default is 1800. Smallest possible value is 60.<br /><br /></li>
+        <li>sortTasks
+        <ul>
+        <li>0: don't sort the tasks (default)</li>
+        <li>1: sorts Tasks alphabetically after every update</li>
+        <!--<li>2: sorts Tasks in todoist order</li>-->
+        </ul></li>
+        <br />
+        <li>hideId
+        <ul>
+        <li>0: show todoist-Task-ID (default)</li>
+        <li>1: hide the todoist-Task-ID</li>
+        </ul></li>
+        <br />
+        <li>showPriority
+        <ul>
+        <li>0: don't show priority (default)</li>
+        <li>1: show priority</li>
+        </ul></li>
+        <br />
+        <li>showAssignedBy
+        <ul>
+        <li>0: don't show assignedByUid (default)</li>
+        <li>1: show assignedByUid</li>
+        </ul></li>
+        <br />
+        <li>showIndent
+        <ul>
+        <li>0: don't show indent of the task (default)</li>
+        <li>1: show indent</li>
+        </ul></li>
+        <br />
+        <li>showOrder
+        <ul>
+        <li>0: don't show order no. of the task (default)</li>
+        <li>1: show order number</li>
+        </ul></li>
+        <br />
+        <li>showResponsible
+        <ul>
+        <li>0: don't show responsibleUid (default)</li>
+        <li>1: show responsibleUid</li>
+        </ul></li>
+        <br />
+        <li>getCompleted
+        <ul>
+        <li>0: don't get completet tasks (default)</li>
+        <li>1: get completed tasks</li>
+        </ul><br />
+        <b>ATTENTION: Only premium users have	access to completed tasks!</b></li>
+        <br /><br />
+        <li>autoGetUsers
+        <ul>
+        <li>0: don't get users automatically</li>
+        <li>1: get users after every "getTasks" (default)</li>
+        </ul></li>
+        <br />
+        <li>avoidDuplicates
+        <ul>
+        <li>0: don't check for duplicates (default)s</li>
+        <li>1: check for duplicates</li>
+        </ul></li>
+        <br />
+        <li>listDivider<br />
+        set the divider for the Reading listText. Default ist ", ".</li>
+    </ul>
+    
+    <a name="todoist_Readings"></a>
+    <h4>Readings</h4>
+    <ul>
+        <li>Task_XXX<br />
+            the tasks are listet as Task_000, Task_001 [...].</li>
+        <li>Task_XXX_parentID<br />
+            parent ID of task XXX if not null</li>
+        <li>Task_XXX_dueDate<br />
+            if a task has a due date, this reading should be filled with the date.</li>
+        <li>Task_XXX_priority<br />
+            the priority of your task.</li>
+        <li>Task_XXX_ID<br />
+            the todoist ID of Task_X.</li>
+        <li>Task_XXX_completedAt<br />
+            only for completed Tasks (attribute getCompleted).</li>
+        <li>Task_XXX_completedById<br />
+            only for completed Tasks (attribute getCompleted).</li>
+        <li>Task_XXX_assignedByUid<br />
+            the user this task was assigned by.</li>
+        <li>Task_XXX_indent<br />
+            shows the indent of the task (attribute showIndent).</li>
+        <li>Task_XXX_order<br />
+            shows the order no. of the task (attribute showOrder).</li>
+        <li>Task_XXX_responsibleUid<br />
+            the user this task was assigned to.</li>
+        <li>User_XXX<br />
+            the lists users are listet as User_000, User_001 [...].</li>
+        <li>User_XXX_ID<br />
+            the users todoist ID.</li>
+        <li>listText<br />
+            a comma seperated list of tasks in the specified list. This may be used for TTS, Messages etc.</li>
+        <li>count<br />
+            number of Tasks in list.</li>
+        <li>error<br />
+            current error. Default is none.</li>
+        <li>lastCompletedTask<br />
+            title of the last completed task.</li>
+        <li>lastCreatedTask<br />
+            title of the last created task.</li>
+        <li>lastDeletedTask<br />
+            title of the last deleted task.</li>
+        <li>lastError<br />
+            last Error.</li>
+        <li>state<br />
+            state of the todoist-Device</li>
+    </ul><br />
+    <a name="todoist_Weblink"></a>
+    <h4>Weblinks</h4>
+        <ul>
+                Define a simple weblink for a Task list.
+                <br /><br />
+                <code>define &lt;NAME&gt; weblink htmlCode {todoist_Html("&lt;TODOIST-DEVCICENAME&gt;")}</code>
+                Define a simple weblink for all Task lists.
+                <br /><br />
+                <code>define &lt;NAME&gt; weblink htmlCode {todoist_Html()}</code>
+                <code>define &lt;NAME&gt; weblink htmlCode {todoist_Html('&lt;REGEX-FILTER&gt;')}</code>
+        </ul>
+</ul>
 
 
 =end html
+
+=begin html_DE
+
+ <a name="todoist"></a>
+
+
+=end html_DE
 
 =cut
