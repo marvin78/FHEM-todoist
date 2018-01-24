@@ -1651,6 +1651,7 @@ sub todoist_inArray {
 <h3>todoist</h3>
 <ul>
     A module to get a task list as readings from todoist. Tasks can be completed, updated and deleted.
+    The modul comes with a weblink-widget to manage tasks comfortable.
     <br /><br />
     As preparation to use this module, you need to get your API Symbol (API ID) from the
     preferences of your account. 
@@ -1871,8 +1872,13 @@ sub todoist_inArray {
 
 =begin html_DE
 
- <a name="todoist"></a>
-
+<a name="todoist"></a>
+<h3>todoist</h3>
+<ul>
+    Ein Modul für die Verwaltung einer todoist-Taskliste. Tasks können hinzugefügt, geändert, komplettiert, gelöscht und geschlossen werden.
+    Ein widget für die Bearbeitung von Tasks ist im Lieferumpfang enthalten.
+    <br /><br />
+</ul>
 
 =end html_DE
 
