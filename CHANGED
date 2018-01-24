@@ -1,1 +1,16 @@
+2017-01-22
+ - better Widget
  
+2017-01-21
+- sort tasks in Widget
+
+2017-01-19
+- widget with filter (devspec)
+
+2017-01-18
+- delete and edit from widget
+- get version
+
+2017-01-15
+- parent_id for items
+- avoidDuplicates as Attribute
