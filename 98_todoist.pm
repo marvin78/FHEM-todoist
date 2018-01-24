@@ -22,16 +22,17 @@ my %gets = (
 
 sub todoist_Initialize($) {
     my ($hash) = @_;
+    my $pre = "todoist";
 
-    $hash->{SetFn}    = "todoist_Set";
-    $hash->{GetFn}    = "todoist_Get";
-		$hash->{DefFn}    = "todoist_Define";
-		$hash->{UndefFn}  = "todoist_Undefine";
-		$hash->{AttrFn}   = "todoist_Attr";
-		$hash->{RenameFn} = "todoist_Rename";   
-		$hash->{CopyFn}	  = "todoist_Copy";
-		$hash->{DeleteFn} = "todoist_Delete";
-		$hash->{NotifyFn} = "todoist_Notify";
+    $hash->{SetFn}    = $pre."_Set";
+    $hash->{GetFn}    = $pre."_Get";
+		$hash->{DefFn}    = $pre."_Define";
+		$hash->{UndefFn}  = $pre."_Undefine";
+		$hash->{AttrFn}   = $pre."_Attr";
+		$hash->{RenameFn} = $pre."_Rename";   
+		$hash->{CopyFn}	  = $pre."_Copy";
+		$hash->{DeleteFn} = $pre."_Delete";
+		$hash->{NotifyFn} = $pre."_Notify";
 	
     $hash->{AttrList} = "disable:1,0 ".
 												"pollInterval ".
