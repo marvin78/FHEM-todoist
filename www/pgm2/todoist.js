@@ -222,12 +222,13 @@
 		  return ui;  
 		};
 		$( ".todoist_table table.sortable" ).sortable({
-			axis: 'y',
+			//axis: 'y',
 			revert: true,
 			items: "> tbody > tr.sortit",
 			handle: ".todoist_sortit_handler",
 			forceHelperSize: true,
 			placeholder: "sortable-placeholder",
+			connectWith: '.todoist_table table.sortable',
 			helper: fixHelper,
 			start: function( event, ui ) { 
 				var width = ui.item.innerWidth();
@@ -238,7 +239,23 @@
 				var parent = ui.item.parent().parent();
 				var id = $(parent).attr('id');
 				var name = id.split("_")[1];
+				if (ui.item.attr('data-remove')==1) ui.item.remove();
 				todoist_refreshTable(name,1);
+			},
+			remove: function (event,ui) {
+				var id=ui.item.attr('data-line-id');
+				var tid = ui.item.attr('id');
+				var nameH = tid.split("_")[0];
+				todoist_sendCommand('set ' + nameH + ' deleteTask ID:'+ id);
+			},
+			receive: function (event,ui) {
+				var parent = ui.item.parent().parent();
+				var id = ui.item.attr('data-line-id');
+				var tid = parent.attr('id');
+				var nameR = tid.split("_")[1];
+				var value = ui.item.find('span').html();
+				todoist_sendCommand('set '+ nameR +' addTask ' + value);
+				ui.item.attr('data-remove','1');
 			}
 		}).disableSelection();
 	});
