@@ -42,7 +42,7 @@
 	
 	function todoist_refreshTable(name,sortit) {
 		var i=1;
-		$('table#todoist_' + name + '_table').find('tr').each(function() {
+		$('table#todoist_' + name + '_table').find('tr.todoist_data').each(function() {
 			// sizes of inputs
 			var input = $(this).find('td.todoist_input').find('input[type=text]');
 			var sizeVal = $(this).find('td.todoist_input').find('span.todoist_task_text').width();
@@ -80,7 +80,7 @@
 
 	function todoist_removeLine(name,id) {
 		var i=1;
-		$('table#todoist_' + name + '_table').find('tr').each(function() {
+		$('table#todoist_' + name + '_table').find('tr.todoist_data').each(function() {
 			var tid = $(this).attr("data-line-id");
 			if (tid==id) $(this).remove();
 			else {
@@ -90,6 +90,7 @@
 				i++;
 			}
 		});
+		if (i==1) $('table#todoist_' + name + '_table').find("tr.todoist_ph").show();
 		todoist_refreshTable(name);
 		todoist_getSizes();
 	}
@@ -103,7 +104,7 @@
 			if (cl=="odd") cl="even";
 			else cl="odd"
 		}
-		$(lastEl).before('<tr id="'+ name + "_" + id +'" data-data="true" data-line-id="' + id +'" class="sortit ' + cl +'">\n' +
+		$(lastEl).before('<tr id="'+ name + "_" + id +'" data-data="true" data-line-id="' + id +'" class="sortit todoist_data ' + cl +'">\n' +
 	  					'	<td class="col1  todoist_col1">\n'+
 	  					'   <div class=\"todoist_move\"></div>\n'+
 	  					'		<input class="todoist_checkbox_' + name + '" type="checkbox" id="check_' + id + '" data-id="' + id + '" />\n'+
@@ -112,13 +113,14 @@
 	  					' 	<span class="todoist_task_text" data-id="' + id + '">' + title + '</span>\n'+
 	  					'   <input type="text" data-id="' + id + '" style="display:none;" class="todoist_input_' + name +'" value="' + title + '" />'+
 	  					' </td>\n' +
-	  					' <td class="col2">\n' +
+	  					' <td class="col2 todoist_delete">\n' +
 	  					' 	<a href="#" class="todoist_delete_' + name + '" data-id="' + id +'">\n'+
 	  					'			x\n'+
 	  					' 	</a>\n'+
 	  					'	</td>\n'+
 	           	'</tr>\n'
 	  );
+	  $('table#todoist_' + name + '_table').find("tr.todoist_ph").hide();
 	  todoist_refreshTable(name);
 	  todoist_getSizes();
 	}

@@ -1530,6 +1530,9 @@ sub todoist_Html(;$$) {
 								.todoist_indent_4 {
 									padding-left:60px;
 								}
+								.todoist_ph td {
+									padding: 4px 8px;
+								}
 							</style> 
 	";
 	
@@ -1579,7 +1582,7 @@ sub todoist_Html(;$$) {
 
   		my $indent=$hash->{helper}{INDENT}{$_};
 	  	
-	  	$ret .= "<tr id=\"".$name."_".$_."\" data-data=\"true\" data-line-id=\"".$_."\" class=\"sortit ".$eo." todoist_indent_".$indent."\">\n".
+	  	$ret .= "<tr id=\"".$name."_".$_."\" data-data=\"true\" data-line-id=\"".$_."\" class=\"sortit todoist_data ".$eo." todoist_indent_".$indent."\">\n".
 	  					"	<td class=\"col1 todoist_col1\">\n".
 	  					"		<div class=\"todoist_move\"></div>\n".
 	  					"		<input class=\"todoist_checkbox_".$name."\" type=\"checkbox\" id=\"check_".$_."\" data-id=\"".$_."\" />\n".
@@ -1604,6 +1607,14 @@ sub todoist_Html(;$$) {
 	    
 	  	$i++;
 	  }
+	  my $showPH = 0;
+	  $showPH = 1 if ($i==1);
+	  
+  	$ret .= "<tr class=\"sortit odd todoist_ph\"".($showPH!=1?" style=\"display:none;\"":"").">";
+  	$ret .= "<td colspan=\"".$cs."\">".
+  				"	No data for this list.\n".
+  				"</td>";
+  	$ret .= "</tr>";
   
 	  $ret .= "<tr class=\"".$eo."\">";
 	  
