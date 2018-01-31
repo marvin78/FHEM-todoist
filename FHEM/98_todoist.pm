@@ -768,6 +768,8 @@ sub todoist_GetTasksCallback($$$){
 					$hash->{helper}{"TITLE"}{$taskID}=$title; # Task title (content)
 					$hash->{helper}{"WID"}{$taskID}=$i; # FHEM Task-ID
 					$hash->{helper}{"INDENT"}{$taskID}=$task->{indent}; # todoist Task indent
+					$hash->{helper}{"PRIORITY"}{$taskID}=$task->{priority}; # todoist Task indent
+					push @{$hash->{helper}{"INDENTS"}{$task->{indent}}},$taskID; # ident for better widget
 					$hash->{helper}{"ORDER"}{$taskID}=$task->{item_order}; # todoist Task order					
 					push @{$hash->{helper}{"TIDS"}},$taskID; # simple ID list
 					push @{$hash->{helper}{"TITS"}},$title; # simple ID list
@@ -1444,16 +1446,16 @@ sub todoist_RestartGetTimer($) {
 	return undef;
 }
 
-sub todoist_AllHtml(;$$$) {
-	my ($regEx,$showDueDate,$showIndent) = @_;
-	return todoist_Html($regEx,$showDueDate,$showIndent);
+sub todoist_AllHtml(;$$) {
+	my ($regEx,$showDueDate) = @_;
+	return todoist_Html($regEx,$showDueDate);
 }
 
-sub todoist_Html(;$$$) {
-	my ($regEx,$showDueDate,$showIndent) = @_;
+sub todoist_Html(;$$) {
+	my ($regEx,$showDueDate) = @_;
 	
 	$showDueDate=0 if (!defined($showDueDate));
-	$showIndent=0 if (!defined($showIndent));
+
 	$regEx="" if (!defined($regEx));
 	
 	my $filter="";
@@ -1519,6 +1521,15 @@ sub todoist_Html(;$$$) {
 								tr.ui-sortable-helper {
 									background-color:#111111;
 								}
+								.todoist_indent_2 {
+									padding-left:20px;
+								}
+								.todoist_indent_3 {
+									padding-left:40px;
+								}
+								.todoist_indent_4 {
+									padding-left:60px;
+								}
 							</style> 
 	";
 	
@@ -1565,26 +1576,16 @@ sub todoist_Html(;$$$) {
 	  	}
 	  	
 	  	my $ind=0;
+
+  		my $indent=$hash->{helper}{INDENT}{$_};
 	  	
-	  	if ($showIndent) {
-	  		$ind=$hash->{helper}{INDENT}{$_}-1;
-	  	}
-	  	
-	  	my $indent="";
-	  	
-	  	if ($ind!=0) {
-		  	for (my $z=0;$z<=$ind;$z++) {
-		  		$indent.="&nbsp;&nbsp;";
-		  	}
-		  }
-	  	
-	  	$ret .= "<tr id=\"".$name."_".$_."\" data-data=\"true\" data-line-id=\"".$_."\" class=\"sortit ".$eo."\">\n".
+	  	$ret .= "<tr id=\"".$name."_".$_."\" data-data=\"true\" data-line-id=\"".$_."\" class=\"sortit ".$eo." todoist_indent_".$indent."\">\n".
 	  					"	<td class=\"col1 todoist_col1\">\n".
 	  					"		<div class=\"todoist_move\"></div>\n".
 	  					"		<input class=\"todoist_checkbox_".$name."\" type=\"checkbox\" id=\"check_".$_."\" data-id=\"".$_."\" />\n".
 	  					"	</td>\n".
 	  					"	<td class=\"col1 todoist_input\">\n".
-	  							"<span class=\"todoist_task_text\" data-id=\"".$_."\">".$indent.$hash->{helper}{TITLE}{$_}."</span>\n".
+	  							"<span class=\"todoist_task_text\" data-id=\"".$_."\">".$hash->{helper}{TITLE}{$_}."</span>\n".
 	  							"<input type=\"text\" data-id=\"".$_."\" style=\"display:none;\" class=\"todoist_input_".$name."\" value=\"".$hash->{helper}{TITLE}{$_}."\" />\n".
 	  					"	</td>\n";
 	  	
