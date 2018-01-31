@@ -1,3 +1,5 @@
+2018-08-31 (0.9.6)
+- new line for empty lists. let's us add lines from other lists easier.
 2018-01-27 (0.9.5)
 - move items between lists in widget
 2018-01-24 (0.9.3)
