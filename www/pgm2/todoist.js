@@ -43,11 +43,6 @@
 	function todoist_refreshTable(name,sortit) {
 		var i=1;
 		$('table#todoist_' + name + '_table').find('tr.todoist_data').each(function() {
-			// sizes of inputs
-			var input = $(this).find('td.todoist_input').find('input[type=text]');
-			var sizeVal = $(this).find('td.todoist_input').find('span.todoist_task_text').width();
-			var size = sizeVal+5;
-			$(input).width(size);
 			// order
 			var tid = $(this).attr("data-line-id");
 			$(this).removeClass("odd even");
@@ -57,6 +52,13 @@
 			i++;
 		});
 		refreshInput(name);
+		refreshInputs(name);
+	}
+	function refreshInputs(name) {
+		$('table#todoist_' + name + '_table').find('tr.todoist_data').find('td.todoist_input').find('input[type=text]').each(function() {
+			var w = $(this).prev('span').width()+5;
+			$(this).width(w); 
+		});
 	}
 	
 	function refreshInput(name) {
@@ -109,7 +111,7 @@
 	  					'   <div class=\"todoist_move\"></div>\n'+
 	  					'		<input class="todoist_checkbox_' + name + '" type="checkbox" id="check_' + id + '" data-id="' + id + '" />\n'+
 	  					' </td>\n' +
-	  					'	<td class="col1">\n'+
+	  					'	<td class="col1 todoist_input">\n'+
 	  					' 	<span class="todoist_task_text" data-id="' + id + '">' + title + '</span>\n'+
 	  					'   <input type="text" data-id="' + id + '" style="display:none;" class="todoist_input_' + name +'" value="' + title + '" />'+
 	  					' </td>\n' +
@@ -121,8 +123,8 @@
 	           	'</tr>\n'
 	  );
 	  $('table#todoist_' + name + '_table').find("tr.todoist_ph").hide();
-	  todoist_refreshTable(name);
 	  todoist_getSizes();
+	  todoist_refreshTable(name);
 	}
 	
 	function resizable (el, factor) {

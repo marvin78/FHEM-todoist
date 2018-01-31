@@ -1,2 +1,2 @@
-UPD 2018-01-31_13:53:55 58754 FHEM/98_todoist.pm
-UPD 2018-01-31_13:52:27 8840 www/pgm2/todoist.js
+UPD 2018-01-31_14:51:07 58754 FHEM/98_todoist.pm
+UPD 2018-01-31_14:49:10 8879 www/pgm2/todoist.js
