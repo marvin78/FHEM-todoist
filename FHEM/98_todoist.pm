@@ -13,7 +13,7 @@ use Data::UUID;
 
 #######################
 # Global variables
-my $version = "0.9.8";
+my $version = "0.9.9";
 
 my %gets = (
   "version:noArg"     => "",
@@ -257,10 +257,10 @@ sub todoist_UpdateTask($$$) {
 				$args{'content'} = $h->{"title"} if($h->{'title'});
 				## change dueDate
 				$args{'date_string'} = $h->{"dueDate"} if($h->{'dueDate'});
-				$args{'date_string'} = "" if ($h->{'dueDate'} =~ /(null|none|nix|leer|del)/);
+				$args{'date_string'} = "" if ($h->{'dueDate'} && $h->{'dueDate'} =~ /(null|none|nix|leer|del)/);
 				## change dueDate (if someone uses due_date in stead of dueDate)
 				$args{'date_string'} = $h->{"due_date"} if ($h->{'due_date'});
-				$args{'date_string'} = "" if ($h->{'due_date'} =~ /(null|none|nix|leer|del)/);
+				$args{'date_string'} = "" if ($h->{'dueDate'} && $h->{'due_date'} =~ /(null|none|nix|leer|del)/);
 				## change priority
 				$args{'priority'} = int($h->{"priority"}) if ($h->{"priority"});
 				## Who is responsible for the task
@@ -550,7 +550,7 @@ sub todoist_HandleTaskCallback($$$){
 			
 			## some Logging
 			Log3 $name, 4, "todoist ($name): successfully created new task $title" if ($param->{wType} eq "create");
-			Log3 $name, 4, "todoist ($name): success: ".$param->{wType}." task $title";
+			Log3 $name, 4, "todoist ($name): success: ".$param->{wType}." task $title" if ($title);
 			
 			readingsEndUpdate( $hash, 1 );
 			
@@ -560,6 +560,7 @@ sub todoist_HandleTaskCallback($$$){
 			if ($param->{wType} eq "create") {
 				if ($param->{parentId}) {
 					CommandSet(undef, "$name updateTask ID:$taskId parent_id=".$param->{parentId});
+					Log3 $name, 3, "todoist ($name): startet set parent_id over update after create: Task-ID: ".$taskId." - parent_id: ".$param->{parentId};
 				}
 				map {FW_directNotify("#FHEMWEB:$_", "if (typeof todoist_addLine === \"function\") todoist_addLine('$name','$taskId','$title')", "")} devspec2array("WEB.*");
 			}
