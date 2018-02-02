@@ -433,6 +433,9 @@ sub todoist_CreateTask($$) {
 				$data->{'parent_id'} = int($h->{"parentID"}) if ($h->{"parentID"});
 				$data->{'parent_id'} = int($h->{"parentId"}) if ($h->{"parentId"});
 				
+				my $parentId = 0;
+				$parentId = $data->{'parent_id'} if ($data->{'parent_id'});
+				
 				## Task priority
 				$data->{'priority'} = $h->{"priority"} if ($h->{"priority"});
 				
@@ -461,6 +464,7 @@ sub todoist_CreateTask($$) {
 					tTitle		 => $title,
 					method		 => "POST",
 					wType			 => "create",
+					parentId	 => $parentId,
 					timeout    => 7,
 					header		 => "Content-Type: application/x-www-form-urlencoded",
 					hash 			 => $hash,
@@ -554,6 +558,9 @@ sub todoist_HandleTaskCallback($$$){
 				map {FW_directNotify("#FHEMWEB:$_", "if (typeof todoist_removeLine === \"function\") todoist_removeLine('$name','$taskId')", "")} devspec2array("WEB.*");
 			}
 			if ($param->{wType} eq "create") {
+				if ($param->{parentId}) {
+					CommandSet(undef, "$name updateTask ID:$taskId parent_id=".$param->{parentId});
+				}
 				map {FW_directNotify("#FHEMWEB:$_", "if (typeof todoist_addLine === \"function\") todoist_addLine('$name','$taskId','$title')", "")} devspec2array("WEB.*");
 			}
 		}
