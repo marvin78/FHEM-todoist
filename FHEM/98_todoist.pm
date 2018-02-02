@@ -1707,6 +1707,7 @@ sub todoist_inArray {
          <li>responsibleUid=the todoist-ID of the user who is responsible for accomplishing the current task</li>
          <li>assignedByUid=the todoist-ID of the user who assigned the current task</li>
          <li>order=the order of the task inside a project (the smallest value would place the task at the top)</li>
+         <li>parentID=parent_id of the parent task. indent will be updated automatically.</li>
          <li>indent=the indent of the task (a number between 1 and 4, where 1 is top-level)</li>
         </ul><br />
         Examples: <br /><br />
