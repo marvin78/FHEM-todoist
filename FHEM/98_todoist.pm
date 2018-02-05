@@ -13,7 +13,7 @@ use Data::UUID;
 
 #######################
 # Global variables
-my $version = "0.9.9";
+my $version = "0.9.10";
 
 my %gets = (
   "version:noArg"     => "",
@@ -42,6 +42,8 @@ sub todoist_Initialize($) {
 												"showAssignedBy:1,0 ".
 												"showResponsible:1,0 ".
 												"showIndent:1,0 ".
+												"showChecked:1,0 ".
+												"showDeleted:1,0 ".
 												"showOrder:1,0 ".
 												"hideId:1,0 ".
 												"autoGetUsers:1,0 ".
@@ -793,6 +795,18 @@ sub todoist_GetTasksCallback($$$){
 					}		
 					
 					## set completed_date if present
+					if (defined($task->{checked}) && $task->{checked}!=0) {
+						readingsBulkUpdate($hash, "Task_".$t."_checked",$task->{checked}) if (AttrVal($name,"showChecked",1)==1);
+						$hash->{helper}{"CHECKED"}{$taskID}=$task->{checked};
+					}
+					
+					## set completed_date if present
+					if (defined($task->{is_deleted}) && $task->{is_deleted}!=0) {
+						readingsBulkUpdate($hash, "Task_".$t."_isDeleted",$task->{is_deleted}) if (AttrVal($name,"showDeleted",1)==1);
+						$hash->{helper}{"ISDELETED"}{$taskID}=$task->{is_deleted};
+					}
+					
+					## set completed_date if present
 					if (defined($task->{completed_date})) {
 						## if there is a completed task, we create a new reading
 						readingsBulkUpdate($hash, "Task_".$t."_completedAt",FmtDateTime(str2time($task->{completed_date})));
@@ -834,12 +848,7 @@ sub todoist_GetTasksCallback($$$){
 						readingsBulkUpdate($hash, "Task_".$t."_recurrenceType",$task->{date_string});
 						$hash->{helper}{"RECURRENCE_TYPE"}{$taskID}=$task->{date_string};
 					}
-					
-					## get parent_id if available (only internals)
-					if (defined($task->{parent_id})) {
-						$hash->{helper}{"PARENT_ID"}{$taskID}=$task->{parent_id};
-					}
-					
+										
 					if ($param->{completed} != 1) {
 						$lText.=AttrVal($name,"listDivider",", ") if ($i != 0);
 						$lText.=$title;
@@ -1060,6 +1069,8 @@ sub todoist_sort($) {
 		readingsBulkUpdate($hash,"Task_".sprintf("%03s",$i)."_indent",$hash->{helper}{"INDENT"}{$data->{ID}}) if ($hash->{helper}{"INDENT"}{$data->{ID}} && AttrVal($name,"showIndent",0)==1);
 		readingsBulkUpdate($hash,"Task_".sprintf("%03s",$i)."_order",$hash->{helper}{"ORDER"}{$data->{ID}}) if ($hash->{helper}{"ORDER"}{$data->{ID}} && AttrVal($name,"showOrder",0)==1);
 		readingsBulkUpdate($hash,"Task_".sprintf("%03s",$i)."_parentID",$hash->{helper}{"PARENT_ID"}{$data->{ID}}) if ($hash->{helper}{"PARENT_ID"}{$data->{ID}});
+		readingsBulkUpdate($hash,"Task_".sprintf("%03s",$i)."_checked",$hash->{helper}{"CHECKED"}{$data->{ID}}) if ($hash->{helper}{"CHECKED"}{$data->{ID}} && AttrVal($name,"showChecked",1)==1);
+		readingsBulkUpdate($hash,"Task_".sprintf("%03s",$i)."_isDeleted",$hash->{helper}{"ISDELETED"}{$data->{ID}}) if ($hash->{helper}{"ISDELETED"}{$data->{ID}} && AttrVal($name,"showDeleted",1)==1);
 		readingsBulkUpdate($hash,"Task_".sprintf("%03s",$i)."_ID",$data->{ID}) if (AttrVal($name,"hideId",0)!=1);
 		
 		$hash->{helper}{"IDS"}{"Task_".$i} = $data->{ID};
@@ -1454,15 +1465,13 @@ sub todoist_RestartGetTimer($) {
 	return undef;
 }
 
-sub todoist_AllHtml(;$$) {
-	my ($regEx,$showDueDate) = @_;
-	return todoist_Html($regEx,$showDueDate);
+sub todoist_AllHtml(;$) {
+	my ($regEx) = @_;
+	return todoist_Html($regEx);
 }
 
-sub todoist_Html(;$$) {
-	my ($regEx,$showDueDate) = @_;
-	
-	$showDueDate=0 if (!defined($showDueDate));
+sub todoist_Html(;$) {
+	my ($regEx) = @_;
 
 	$regEx="" if (!defined($regEx));
 	
@@ -1529,14 +1538,14 @@ sub todoist_Html(;$$) {
 								tr.ui-sortable-helper {
 									background-color:#111111;
 								}
-								.todoist_indent_2 {
-									padding-left:20px;
+								.todoist_indent_2 td:first-child input {
+									padding-left:20px!important;
 								}
-								.todoist_indent_3 {
-									padding-left:40px;
+								.todoist_indent_3 td:first-child input {
+									padding-left:40px!important;
 								}
-								.todoist_indent_4 {
-									padding-left:60px;
+								.todoist_indent_4 td:first-child input {
+									padding-left:60px!important;
 								}
 								.todoist_ph td {
 									padding: 4px 8px;
@@ -1568,15 +1577,6 @@ sub todoist_Html(;$$) {
 	  my $eo;
 	  my $cs=3;
 	  
-	  if ($showDueDate) {
-			$ret .= "<th>\n".
-							" <td class=\"col1\"> </td>\n".
-							" <td class=\"col1\">Task</td>\n".
-							" <td class=\"col3\">Due date</td>\n".
-							" <td class=\"col3\"></td>\n".
-							"</th>\n";
-		}
-	  
 	  foreach (@{$hash->{helper}{TIDS}}) {
 	  	
 	  	if ($i%2==0) {
@@ -1599,11 +1599,6 @@ sub todoist_Html(;$$) {
 	  							"<span class=\"todoist_task_text\" data-id=\"".$_."\">".$hash->{helper}{TITLE}{$_}."</span>\n".
 	  							"<input type=\"text\" data-id=\"".$_."\" style=\"display:none;\" class=\"todoist_input_".$name."\" value=\"".$hash->{helper}{TITLE}{$_}."\" />\n".
 	  					"	</td>\n";
-	  	
-	  	if ($showDueDate) {
-	  		$ret .= "<td class=\"col3\">".$hash->{helper}{DUE_DATE}{$_}."</td>\n";
-	  		$cs++;
-	  	}					
 	  	
 	  	$ret .= "<td class=\"col2 todoist_delete\">\n".
 	  					" <a href=\"#\" class=\"todoist_delete_".$name."\" data-id=\"".$_."\">\n".
@@ -1644,7 +1639,6 @@ sub todoist_Html(;$$) {
   
   return $rot.$ret;
 }
-
 
 sub todoist_inArray {
   my ($arr,$search_for) = @_;
@@ -1795,6 +1789,18 @@ sub todoist_inArray {
         <li>1: show order number</li>
         </ul></li>
         <br />
+        <li>showChecked
+        <ul>
+        <li>0: don't show if a task is checked (for tasks with parent_id)</li>
+        <li>1: show if a task is checked (default)</li>
+        </ul></li>
+        <br />
+        <li>showDeleted
+        <ul>
+        <li>0: don't show if a task is deleted (for tasks with parent_id)</li>
+        <li>1: show if a task is deleted (default)</li>
+        </ul></li>
+        <br />
         <li>showResponsible
         <ul>
         <li>0: don't show responsibleUid (default)</li>
@@ -1831,6 +1837,10 @@ sub todoist_inArray {
             the tasks are listet as Task_000, Task_001 [...].</li>
         <li>Task_XXX_parentID<br />
             parent ID of task XXX if not null</li>
+        <li>Task_XXX_checked<br />
+            1 when a task with parent_id is checked</li>  
+        <li>Task_XXX_isDeleted<br />
+            1 when a task with parent_id is deleted</li>
         <li>Task_XXX_dueDate<br />
             if a task has a due date, this reading should be filled with the date.</li>
         <li>Task_XXX_priority<br />
@@ -1843,12 +1853,12 @@ sub todoist_inArray {
             only for completed Tasks (attribute getCompleted).</li>
         <li>Task_XXX_assignedByUid<br />
             the user this task was assigned by.</li>
+        <li>Task_XXX_responsibleUid<br />
+            the user this task was assigned to.</li>
         <li>Task_XXX_indent<br />
             shows the indent of the task (attribute showIndent).</li>
         <li>Task_XXX_order<br />
             shows the order no. of the task (attribute showOrder).</li>
-        <li>Task_XXX_responsibleUid<br />
-            the user this task was assigned to.</li>
         <li>User_XXX<br />
             the lists users are listet as User_000, User_001 [...].</li>
         <li>User_XXX_ID<br />

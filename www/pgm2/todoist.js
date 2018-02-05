@@ -152,10 +152,10 @@
 			var name = $(this).val();
 			todoist_refreshTable(name);
 			
-			$('#todoist_' + name + '_table').on('mouseover','tr.sortit',function(e) {
+			$('#todoist_' + name + '_table').on('mouseover','.sortit',function(e) {
 				$(this).find('div.todoist_move').addClass('todoist_sortit_handler');
 			});
-			$('#todoist_' + name + '_table').on('mouseout','tr.sortit',function(e) {
+			$('#todoist_' + name + '_table').on('mouseout','.sortit',function(e) {
 				$(this).find('div.todoist_move').removeClass('todoist_sortit_handler');
 			});
 			$('#newEntry_' + name).on('blur keypress',function(e) {
@@ -262,6 +262,43 @@
 				ui.item.attr('data-remove','1');
 			}
 		}).disableSelection();
+	
+		$( ".todoist_table ul.sortable" ).sortable({
+			//axis: 'y',
+			revert: true,
+		  items: "> li.sortit",
+			handle: ".todoist_sortit_handler",
+			forceHelperSize: true,
+			placeholder: "sortable-placeholder",
+			connectWith: '.todoist_table ul.sortable',
+			helper: fixHelper,
+			start: function( event, ui ) { 
+				var width = ui.item.innerWidth();
+				var height = ui.item.innerHeight();
+				ui.placeholder.css("width",width).css("height",height); 
+			},
+			stop: function (event,ui) {
+				var parent = ui.item.parent();
+				var id = $(parent).attr('id');
+				var name = id.split("_")[1];
+				if (ui.item.attr('data-remove')==1) ui.item.remove();
+				todoist_refreshTable(name,1);
+			},
+			remove: function (event,ui) {
+				var id=ui.item.attr('data-line-id');
+				var tid = ui.item.attr('id');
+				var nameH = tid.split("_")[0];
+				todoist_sendCommand('set ' + nameH + ' deleteTask ID:'+ id);
+			},
+			receive: function (event,ui) {
+				var parent = ui.item.parent();
+				var id = ui.item.attr('data-line-id');
+				var tid = parent.attr('id');
+				var nameR = tid.split("_")[1];
+				var value = ui.item.find('span').html();
+				todoist_sendCommand('set '+ nameR +' addTask ' + value);
+				ui.item.attr('data-remove','1');
+			}
+		}).disableSelection();
 	});
-
 }
