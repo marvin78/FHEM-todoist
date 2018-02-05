@@ -1223,7 +1223,7 @@ sub todoist_Attr($@) {
 	if ( $attrName eq "pollInterval") {
 		if ( $cmd eq "set" ) {
 			return "$name: pollInterval has to be a number (seconds)" if ($attrVal!~ /\d+/);
-			return "$name: pollInterval has to be greater than or equal 600" if ($attrVal < 60);
+			return "$name: pollInterval has to be greater than or equal 20" if ($attrVal < 20);
 			$hash->{INTERVAL}=$attrVal;
 			Log3 $name, 4, "todoist ($name): set new pollInterval to $attrVal";
 		}
@@ -1774,7 +1774,7 @@ sub todoist_inArray {
         <li><a href="#do_not_notify">do_not_notify</a></li>
         <li><a name="#disable">disable</a></li>
         <li>pollInterval
-        get the list every pollInterval seconds. Default is 1800. Smallest possible value is 60.<br /><br /></li>
+        get the list every pollInterval seconds. Default is 1800. Smallest possible value is 20.<br /><br /></li>
         <li>sortTasks
         <ul>
         <li>0: don't sort the tasks (default)</li>
