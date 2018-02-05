@@ -54,6 +54,14 @@
 		refreshInput(name);
 		refreshInputs(name);
 	}
+	
+	function todoist_reloadTable(name,val) {
+		$('table#todoist_' + name + '_table').html(val);
+		todoist_refreshTable(name);
+		todoist_getSizes();
+		//alert(val);
+	}
+	
 	function refreshInputs(name) {
 		$('table#todoist_' + name + '_table').find('tr.todoist_data').find('td.todoist_input').find('input[type=text]').each(function() {
 			var w = $(this).prev('span').width()+5;

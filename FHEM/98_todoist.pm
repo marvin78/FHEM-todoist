@@ -13,7 +13,7 @@ use Data::UUID;
 
 #######################
 # Global variables
-my $version = "0.9.10";
+my $version = "0.9.11";
 
 my %gets = (
   "version:noArg"     => "",
@@ -880,6 +880,10 @@ sub todoist_GetTasksCallback($$$){
 	InternalTimer(gettimeofday()+$hash->{INTERVAL}, "todoist_GetTasks", $hash, 0); ## loop with Interval
 	
 	#map {FW_directNotify("#FHEMWEB:WEB", "location.reload('true')", "")} devspec2array("WEB.*");
+	my $ret = todoist_Html($name,1);
+	$ret =~ s/\"/\'/g;
+	$ret =~ s/\n//g;
+	map {FW_directNotify("#FHEMWEB:$_", "if (typeof todoist_reloadTable === \"function\") todoist_reloadTable('$name',\"$ret\")", "")} devspec2array("WEB.*");
 	
 	return undef;
 }
@@ -1470,10 +1474,11 @@ sub todoist_AllHtml(;$) {
 	return todoist_Html($regEx);
 }
 
-sub todoist_Html(;$) {
-	my ($regEx) = @_;
+sub todoist_Html(;$$) {
+	my ($regEx,$ajaxGet) = @_;
 
 	$regEx="" if (!defined($regEx));
+	$ajaxGet=0 if (!defined($ajaxGet));
 	
 	my $filter="";
 	
@@ -1481,84 +1486,89 @@ sub todoist_Html(;$) {
 	
 	my @devs = devspec2array("TYPE=todoist".$filter);
 	my $ret="";
-	
-	# Javascript
-	my $rot .= "<script type=\"text/javascript\" src=\"$FW_ME/www/pgm2/todoist.js?version=".$version."\"></script>
-							<style>
-								.todoist_container {
-								    display: block;
-								    padding: 0;
-								    float:none;
-								}
-								.todoist_table {
-								    float: left;
-								    margin-right: 10px;
-								}
-								.sortable-placeholder {
-									background-color: grey;
-								}
-								.todoist_col1 {
-									width:32px;
-									text-align:right;
-									padding: 4px 4px 4px 1px!important;
-								}
-								.todoist_col1 input {
-									//margin-top:4px;
-								}
-								.todoist_move {
-									width:10px;
-									float:left;
-								}
-								.todoist_sortit_handler {
-									padding-top: 0px!important;
-								  content: '....';
-								  width: 5px;
-								  height: 20px;
-								  //display: inline-block;
-								  overflow: hidden;
-								  line-height: 5px;
-								  padding: 0px 2px!important;
-								  cursor: move;
-								  vertical-align: middle;
-								  margin-top: -.2em;
-								  margin-right: 0!important;
-								  font-size: 12px;
-								  font-family: sans-serif;
-								  letter-spacing: 1px;
-								  color: #cccccc;
-								  text-shadow: 1px 0 1px black;
-								}
-								.todoist_sortit_handler::after {
-								  content: '.. .. .. ..';
-								}
-								.todoist_delete {
-									padding-right:15px!important;
-									padding-left:15px!important;
-								}
-								tr.ui-sortable-helper {
-									background-color:#111111;
-								}
-								.todoist_indent_2 td:first-child input {
-									padding-left:20px!important;
-								}
-								.todoist_indent_3 td:first-child input {
-									padding-left:40px!important;
-								}
-								.todoist_indent_4 td:first-child input {
-									padding-left:60px!important;
-								}
-								.todoist_ph td {
-									padding: 4px 8px;
-								}
-							</style> 
-	";
+	my $rot="";
 	
 	my $r=0;
 	
 	my $count = @devs;
 	my $width = 95/$count;
 	
-	$ret .= "<div class=\"todoist_container\">\n";
+	## ajax request? don't show everything
+	if (!$ajaxGet) {
+		# Javascript
+		$rot .= "<script type=\"text/javascript\" src=\"$FW_ME/www/pgm2/todoist.js?version=".$version."\"></script>
+								<style>
+									.todoist_container {
+									    display: block;
+									    padding: 0;
+									    float:none;
+									}
+									.todoist_table {
+									    float: left;
+									    margin-right: 10px;
+									}
+									.sortable-placeholder {
+										background-color: grey;
+									}
+									.todoist_col1 {
+										width:32px;
+										text-align:right;
+										padding: 4px 4px 4px 1px!important;
+									}
+									.todoist_col1 input {
+										//margin-top:4px;
+									}
+									.todoist_move {
+										width:10px;
+										float:left;
+									}
+									.todoist_sortit_handler {
+										padding-top: 0px!important;
+									  content: '....';
+									  width: 5px;
+									  height: 20px;
+									  //display: inline-block;
+									  overflow: hidden;
+									  line-height: 5px;
+									  padding: 0px 2px!important;
+									  cursor: move;
+									  vertical-align: middle;
+									  margin-top: -.2em;
+									  margin-right: 0!important;
+									  font-size: 12px;
+									  font-family: sans-serif;
+									  letter-spacing: 1px;
+									  color: #cccccc;
+									  text-shadow: 1px 0 1px black;
+									}
+									.todoist_sortit_handler::after {
+									  content: '.. .. .. ..';
+									}
+									.todoist_delete {
+										padding-right:15px!important;
+										padding-left:15px!important;
+									}
+									tr.ui-sortable-helper {
+										background-color:#111111;
+									}
+									.todoist_indent_2 td:first-child input {
+										padding-left:20px!important;
+									}
+									.todoist_indent_3 td:first-child input {
+										padding-left:40px!important;
+									}
+									.todoist_indent_4 td:first-child input {
+										padding-left:60px!important;
+									}
+									.todoist_ph td {
+										padding: 4px 8px;
+									}
+								</style> 
+		";
+		
+	
+		$ret .= "<div class=\"todoist_container\">\n";
+	}
 	
 	foreach my $name (@devs) {
 		
@@ -1567,11 +1577,15 @@ sub todoist_Html(;$) {
 		my $hash = $defs{$name};
 	  my $id   = $defs{$name}{NR};
 	  
+	  ## ajax request? don't show everything
+		if (!$ajaxGet) {
 	    
-	  $ret .= "<table class=\"roomoverview todoist_table\">\n";
-	  
-	  $ret .= "<tr class=\"devTypeTr\"><td colspan=\"3\"><div class=\"devType\">".AttrVal($name,"alias",$name)."</div></td></tr>";
-	  $ret .= "<tr><td colspan=\"3\"><table class=\"block wide sortable\" id=\"todoist_".$name."_table\">\n"; 
+		  $ret .= "<table class=\"roomoverview todoist_table\">\n";
+		  
+		  $ret .= "<tr class=\"devTypeTr\"><td colspan=\"3\"><div class=\"devType\">".AttrVal($name,"alias",$name)."</div></td></tr>";
+		  $ret .= "<tr><td colspan=\"3\"><table class=\"block wide sortable\" id=\"todoist_".$name."_table\">\n"; 
+		
+		}
 	  
 	  my $i=1;
 	  my $eo;
@@ -1629,13 +1643,22 @@ sub todoist_Html(;$) {
 	  
 	  $ret .= "</tr>";
 	  
-	  $ret .= "</table></td></tr>\n";
+	  if (!$ajaxGet) {
 	  
-	  $ret .= "</table>\n";
+		  $ret .= "</table></td></tr>\n";
+		  
+		  $ret .= "</table>\n";
+	  
+		}
 	}
 	
-	$ret .= "</div>\n";
-	$ret .= "<br style=\"clear:both;\" />";
+	## ajax request? don't show everything
+	if (!$ajaxGet) {
+	
+		$ret .= "</div>\n";
+		$ret .= "<br style=\"clear:both;\" />";
+		
+	}
   
   return $rot.$ret;
 }
