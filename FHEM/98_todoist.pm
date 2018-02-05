@@ -13,7 +13,7 @@ use Data::UUID;
 
 #######################
 # Global variables
-my $version = "0.9.11";
+my $version = "0.9.12";
 
 my %gets = (
   "version:noArg"     => "",
@@ -565,6 +565,7 @@ sub todoist_HandleTaskCallback($$$){
 					Log3 $name, 3, "todoist ($name): startet set parent_id over update after create: Task-ID: ".$taskId." - parent_id: ".$param->{parentId};
 				}
 				map {FW_directNotify("#FHEMWEB:$_", "if (typeof todoist_addLine === \"function\") todoist_addLine('$name','$taskId','$title')", "")} devspec2array("WEB.*");
+				#todoist_ReloadTable($name);
 			}
 		}
 		## we got an error from the API
@@ -879,13 +880,19 @@ sub todoist_GetTasksCallback($$$){
 	RemoveInternalTimer($hash,"todoist_GetTasks");
 	InternalTimer(gettimeofday()+$hash->{INTERVAL}, "todoist_GetTasks", $hash, 0); ## loop with Interval
 	
-	#map {FW_directNotify("#FHEMWEB:WEB", "location.reload('true')", "")} devspec2array("WEB.*");
+	todoist_ReloadTable($name);
+	
+	return undef;
+}
+
+sub todoist_ReloadTable($) {
+	my ($name) = @_;
+	
 	my $ret = todoist_Html($name,1);
 	$ret =~ s/\"/\'/g;
 	$ret =~ s/\n//g;
-	map {FW_directNotify("#FHEMWEB:$_", "if (typeof todoist_reloadTable === \"function\") todoist_reloadTable('$name',\"$ret\")", "")} devspec2array("WEB.*");
 	
-	return undef;
+	map {FW_directNotify("#FHEMWEB:$_", "if (typeof todoist_reloadTable === \"function\") todoist_reloadTable('$name',\"$ret\")", "")} devspec2array("WEB.*");
 }
 
 

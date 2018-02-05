@@ -164,7 +164,7 @@
 			$('#todoist_' + name + '_table').on('mouseout','.sortit',function(e) {
 				$(this).find('div.todoist_move').removeClass('todoist_sortit_handler');
 			});
-			$('#newEntry_' + name).on('blur keypress',function(e) {
+			$('#todoist_' + name + '_table').on('blur keypress','#newEntry_' + name,function(e) {
 				if (e.type!='keypress' || e.which==13) {
 					e.preventDefault();
 					var v=todoist_encodeParm($(this).val());
