@@ -1475,10 +1475,10 @@ sub todoist_AllHtml(;$) {
 }
 
 sub todoist_Html(;$$) {
-	my ($regEx,$ajaxGet) = @_;
+	my ($regEx,$refreshGet) = @_;
 
 	$regEx="" if (!defined($regEx));
-	$ajaxGet=0 if (!defined($ajaxGet));
+	$refreshGet=0 if (!defined($refreshGet));
 	
 	my $filter="";
 	
@@ -1494,7 +1494,7 @@ sub todoist_Html(;$$) {
 	my $width = 95/$count;
 	
 	## ajax request? don't show everything
-	if (!$ajaxGet) {
+	if (!$refreshGet) {
 		# Javascript
 		$rot .= "<script type=\"text/javascript\" src=\"$FW_ME/www/pgm2/todoist.js?version=".$version."\"></script>
 								<style>
@@ -1578,7 +1578,7 @@ sub todoist_Html(;$$) {
 	  my $id   = $defs{$name}{NR};
 	  
 	  ## ajax request? don't show everything
-		if (!$ajaxGet) {
+		if (!$refreshGet) {
 	    
 		  $ret .= "<table class=\"roomoverview todoist_table\">\n";
 		  
@@ -1643,7 +1643,7 @@ sub todoist_Html(;$$) {
 	  
 	  $ret .= "</tr>";
 	  
-	  if (!$ajaxGet) {
+	  if (!$refreshGet) {
 	  
 		  $ret .= "</table></td></tr>\n";
 		  
@@ -1653,7 +1653,7 @@ sub todoist_Html(;$$) {
 	}
 	
 	## ajax request? don't show everything
-	if (!$ajaxGet) {
+	if (!$refreshGet) {
 	
 		$ret .= "</div>\n";
 		$ret .= "<br style=\"clear:both;\" />";
