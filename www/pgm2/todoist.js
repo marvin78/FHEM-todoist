@@ -86,13 +86,18 @@
 
 	function todoist_sendCommand(cmd) {
 		var name = cmd.split(" ")[1];
-		$('.todoist_devType_' + name).append('<div class="todoist_icon todoist_loadingDiv">' + todoist_icon.loading + '</div>');
+		todoist_addLoading(name);
 		var location = document.location.pathname;
 	  if (location.substr(location.length -1, 1) == '/') {
 	      location = location.substr(0, location.length -1);
 	  }
 	  var url = document.location.protocol + "//" + document.location.host + location;
 	  FW_cmd(url + '?XHR=1&fwcsrf=' + csrfToken + '&cmd.' + name + '=' + cmd);
+	}
+	
+	function todoist_addLoading(name) {
+		$('.todoist_devType_' + name).find('.todoist_loadingDiv').remove();
+		$('.todoist_devType_' + name).append('<div class="todoist_icon todoist_loadingDiv">' + todoist_icon.loading + '</div>');
 	}
 	
 	function todoist_removeLoading(name) {

@@ -599,6 +599,8 @@ sub todoist_GetTasks($;$) {
 	
 	my $name=$hash->{NAME};
 	
+	map {FW_directNotify("#FHEMWEB:$_", "if (typeof todoist_addLoading === \"function\") todoist_addLoading('$name')", "")} devspec2array("WEB.*");
+	
 	$completed = 0 unless defined($completed);
 	
 	my $param;
