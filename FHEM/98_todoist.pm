@@ -13,7 +13,7 @@ use Data::UUID;
 
 #######################
 # Global variables
-my $version = "0.9.15";
+my $version = "0.9.16";
 
 my %gets = (
   "version:noArg"     => "",
@@ -1110,13 +1110,20 @@ sub todoist_sort($) {
 sub todoist_clearList($) {
 	my ($hash) = @_;
 	
+	my $name = $hash->{NAME};
+	
+	my $i=0;
 	## iterate through all tasks
 	foreach my $id (%{$hash->{helper}{IDS}}) {
 		my $dHash->{hash}=$hash;
 		if ($id !~ /Task_/) {
 			$dHash->{id}=$id;
 			InternalTimer(gettimeofday()+0.4, "todoist_doUpdateTask", $dHash, 0);
+			$i++;
 		}
+	}
+	if ($i==0) {
+		map {FW_directNotify("#FHEMWEB:$_", "if (typeof todoist_removeLoading === \"function\") todoist_removeLoading('$name')", "")} devspec2array("WEB.*");
 	}
 }
 
