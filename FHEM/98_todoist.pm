@@ -13,7 +13,7 @@ use Data::UUID;
 
 #######################
 # Global variables
-my $version = "0.9.12";
+my $version = "0.9.14";
 
 my %gets = (
   "version:noArg"     => "",
@@ -1570,6 +1570,23 @@ sub todoist_Html(;$$) {
 									.todoist_ph td {
 										padding: 4px 8px;
 									}
+									div.todoist_devType {
+										margin-top: 20px;
+										padding: 4px!important;
+										
+									}
+									div.todoist_icon {
+										cursor: pointer;
+   									display: block;
+    								float: right;
+								    width: 1em;
+								    height: 1em;
+								    margin-left: 0.5em;
+									}
+									div.todoist_icon svg {
+										height: 12px!important;
+										width: 12px!important;
+									}
 								</style> 
 		";
 		
@@ -1589,7 +1606,7 @@ sub todoist_Html(;$$) {
 	    
 		  $ret .= "<table class=\"roomoverview todoist_table\">\n";
 		  
-		  $ret .= "<tr class=\"devTypeTr\"><td colspan=\"3\"><div class=\"devType\">".AttrVal($name,"alias",$name)."</div></td></tr>";
+		  $ret .= "<tr class=\"devTypeTr\"><td colspan=\"3\"><div class=\"todoist_devType todoist_devType_".$name." col_header\">".AttrVal($name,"alias",$name)."</div></td></tr>";
 		  $ret .= "<tr><td colspan=\"3\"><table class=\"block wide sortable\" id=\"todoist_".$name."_table\">\n"; 
 		
 		}
@@ -1617,8 +1634,9 @@ sub todoist_Html(;$$) {
 	  					"		<input class=\"todoist_checkbox_".$name."\" type=\"checkbox\" id=\"check_".$_."\" data-id=\"".$_."\" />\n".
 	  					"	</td>\n".
 	  					"	<td class=\"col1 todoist_input\">\n".
-	  							"<span class=\"todoist_task_text\" data-id=\"".$_."\">".$hash->{helper}{TITLE}{$_}."</span>\n".
-	  							"<input type=\"text\" data-id=\"".$_."\" style=\"display:none;\" class=\"todoist_input_".$name."\" value=\"".$hash->{helper}{TITLE}{$_}."\" />\n".
+	  					#"		<a title=".
+	  					"		<span class=\"todoist_task_text\" data-id=\"".$_."\">".$hash->{helper}{TITLE}{$_}."</span>\n".
+	  					"		<input type=\"text\" data-id=\"".$_."\" style=\"display:none;\" class=\"todoist_input_".$name."\" value=\"".$hash->{helper}{TITLE}{$_}."\" />\n".
 	  					"	</td>\n";
 	  	
 	  	$ret .= "<td class=\"col2 todoist_delete\">\n".
