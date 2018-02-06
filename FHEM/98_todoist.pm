@@ -1649,16 +1649,18 @@ sub todoist_Html(;$$) {
 	    
 	  	$i++;
 	  }
-	  my $showPH = 0;
-	  $showPH = 1 if ($i==1);
 	  
-  	$ret .= "<tr class=\"sortit odd todoist_ph\"".($showPH!=1?" style=\"display:none;\"":"").">";
-  	$ret .= "<td colspan=\"".$cs."\">".
-  				"	No data for this list.\n".
-  				"</td>";
-  	$ret .= "</tr>";
-  	
-  	if (!$refreshGet) {
+	  if (!$refreshGet) {
+	  	
+		  my $showPH = 0;
+		  $showPH = 1 if ($i==1);
+		  
+	  	$ret .= "<tr class=\"sortit odd todoist_ph\"".($showPH!=1?" style=\"display:none;\"":"").">";
+	  	$ret .= "<td colspan=\"".$cs."\">".
+	  				"	No data for this list.\n".
+	  				"</td>";
+	  	$ret .= "</tr>";
+
   
 	  	$ret .= "<tr class=\"".$eo."\">";
 	  
