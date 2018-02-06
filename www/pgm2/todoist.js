@@ -101,8 +101,12 @@
 	}
 	
 	function todoist_addLoading(name) {
-		$('.todoist_devType_' + name).find('.todoist_loadingDiv').remove();
-		$('.todoist_devType_' + name).append('<div class="todoist_icon todoist_loadingDiv">' + todoist_icon.loading + '</div>');
+		if ( $('.todoist_devType_' + name).find('.todoist_loadingDiv').length ) {
+			$('.todoist_devType_' + name).find('.todoist_loadingDiv').remove();
+		}
+		else {
+			$('.todoist_devType_' + name).append('<div class="todoist_icon todoist_loadingDiv">' + todoist_icon.loading + '</div>');
+		}
 	}
 	
 	function todoist_removeLoading(name) {
