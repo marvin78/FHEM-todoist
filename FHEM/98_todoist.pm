@@ -1657,18 +1657,18 @@ sub todoist_Html(;$$) {
   				"	No data for this list.\n".
   				"</td>";
   	$ret .= "</tr>";
+  	
+  	if (!$refreshGet) {
   
-	  $ret .= "<tr class=\"".$eo."\">";
+	  	$ret .= "<tr class=\"".$eo."\">";
 	  
 	  
-	  $ret .= "<td colspan=\"".$cs."\">".
-	  				"	<input type=\"hidden\" class=\"todoist_name\" id=\"todoist_name_".$name."\" value=\"".$name."\" />\n".
-	  				" <input type=\"text\" id=\"newEntry_".$name."\" />\n".
-	  				"</td>";
-	  
-	  $ret .= "</tr>";
-	  
-	  if (!$refreshGet) {
+		  $ret .= "<td colspan=\"".$cs."\">".
+		  				"	<input type=\"hidden\" class=\"todoist_name\" id=\"todoist_name_".$name."\" value=\"".$name."\" />\n".
+		  				" <input type=\"text\" id=\"newEntry_".$name."\" />\n".
+		  				"</td>";
+		  
+		  $ret .= "</tr>";
 	  
 		  $ret .= "</table></td></tr>\n";
 		  

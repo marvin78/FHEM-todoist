@@ -63,8 +63,10 @@
 	}
 	
 	function todoist_reloadTable(name,val) {
-		$('table#todoist_' + name + '_table').html(val);
+		$('table#todoist_' + name + '_table').find('tr.todoist_data').remove();
+		$('table#todoist_' + name + '_table').find('#newEntry_'+name).parent().parent().before(val);
 		todoist_refreshTable(name);
+		$('#newEntry_' + name).focus();
 	}
 	
 	function refreshInputs(name) {
