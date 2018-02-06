@@ -13,11 +13,31 @@ use Data::UUID;
 
 #######################
 # Global variables
-my $version = "0.9.17";
+my $version = "0.9.19";
 
 my %gets = (
   "version:noArg"     => "",
 ); 
+
+my %todoist_transtable_EN = ( 
+  "check"             =>  "Check",
+  "delete"            =>  "Delete",
+  "refresh"           =>  "refresh",
+  "clearList"         =>  "Delete all elements",
+  "alreadythere"     	=>  "is already on the list",
+  "error"							=>	"Error",
+);
+
+my %todoist_transtable_DE = ( 
+  "check"             =>  "Erledigen",
+  "delete"            =>  "Löschen",
+  "refresh"           =>  "Aktualisieren",
+  "clearList"         =>  "Alle Elemente löschen",
+  "alreadythere"     	=>  "befindet sich bereits auf der Liste",
+  "error"							=>	"Fehler",
+);
+
+my $todoist_tt;
 
 
 sub todoist_Initialize($) {
@@ -50,6 +70,17 @@ sub todoist_Initialize($) {
 												"avoidDuplicates:1,0 ".
 												"listDivider ".
 												$readingFnAttributes;
+												
+		if( !defined($todoist_tt) ){
+    # in any attribute redefinition readjust language
+    my $lang = AttrVal("global","language","EN");
+    if( $lang eq "DE") {
+      $todoist_tt = \%todoist_transtable_DE;
+    }
+    else{
+      $todoist_tt = \%todoist_transtable_EN;
+    }
+  }
 	
 	return undef;
 }
@@ -58,6 +89,17 @@ sub todoist_Define($$) {
   my ($hash, $def) = @_;
 	my $now = time();
 	my $name = $hash->{NAME}; 
+	
+	if( !defined($todoist_tt) ){
+	  # in any attribute redefinition readjust language
+	  my $lang = AttrVal("global","language","EN");
+	  if( $lang eq "DE") {
+	    $todoist_tt = \%todoist_transtable_DE;
+	  }
+	  else{
+	    $todoist_tt = \%todoist_transtable_EN;
+	  }
+	 }
   
 	
 	my @a = split( "[ \t][ \t]*", $def );
@@ -493,7 +535,7 @@ sub todoist_CreateTask($$) {
 	}
 	else {
 		#map {FW_directNotify("#FHEMWEB:$_", "FW_okDialog('$title is already in the list')", "")} devspec2array("WEB.*");
-		map {FW_directNotify("#FHEMWEB:$_", "if (typeof todoist_ErrorDialog === \"function\") todoist_ErrorDialog('$title is already on the list')", "")} devspec2array("WEB.*");
+		map {FW_directNotify("#FHEMWEB:$_", "if (typeof todoist_ErrorDialog === \"function\") todoist_ErrorDialog('$name','$title ".$todoist_tt->{"alreadythere"}."','".$todoist_tt->{"error"}."')", "")} devspec2array("WEB.*");
 		todoist_ErrorReadings($hash,"duplicate detected","duplicate detected");
 	}
 	
@@ -1513,7 +1555,7 @@ sub todoist_Html(;$$) {
 	if (!$refreshGet) {
 		# Javascript
 		$rot .= "<script type=\"text/javascript\" src=\"$FW_ME/www/pgm2/todoist.js?version=".$version."\"></script>
-								<style>
+								<style id=\"todoist_style\">
 									.todoist_container {
 									    display: block;
 									    padding: 0;
@@ -1615,7 +1657,15 @@ sub todoist_Html(;$$) {
 	    
 		  $ret .= "<table class=\"roomoverview todoist_table\">\n";
 		  
-		  $ret .= "<tr class=\"devTypeTr\"><td colspan=\"3\"><div class=\"todoist_devType todoist_devType_".$name." col_header\"><a href=\"/fhem?detail=".$name."\">".AttrVal($name,"alias",$name)."</a></div></td></tr>";
+		  $ret .= "<tr class=\"devTypeTr\">\n".
+		  				"	<td colspan=\"3\">\n".
+		  				"		<div class=\"todoist_devType todoist_devType_".$name." col_header\">\n".
+		  						(!$FW_hiddenroom{detail}?"<a href=\"/fhem?detail=".$name."\">":"").
+		  							AttrVal($name,"alias",$name).
+		  						(!$FW_hiddenroom{detail}?"</a>":"").
+		  				"		</div>\n".
+		  				"	</td>\n".
+		  				"</tr>\n";
 		  $ret .= "<tr><td colspan=\"3\"><table class=\"block wide sortable\" id=\"todoist_".$name."_table\">\n"; 
 		
 		}

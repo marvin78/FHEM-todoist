@@ -33,9 +33,10 @@
 	    return newVal;
 	};
 
-	function todoist_dialog(message) {
+	function todoist_dialog(message,title) {
+			if (typeof title === 'undefined') title="Message";
 	    $('<div></div>').appendTo('body').html('<div>' + message + '</div>').dialog({
-	        modal: true, title: 'Todoist Error', zIndex: 10000, autoOpen: true,
+	        modal: true, title: 'Todoist '+title, zIndex: 10000, autoOpen: true,
 	        width: 'auto', resizable: false,
 	        buttons: {
 	            OK: function () {
@@ -106,6 +107,9 @@
 		}
 		else {
 			$('.todoist_devType_' + name).append('<div class="todoist_icon todoist_loadingDiv">' + todoist_icon.loading + '</div>');
+			setTimeout(function(){ 
+				todoist_removeLoading(name);
+			}, 10000);
 		}
 	}
 	
@@ -113,8 +117,9 @@
 		$('.todoist_devType_' + name).find('.todoist_loadingDiv').remove();
 	}
 
-	function todoist_ErrorDialog($text) {
-		todoist_dialog($text);
+	function todoist_ErrorDialog(name,text,title) {
+		todoist_dialog(text,title);
+		todoist_removeLoading(name);
 	}
 
 	function todoist_removeLine(name,id) {
