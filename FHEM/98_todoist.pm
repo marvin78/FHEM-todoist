@@ -1606,7 +1606,7 @@ sub todoist_Html(;$$) {
 	    
 		  $ret .= "<table class=\"roomoverview todoist_table\">\n";
 		  
-		  $ret .= "<tr class=\"devTypeTr\"><td colspan=\"3\"><div class=\"todoist_devType todoist_devType_".$name." col_header\">".AttrVal($name,"alias",$name)."</div></td></tr>";
+		  $ret .= "<tr class=\"devTypeTr\"><td colspan=\"3\"><div class=\"todoist_devType todoist_devType_".$name." col_header\"><a href=\"/fhem?detail=".$name."\">".AttrVal($name,"alias",$name)."</a></div></td></tr>";
 		  $ret .= "<tr><td colspan=\"3\"><table class=\"block wide sortable\" id=\"todoist_".$name."_table\">\n"; 
 		
 		}
