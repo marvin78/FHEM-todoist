@@ -59,6 +59,8 @@
 			if (typeof sortit != 'undefined') todoist_sendCommand('set ' + name + ' updateTask ID:'+ tid + ' order="' + i + '"');
 			i++;
 		});
+		if (i!=1) $('table#todoist_' + name + '_table').find("tr.todoist_ph").hide();
+		if (i==1) $('table#todoist_' + name + '_table').find("tr.todoist_ph").show();
 		refreshInput(name);
 		refreshInputs(name);
 		todoist_removeLoading(name);
