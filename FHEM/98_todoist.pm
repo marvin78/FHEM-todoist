@@ -13,7 +13,7 @@ use Data::UUID;
 
 #######################
 # Global variables
-my $version = "1.0.1";
+my $version = "1.0.2";
 
 my %gets = (
   "version:noArg"     => "",
@@ -52,33 +52,35 @@ my $todoist_tt;
 sub todoist_Initialize($) {
   my ($hash) = @_;
 
-  $hash->{SetFn}    = "todoist_Set";
-  $hash->{GetFn}    = "todoist_Get";
-	$hash->{DefFn}    = "todoist_Define";
-	$hash->{UndefFn}  = "todoist_Undefine";
-	$hash->{AttrFn}   = "todoist_Attr";
-	$hash->{RenameFn} = "todoist_Rename";   
-	$hash->{CopyFn}	  = "todoist_Copy";
-	$hash->{DeleteFn} = "todoist_Delete";
-	$hash->{NotifyFn} = "todoist_Notify";
+  $hash->{SetFn}    		= "todoist_Set";
+  $hash->{GetFn}    		= "todoist_Get";
+	$hash->{DefFn}    		= "todoist_Define";
+	$hash->{UndefFn}  		= "todoist_Undefine";
+	$hash->{AttrFn}   		= "todoist_Attr";
+	$hash->{RenameFn} 		= "todoist_Rename";   
+	$hash->{CopyFn}	  		= "todoist_Copy";
+	$hash->{DeleteFn} 		= "todoist_Delete";
+	$hash->{NotifyFn} 		= "todoist_Notify";
+	
+	$hash->{FW_detailFn}  = "todoist_detailFn";
 
-  $hash->{AttrList} = "disable:1,0 ".
-											"pollInterval ".
-											"do_not_notify ".
-											"sortTasks:1,0 ".
-											"getCompleted:1,0 ".
-											"showPriority:1,0 ".
-											"showAssignedBy:1,0 ".
-											"showResponsible:1,0 ".
-											"showIndent:1,0 ".
-											"showChecked:1,0 ".
-											"showDeleted:1,0 ".
-											"showOrder:1,0 ".
-											"hideId:1,0 ".
-											"autoGetUsers:1,0 ".
-											"avoidDuplicates:1,0 ".
-											"listDivider ".
-											$readingFnAttributes;
+	$hash->{AttrList} 		= "disable:1,0 ".
+													"pollInterval ".
+													"do_not_notify ".
+													"sortTasks:1,0 ".
+													"getCompleted:1,0 ".
+													"showPriority:1,0 ".
+													"showAssignedBy:1,0 ".
+													"showResponsible:1,0 ".
+													"showIndent:1,0 ".
+													"showChecked:1,0 ".
+													"showDeleted:1,0 ".
+													"showOrder:1,0 ".
+													"hideId:1,0 ".
+													"autoGetUsers:1,0 ".
+													"avoidDuplicates:1,0 ".
+													"listDivider ".
+													$readingFnAttributes;
 											
 	if( !defined($todoist_tt) ){
     # in any attribute redefinition readjust language
@@ -1544,12 +1546,26 @@ sub todoist_AllHtml(;$) {
 	return todoist_Html($regEx);
 }
 
+# show widget in detail view of todoist device
+sub todoist_detailFn(){
+  my ($FW_wname, $devname, $room, $pageHash) = @_; # pageHash is set for summaryFn.
+
+  my $hash = $defs{$devname};
+
+  $hash->{mayBeVisible} = 1;
+  
+  my $name=$hash->{NAME};
+  
+  return todoist_Html($name,undef,1);
+}
+
 # frontend weblink widget (FHEMWEB)
-sub todoist_Html(;$$) {
-	my ($regEx,$refreshGet) = @_;
+sub todoist_Html(;$$$) {
+	my ($regEx,$refreshGet,$detail) = @_;
 
 	$regEx="" if (!defined($regEx));
 	$refreshGet=0 if (!defined($refreshGet));
+	$detail=0 if (!defined($detail));
 	
 	my $filter="";
 	
@@ -1645,9 +1661,7 @@ sub todoist_Html(;$$) {
 										padding: 4px 8px;
 									}
 									div.todoist_devType {
-										margin-top: 20px;
-										padding: 4px!important;
-										
+										padding: 4px!important;			
 									}
 									div.todoist_icon {
 										cursor: pointer;
@@ -1661,7 +1675,16 @@ sub todoist_Html(;$$) {
 										height: 12px!important;
 										width: 12px!important;
 									}
-								</style> 
+		";
+		
+		if (!$detail) {
+			$rot.="			div.todoist_devType {
+										margin-top: 20px;
+									}
+						";	
+		}
+		
+		$rot.="				</style> 
 		";
 		
 		$ret .= "<div class=\"todoist_container\">\n";
