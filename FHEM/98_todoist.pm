@@ -13,12 +13,13 @@ use Data::UUID;
 
 #######################
 # Global variables
-my $version = "1.0.0";
+my $version = "1.0.1";
 
 my %gets = (
   "version:noArg"     => "",
 ); 
 
+## define variables for multi language
 my %todoist_transtable_EN = ( 
   "check"             =>  "Check",
   "delete"            =>  "Delete",
@@ -49,37 +50,37 @@ my $todoist_tt;
 
 
 sub todoist_Initialize($) {
-    my ($hash) = @_;
+  my ($hash) = @_;
 
-    $hash->{SetFn}    = "todoist_Set";
-    $hash->{GetFn}    = "todoist_Get";
-		$hash->{DefFn}    = "todoist_Define";
-		$hash->{UndefFn}  = "todoist_Undefine";
-		$hash->{AttrFn}   = "todoist_Attr";
-		$hash->{RenameFn} = "todoist_Rename";   
-		$hash->{CopyFn}	  = "todoist_Copy";
-		$hash->{DeleteFn} = "todoist_Delete";
-		$hash->{NotifyFn} = "todoist_Notify";
-	
-    $hash->{AttrList} = "disable:1,0 ".
-												"pollInterval ".
-												"do_not_notify ".
-												"sortTasks:1,0 ".
-												"getCompleted:1,0 ".
-												"showPriority:1,0 ".
-												"showAssignedBy:1,0 ".
-												"showResponsible:1,0 ".
-												"showIndent:1,0 ".
-												"showChecked:1,0 ".
-												"showDeleted:1,0 ".
-												"showOrder:1,0 ".
-												"hideId:1,0 ".
-												"autoGetUsers:1,0 ".
-												"avoidDuplicates:1,0 ".
-												"listDivider ".
-												$readingFnAttributes;
-												
-		if( !defined($todoist_tt) ){
+  $hash->{SetFn}    = "todoist_Set";
+  $hash->{GetFn}    = "todoist_Get";
+	$hash->{DefFn}    = "todoist_Define";
+	$hash->{UndefFn}  = "todoist_Undefine";
+	$hash->{AttrFn}   = "todoist_Attr";
+	$hash->{RenameFn} = "todoist_Rename";   
+	$hash->{CopyFn}	  = "todoist_Copy";
+	$hash->{DeleteFn} = "todoist_Delete";
+	$hash->{NotifyFn} = "todoist_Notify";
+
+  $hash->{AttrList} = "disable:1,0 ".
+											"pollInterval ".
+											"do_not_notify ".
+											"sortTasks:1,0 ".
+											"getCompleted:1,0 ".
+											"showPriority:1,0 ".
+											"showAssignedBy:1,0 ".
+											"showResponsible:1,0 ".
+											"showIndent:1,0 ".
+											"showChecked:1,0 ".
+											"showDeleted:1,0 ".
+											"showOrder:1,0 ".
+											"hideId:1,0 ".
+											"autoGetUsers:1,0 ".
+											"avoidDuplicates:1,0 ".
+											"listDivider ".
+											$readingFnAttributes;
+											
+	if( !defined($todoist_tt) ){
     # in any attribute redefinition readjust language
     my $lang = AttrVal("global","language","EN");
     if( $lang eq "DE") {
@@ -117,7 +118,6 @@ sub todoist_Define($$) {
     Log3 $name, 4, $msg;
     return $msg;
   }
-	
 
 	## set internal variables
 	$hash->{PID}=$a[2];
@@ -137,7 +137,7 @@ sub todoist_Define($$) {
 		## at first, we delete old readings. List could have changed
 		CommandDeleteReading(undef, "$hash->{NAME} (T|t)ask_.*");
 		CommandDeleteReading(undef, "$hash->{NAME} listText");
-		## set status 
+		## set state
 		readingsSingleUpdate($hash,"state","active",1) if (!$hash->{helper}{PWD_NEEDED} && !IsDisabled($name) );
 		readingsSingleUpdate($hash,"state","inactive",1) if ($hash->{helper}{PWD_NEEDED});
 		## remove timers
@@ -148,6 +148,7 @@ sub todoist_Define($$) {
 	return undef;
 }
 
+# get token from file
 sub todoist_GetPwd($) {
 	my ($hash) = @_;
 	
@@ -175,7 +176,7 @@ sub todoist_GetPwd($) {
 	return $pwd;
 }
 
-## set error Readings
+## set error Readings and log
 sub todoist_ErrorReadings($;$$) {
 	my ($hash,$errorLog,$errorMessage) = @_;
 	
@@ -542,7 +543,6 @@ sub todoist_CreateTask($$) {
 		}
 	}
 	else {
-		#map {FW_directNotify("#FHEMWEB:$_", "FW_okDialog('$title is already in the list')", "")} devspec2array("WEB.*");
 		map {FW_directNotify("#FHEMWEB:$_", "if (typeof todoist_ErrorDialog === \"function\") todoist_ErrorDialog('$name','$title ".$todoist_tt->{"alreadythere"}."','".$todoist_tt->{"error"}."')", "")} devspec2array("WEB.*");
 		todoist_ErrorReadings($hash,"duplicate detected","duplicate detected");
 	}
@@ -551,6 +551,7 @@ sub todoist_CreateTask($$) {
 	return undef;
 }
 
+# handle the callback data if task was created or updated
 sub todoist_HandleTaskCallback($$$){
 	my ($param, $err, $data) = @_;
 	
@@ -726,6 +727,7 @@ sub todoist_GetTasks($;$) {
 	return undef;
 }
 
+# helper sub for getting completed tasks
 sub todoist_doGetCompTasks($) {
 	my ($hash) = @_;
 	todoist_GetTasks($hash,1);
@@ -937,6 +939,7 @@ sub todoist_GetTasksCallback($$$){
 	return undef;
 }
 
+# called if weblink widget table has to be updated
 sub todoist_ReloadTable($) {
 	my ($name) = @_;
 	
@@ -1087,7 +1090,7 @@ sub todoist_GetUsersCallback($$$){
 	
 }
 
-## sort alphabetically
+# sort alphabetically (probably deprecated)
 sub todoist_sort($) {
 	my ($hash) = @_;
 	
@@ -1535,11 +1538,13 @@ sub todoist_RestartGetTimer($) {
 	return undef;
 }
 
+# placeholder for older widgets
 sub todoist_AllHtml(;$) {
 	my ($regEx) = @_;
 	return todoist_Html($regEx);
 }
 
+# frontend weblink widget (FHEMWEB)
 sub todoist_Html(;$$) {
 	my ($regEx,$refreshGet) = @_;
 
@@ -1559,10 +1564,9 @@ sub todoist_Html(;$$) {
 	my $count = @devs;
 	my $width = 95/$count;
 	
-	## ajax request? don't show everything
+	# refresh request? don't show everything
 	if (!$refreshGet) {
-		# Javascript and CSS
-		# define global variables
+		# define global JS variables
 		$rot .= "	<script type=\"text/javascript\">
 								todoist_tt={};
 								todoist_tt.refreshList='".$todoist_tt->{'refreshList'}."';
@@ -1572,6 +1576,7 @@ sub todoist_Html(;$$) {
 								todoist_tt.check='".$todoist_tt->{'check'}."';
 								todoist_tt.delete='".$todoist_tt->{'delete'}."';
 					  	</script>";
+		# Javascript and CSS
 		$rot .= "	<script type=\"text/javascript\" src=\"$FW_ME/www/pgm2/todoist.js?version=".$version."\"></script>
 								<style id=\"todoist_style\">
 									.todoist_container {
@@ -1659,7 +1664,6 @@ sub todoist_Html(;$$) {
 								</style> 
 		";
 		
-	
 		$ret .= "<div class=\"todoist_container\">\n";
 	}
 	
@@ -1670,7 +1674,7 @@ sub todoist_Html(;$$) {
 		my $hash = $defs{$name};
 	  my $id   = $defs{$name}{NR};
 	  
-	  ## ajax request? don't show everything
+	  # refresh request? don't show everything
 		if (!$refreshGet) {
 	    
 		  $ret .= "<table class=\"roomoverview todoist_table\">\n";
@@ -1692,6 +1696,7 @@ sub todoist_Html(;$$) {
 	  my $eo;
 	  my $cs=3;
 	  
+	  # show data
 	  foreach (@{$hash->{helper}{TIDS}}) {
 	  	
 	  	if ($i%2==0) {
@@ -1726,6 +1731,7 @@ sub todoist_Html(;$$) {
 	  	$i++;
 	  }
 	  
+	  # refresh request? don't show everything
 	  if (!$refreshGet) {
 	  	
 		  my $showPH = 0;
@@ -1755,7 +1761,7 @@ sub todoist_Html(;$$) {
 		}
 	}
 	
-	## ajax request? don't show everything
+	# refresh request? don't show everything
 	if (!$refreshGet) {
 	
 		$ret .= "</div>\n";
@@ -1766,6 +1772,7 @@ sub todoist_Html(;$$) {
   return $rot.$ret;
 }
 
+# check if element is in array
 sub todoist_inArray {
   my ($arr,$search_for) = @_;
   foreach (@$arr) {
