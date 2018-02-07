@@ -13,7 +13,7 @@ use Data::UUID;
 
 #######################
 # Global variables
-my $version = "1.0.2";
+my $version = "1.0.3";
 
 my %gets = (
   "version:noArg"     => "",
@@ -80,6 +80,7 @@ sub todoist_Initialize($) {
 													"autoGetUsers:1,0 ".
 													"avoidDuplicates:1,0 ".
 													"listDivider ".
+													"showDetailWidget:1,0 ".
 													$readingFnAttributes;
 											
 	if( !defined($todoist_tt) ){
@@ -1556,6 +1557,8 @@ sub todoist_detailFn(){
   
   my $name=$hash->{NAME};
   
+  return undef if (AttrVal($name,"showDetailWidget",1)!=1);
+  
   return todoist_Html($name,undef,1);
 }
 
@@ -1963,6 +1966,12 @@ sub todoist_inArray {
         <li>1: show responsibleUid</li>
         </ul></li>
         <br />
+        <li>showDetailWidget
+        <ul>
+        <li>0: don't show widget in detail view of device</li>
+        <li>1: show widget in detail view of device (default)</li>
+        </ul></li>
+        <br />
         <li>getCompleted
         <ul>
         <li>0: don't get completet tasks (default)</li>
@@ -1983,7 +1992,7 @@ sub todoist_inArray {
         </ul></li>
         <br />
         <li>listDivider<br />
-        set the divider for the Reading listText. Default ist ", ".</li>
+        set the divider for the Reading listText. Default is ", ".</li>
     </ul>
     
     <a name="todoist_Readings"></a>
