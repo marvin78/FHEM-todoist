@@ -13,7 +13,7 @@ use Data::UUID;
 
 #######################
 # Global variables
-my $version = "1.0.5";
+my $version = "1.0.6";
 
 my %gets = (
   "version:noArg"     => "",
@@ -1846,7 +1846,6 @@ sub todoist_inArray {
             <code>define Einkaufsliste todoist 257528237</code><br />
         </ul>
     </ul><br />
-    <br />
     <a name="todoist_Set"></a>
     <h4>Set</h4>
     <ul>
@@ -1900,9 +1899,9 @@ sub todoist_inArray {
         <code>set &lt;DEVICE&gt; closeTask &lt;TASK-ID&gt;</code> - completes a task by number<br >
         <code>set &lt;DEVICE&gt; closeTask ID:&lt;todoist-TASK-ID&gt;</code> - completes a task by todoist-Task-ID</li>
         <li><b>uncompleteTask</b> - uncompletes a Task. Use it like complete.</li>
-        <li><b>deleteTask</b> - deletes a task. Needs number of task (reading 'Task_NUMBER') or the todoist-Task-ID (ID:&lt;ID&gt;) as parameter</li>
+        <li><b>deleteTask</b> - deletes a task. Needs number of task (reading 'Task_NUMBER') or the todoist-Task-ID (ID:&lt;ID&gt;) as parameter
         <code>set &lt;DEVICE&gt; deleteTask &lt;TASK-ID&gt;</code> - deletes a task by number<br />
-        <code>set &lt;DEVICE&gt; deleteTask ID:&lt;todoist-TASK-ID&gt;</code> - deletes a task by todoist-Task-ID<br ><br />
+        <code>set &lt;DEVICE&gt; deleteTask ID:&lt;todoist-TASK-ID&gt;</code> - deletes a task by todoist-Task-ID</li>
         <li><b>sortTasks</b> - sort Tasks alphabetically</li>
         <li><b>clearList</b> - <b><u>deletes</u></b> all Tasks from the list (only FHEM listed Tasks can be deleted)</li>
     </ul>
@@ -1991,8 +1990,8 @@ sub todoist_inArray {
         <br />
         <li>avoidDuplicates
         <ul>
-        <li>0: don't check for duplicates (default)s</li>
-        <li>1: check for duplicates</li>
+        <li>0: don't check for duplicates (default)</li>
+        <li>1: check for duplicates, deny new entries if task exists (exactly)</li>
         </ul></li>
         <br />
         <li>listDivider<br />
@@ -2051,17 +2050,40 @@ sub todoist_inArray {
     </ul><br />
     <a name="todoist_Weblink"></a>
     <h4>Weblinks</h4>
-        <ul>
-                Define a simple weblink for a Task list.
-                <br /><br />
-                <code>define &lt;NAME&gt; weblink htmlCode {todoist_Html("&lt;TODOIST-DEVCICENAME&gt;")}</code><br /><br />
-                Define a simple weblink for all Task lists.
-                <br /><br />
-                <code>define &lt;NAME&gt; weblink htmlCode {todoist_Html()}</code><br /><br />
-                Define a simple weblink for a group of Task lists.
-                <br /><br />
-                <code>define &lt;NAME&gt; weblink htmlCode {todoist_Html('&lt;REGEX-FILTER&gt;')}</code>
-        </ul>
+      	FHEMWEB weblink as frontend for one or more. There are 3 different ways to setup a todoist-weblink:<br /><br />
+      	<ul>
+        	<li>Define a simple weblink for a Task list:
+          <br /><br />
+          <code>define &lt;NAME&gt; weblink htmlCode {todoist_Html("&lt;TODOIST-DEVCICENAME&gt;")}</code><br /><br /></li>
+          <li>Define a simple weblink for all active Task lists:
+          <br /><br />
+          <code>define &lt;NAME&gt; weblink htmlCode {todoist_Html()}</code><br /><br /></li>
+          <li>Define a simple weblink for a group of active Task lists:
+          <br /><br />
+          <code>define &lt;NAME&gt; weblink htmlCode {todoist_Html('&lt;REGEX-FILTER&gt;')}</code><br /><br /></li>
+      	</ul>
+      	Examples:<br /><br />
+      	<code>define EinkaufslisteWeb weblink htmlCode {todoist_Html("Einkaufsliste")}</code> - single list<br />
+      	<code>define EinkaufslistenWeb weblink htmlCode {todoist_Html()}</code> - all active lists<br />
+      	<code>define PapaLists weblink htmlCode {todoist_Html("Papa_list.*")}</code> - all active lists beginning with "Papa_list"
+      	<br /><br />
+      	<ul>
+      		<li>Tasks can be sorted, updated and added inside the widget. You can reload a list and delete all entries of a list.</li>
+      		<li>To check (close) a task, click the checkbox in front of the completed task.</li>
+      		<li>A list can be sorted by by drag & drop. You can also move a task from one list to another. This deletes the task from the "old" list and<br />
+      				adds it to the new one.</li>
+      		<li>The input field under the actual list can be used for adding tasks to this list. Leaving the field or pressing enter triggers addTask.</li>
+      		<li>Update a task by clicking it's text. You can edit the task in an input field. Leaving the field or pressing enter triggers updateTask.</li>
+      		<li>You can use parameters like "dueDate" in the input fields like this:
+      			<ul>
+      				<code>Milch -dueDate=morgen</code>
+      			</ul>
+      		</li>
+      		<li>Clicking the cross behind every task deletes this one for good.</li>
+      		<li>Clicking the trashcan symbol in the title bar of every list deletes all tasks from the list.</li>
+      		<li>A list can be reloaded by clicking the round arrow symbol in the title bar of every list.</li>
+      		<li>A list is refreshed if a getTasks for this is fired (by interval or manually).</li>
+      	</ul>
 </ul>
 
 
