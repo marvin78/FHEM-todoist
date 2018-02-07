@@ -13,7 +13,7 @@ use Data::UUID;
 
 #######################
 # Global variables
-my $version = "1.0.4";
+my $version = "1.0.5";
 
 my %gets = (
   "version:noArg"     => "",
@@ -1557,7 +1557,7 @@ sub todoist_detailFn(){
   
   my $name=$hash->{NAME};
   
-  return undef if (AttrVal($name,"showDetailWidget",1)!=1);
+  return undef if (IsDisabled($name) || AttrVal($name,"showDetailWidget",1)!=1);
   
   return todoist_Html($name,undef,1);
 }
@@ -1700,90 +1700,94 @@ sub todoist_Html(;$$$) {
 		my $hash = $defs{$name};
 	  my $id   = $defs{$name}{NR};
 	  
-	  # refresh request? don't show everything
-		if (!$refreshGet) {
-	    
-		  $ret .= "<table class=\"roomoverview todoist_table\">\n";
+	  # show active lists only
+	  if (!IsDisabled($name)) {
+	  
+		  # refresh request? don't show everything
+			if (!$refreshGet) {
+		    
+			  $ret .= "<table class=\"roomoverview todoist_table\">\n";
+			  
+			  $ret .= "<tr class=\"devTypeTr\">\n".
+			  				"	<td colspan=\"3\">\n".
+			  				"		<div class=\"todoist_devType todoist_devType_".$name." col_header\">\n".
+			  						(!$FW_hiddenroom{detail}?"<a title=\"".$todoist_tt->{'gotodetail'}."\" href=\"/fhem?detail=".$name."\">":"").
+			  							AttrVal($name,"alias",$name).
+			  						(!$FW_hiddenroom{detail}?"</a>":"").
+			  				"		</div>\n".
+			  				"	</td>\n".
+			  				"</tr>\n";
+			  $ret .= "<tr><td colspan=\"3\"><table class=\"block wide sortable\" id=\"todoist_".$name."_table\">\n"; 
+			
+			}
 		  
-		  $ret .= "<tr class=\"devTypeTr\">\n".
-		  				"	<td colspan=\"3\">\n".
-		  				"		<div class=\"todoist_devType todoist_devType_".$name." col_header\">\n".
-		  						(!$FW_hiddenroom{detail}?"<a title=\"".$todoist_tt->{'gotodetail'}."\" href=\"/fhem?detail=".$name."\">":"").
-		  							AttrVal($name,"alias",$name).
-		  						(!$FW_hiddenroom{detail}?"</a>":"").
-		  				"		</div>\n".
-		  				"	</td>\n".
-		  				"</tr>\n";
-		  $ret .= "<tr><td colspan=\"3\"><table class=\"block wide sortable\" id=\"todoist_".$name."_table\">\n"; 
-		
-		}
-	  
-	  my $i=1;
-	  my $eo;
-	  my $cs=3;
-	  
-	  # show data
-	  foreach (@{$hash->{helper}{TIDS}}) {
-	  	
-	  	if ($i%2==0) {
-	  		$eo="even";
-	  	}
-	  	else {
-	  		$eo="odd";
-	  	}
-	  	
-	  	my $ind=0;
+		  my $i=1;
+		  my $eo;
+		  my $cs=3;
+		  
+		  # show data
+		  foreach (@{$hash->{helper}{TIDS}}) {
+		  	
+		  	if ($i%2==0) {
+		  		$eo="even";
+		  	}
+		  	else {
+		  		$eo="odd";
+		  	}
+		  	
+		  	my $ind=0;
 
-  		my $indent=$hash->{helper}{INDENT}{$_};
-	  	
-	  	$ret .= "<tr id=\"".$name."_".$_."\" data-data=\"true\" data-line-id=\"".$_."\" class=\"sortit todoist_data ".$eo." todoist_indent_".$indent."\">\n".
-	  					"	<td class=\"col1 todoist_col1\">\n".
-	  					"		<div class=\"todoist_move\"></div>\n".
-	  					"		<input title=\"".$todoist_tt->{'check'}."\" class=\"todoist_checkbox_".$name."\" type=\"checkbox\" id=\"check_".$_."\" data-id=\"".$_."\" />\n".
-	  					"	</td>\n".
-	  					"	<td class=\"col1 todoist_input\">\n".
-	  					"		<span class=\"todoist_task_text\" data-id=\"".$_."\">".$hash->{helper}{TITLE}{$_}."</span>\n".
-	  					"		<input type=\"text\" data-id=\"".$_."\" style=\"display:none;\" class=\"todoist_input_".$name."\" value=\"".$hash->{helper}{TITLE}{$_}."\" />\n".
-	  					"	</td>\n";
-	  	
-	  	$ret .= "<td class=\"col2 todoist_delete\">\n".
-	  					" <a title=\"".$todoist_tt->{'delete'}."\" href=\"#\" class=\"todoist_delete_".$name."\" data-id=\"".$_."\">\n".
-	  					"		x\n".
-	  					" </a>\n".
-	  					"</td>\n";
-	  					
-	    $ret .= "</tr>\n";
-	    
-	  	$i++;
-	  }
-	  
-	  # refresh request? don't show everything
-	  if (!$refreshGet) {
-	  	
-		  my $showPH = 0;
-		  $showPH = 1 if ($i==1);
+	  		my $indent=$hash->{helper}{INDENT}{$_};
+		  	
+		  	$ret .= "<tr id=\"".$name."_".$_."\" data-data=\"true\" data-line-id=\"".$_."\" class=\"sortit todoist_data ".$eo." todoist_indent_".$indent."\">\n".
+		  					"	<td class=\"col1 todoist_col1\">\n".
+		  					"		<div class=\"todoist_move\"></div>\n".
+		  					"		<input title=\"".$todoist_tt->{'check'}."\" class=\"todoist_checkbox_".$name."\" type=\"checkbox\" id=\"check_".$_."\" data-id=\"".$_."\" />\n".
+		  					"	</td>\n".
+		  					"	<td class=\"col1 todoist_input\">\n".
+		  					"		<span class=\"todoist_task_text\" data-id=\"".$_."\">".$hash->{helper}{TITLE}{$_}."</span>\n".
+		  					"		<input type=\"text\" data-id=\"".$_."\" style=\"display:none;\" class=\"todoist_input_".$name."\" value=\"".$hash->{helper}{TITLE}{$_}."\" />\n".
+		  					"	</td>\n";
+		  	
+		  	$ret .= "<td class=\"col2 todoist_delete\">\n".
+		  					" <a title=\"".$todoist_tt->{'delete'}."\" href=\"#\" class=\"todoist_delete_".$name."\" data-id=\"".$_."\">\n".
+		  					"		x\n".
+		  					" </a>\n".
+		  					"</td>\n";
+		  					
+		    $ret .= "</tr>\n";
+		    
+		  	$i++;
+		  }
 		  
-	  	$ret .= "<tr class=\"sortit odd todoist_ph\"".($showPH!=1?" style=\"display:none;\"":"").">";
-	  	$ret .= "	<td colspan=\"".$cs."\">".
-	  					"		No data for this list.\n".
-	  					"	</td>";
-	  	$ret .= "</tr>";
+		  # refresh request? don't show everything
+		  if (!$refreshGet) {
+		  	
+			  my $showPH = 0;
+			  $showPH = 1 if ($i==1);
+			  
+		  	$ret .= "<tr class=\"sortit odd todoist_ph\"".($showPH!=1?" style=\"display:none;\"":"").">";
+		  	$ret .= "	<td colspan=\"".$cs."\">".
+		  					"		No data for this list.\n".
+		  					"	</td>";
+		  	$ret .= "</tr>";
 
-  
-	  	$ret .= "<tr class=\"".$eo."\">";
 	  
-	  
-		  $ret .= "<td colspan=\"".$cs."\">".
-		  				"	<input type=\"hidden\" class=\"todoist_name\" id=\"todoist_name_".$name."\" value=\"".$name."\" />\n".
-		  				" <input title=\"".$todoist_tt->{'newentry'}."\" type=\"text\" id=\"newEntry_".$name."\" />\n".
-		  				"</td>";
+		  	$ret .= "<tr class=\"".$eo."\">";
 		  
-		  $ret .= "</tr>";
-	  
-		  $ret .= "</table></td></tr>\n";
 		  
-		  $ret .= "</table>\n";
-	  
+			  $ret .= "<td colspan=\"".$cs."\">".
+			  				"	<input type=\"hidden\" class=\"todoist_name\" id=\"todoist_name_".$name."\" value=\"".$name."\" />\n".
+			  				" <input title=\"".$todoist_tt->{'newentry'}."\" type=\"text\" id=\"newEntry_".$name."\" />\n".
+			  				"</td>";
+			  
+			  $ret .= "</tr>";
+		  
+			  $ret .= "</table></td></tr>\n";
+			  
+			  $ret .= "</table>\n";
+		  
+			}
 		}
 	}
 	
