@@ -13,7 +13,7 @@ use Data::UUID;
 
 #######################
 # Global variables
-my $version = "1.0.3";
+my $version = "1.0.4";
 
 my %gets = (
   "version:noArg"     => "",
@@ -1681,8 +1681,8 @@ sub todoist_Html(;$$$) {
 		";
 		
 		if (!$detail) {
-			$rot.="			div.todoist_devType {
-										margin-top: 20px;
+			$rot.="			.todoist_table {
+										margin-bottom: 15px;
 									}
 						";	
 		}
