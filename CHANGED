@@ -1,3 +1,5 @@
+2018-02-07 (1.0.0)
+- full mutlilanguage support in weblink widget (DE/EN)
 2018-02-06 (0.9.19)
 - show detaillink in widget only if FHEMWEB attr hiddenroom detail is not set
 2018-02-06 (0.9.17)

@@ -13,7 +13,7 @@ use Data::UUID;
 
 #######################
 # Global variables
-my $version = "0.9.19";
+my $version = "1.0.0";
 
 my %gets = (
   "version:noArg"     => "",
@@ -22,19 +22,27 @@ my %gets = (
 my %todoist_transtable_EN = ( 
   "check"             =>  "Check",
   "delete"            =>  "Delete",
-  "refresh"           =>  "refresh",
+  "refreshList"       =>  "Refresh list",
   "clearList"         =>  "Delete all elements",
   "alreadythere"     	=>  "is already on the list",
   "error"							=>	"Error",
+  "clearconfirm"			=>	"Are you sure? This deletes ALL the task in this list permanently.",
+  "delconfirm"				=>	"Are you sure? This deletes the task permanently.",
+  "gotodetail"				=>	"Click to show detail page of todoist device",
+  "newentry"					=>	"Add new task to list",
 );
 
 my %todoist_transtable_DE = ( 
   "check"             =>  "Erledigen",
   "delete"            =>  "Löschen",
-  "refresh"           =>  "Aktualisieren",
+  "refreshList"       =>  "Liste aktualisieren",
   "clearList"         =>  "Alle Elemente löschen",
   "alreadythere"     	=>  "befindet sich bereits auf der Liste",
   "error"							=>	"Fehler",
+  "clearconfirm"			=>	"Wirklich alle Elemente löschen?",
+ 	"delconfirm"				=>	"Task wirklich löschen?",
+ 	"gotodetail"				=>	"Detailseite des todoist-Devices aufrufen",
+ 	"newentry"					=>	"Neuen Eintrag zur Liste hinzufügen",
 );
 
 my $todoist_tt;
@@ -890,8 +898,8 @@ sub todoist_GetTasksCallback($$$){
 					## set recurrence_type and count if present
 					if (defined($task->{date_string})) {
 						## if there is a task with recurrence_type, we create new readings
-						readingsBulkUpdate($hash, "Task_".$t."_recurrenceType",$task->{date_string});
-						$hash->{helper}{"RECURRENCE_TYPE"}{$taskID}=$task->{date_string};
+						readingsBulkUpdate($hash, "Task_".$t."_recurrenceType",encode_utf8($task->{date_string}));
+						$hash->{helper}{"RECURRENCE_TYPE"}{$taskID}=encode_utf8($task->{date_string});
 					}
 										
 					if ($param->{completed} != 1) {
@@ -1553,8 +1561,18 @@ sub todoist_Html(;$$) {
 	
 	## ajax request? don't show everything
 	if (!$refreshGet) {
-		# Javascript
-		$rot .= "<script type=\"text/javascript\" src=\"$FW_ME/www/pgm2/todoist.js?version=".$version."\"></script>
+		# Javascript and CSS
+		# define global variables
+		$rot .= "	<script type=\"text/javascript\">
+								todoist_tt={};
+								todoist_tt.refreshList='".$todoist_tt->{'refreshList'}."';
+								todoist_tt.clearList='".$todoist_tt->{'clearList'}."';
+								todoist_tt.clearconfirm='".$todoist_tt->{'clearconfirm'}."';
+								todoist_tt.delconfirm='".$todoist_tt->{'delconfirm'}."';
+								todoist_tt.check='".$todoist_tt->{'check'}."';
+								todoist_tt.delete='".$todoist_tt->{'delete'}."';
+					  	</script>";
+		$rot .= "	<script type=\"text/javascript\" src=\"$FW_ME/www/pgm2/todoist.js?version=".$version."\"></script>
 								<style id=\"todoist_style\">
 									.todoist_container {
 									    display: block;
@@ -1660,7 +1678,7 @@ sub todoist_Html(;$$) {
 		  $ret .= "<tr class=\"devTypeTr\">\n".
 		  				"	<td colspan=\"3\">\n".
 		  				"		<div class=\"todoist_devType todoist_devType_".$name." col_header\">\n".
-		  						(!$FW_hiddenroom{detail}?"<a href=\"/fhem?detail=".$name."\">":"").
+		  						(!$FW_hiddenroom{detail}?"<a title=\"".$todoist_tt->{'gotodetail'}."\" href=\"/fhem?detail=".$name."\">":"").
 		  							AttrVal($name,"alias",$name).
 		  						(!$FW_hiddenroom{detail}?"</a>":"").
 		  				"		</div>\n".
@@ -1690,16 +1708,15 @@ sub todoist_Html(;$$) {
 	  	$ret .= "<tr id=\"".$name."_".$_."\" data-data=\"true\" data-line-id=\"".$_."\" class=\"sortit todoist_data ".$eo." todoist_indent_".$indent."\">\n".
 	  					"	<td class=\"col1 todoist_col1\">\n".
 	  					"		<div class=\"todoist_move\"></div>\n".
-	  					"		<input class=\"todoist_checkbox_".$name."\" type=\"checkbox\" id=\"check_".$_."\" data-id=\"".$_."\" />\n".
+	  					"		<input title=\"".$todoist_tt->{'check'}."\" class=\"todoist_checkbox_".$name."\" type=\"checkbox\" id=\"check_".$_."\" data-id=\"".$_."\" />\n".
 	  					"	</td>\n".
 	  					"	<td class=\"col1 todoist_input\">\n".
-	  					#"		<a title=".
 	  					"		<span class=\"todoist_task_text\" data-id=\"".$_."\">".$hash->{helper}{TITLE}{$_}."</span>\n".
 	  					"		<input type=\"text\" data-id=\"".$_."\" style=\"display:none;\" class=\"todoist_input_".$name."\" value=\"".$hash->{helper}{TITLE}{$_}."\" />\n".
 	  					"	</td>\n";
 	  	
 	  	$ret .= "<td class=\"col2 todoist_delete\">\n".
-	  					" <a href=\"#\" class=\"todoist_delete_".$name."\" data-id=\"".$_."\">\n".
+	  					" <a title=\"".$todoist_tt->{'delete'}."\" href=\"#\" class=\"todoist_delete_".$name."\" data-id=\"".$_."\">\n".
 	  					"		x\n".
 	  					" </a>\n".
 	  					"</td>\n";
@@ -1715,9 +1732,9 @@ sub todoist_Html(;$$) {
 		  $showPH = 1 if ($i==1);
 		  
 	  	$ret .= "<tr class=\"sortit odd todoist_ph\"".($showPH!=1?" style=\"display:none;\"":"").">";
-	  	$ret .= "<td colspan=\"".$cs."\">".
-	  				"	No data for this list.\n".
-	  				"</td>";
+	  	$ret .= "	<td colspan=\"".$cs."\">".
+	  					"		No data for this list.\n".
+	  					"	</td>";
 	  	$ret .= "</tr>";
 
   
@@ -1726,7 +1743,7 @@ sub todoist_Html(;$$) {
 	  
 		  $ret .= "<td colspan=\"".$cs."\">".
 		  				"	<input type=\"hidden\" class=\"todoist_name\" id=\"todoist_name_".$name."\" value=\"".$name."\" />\n".
-		  				" <input type=\"text\" id=\"newEntry_".$name."\" />\n".
+		  				" <input title=\"".$todoist_tt->{'newentry'}."\" type=\"text\" id=\"newEntry_".$name."\" />\n".
 		  				"</td>";
 		  
 		  $ret .= "</tr>";

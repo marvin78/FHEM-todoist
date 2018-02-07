@@ -151,14 +151,14 @@
 		$(lastEl).before('<tr id="'+ name + "_" + id +'" data-data="true" data-line-id="' + id +'" class="sortit todoist_data ' + cl +'">\n' +
 	  					'	<td class="col1  todoist_col1">\n'+
 	  					'   <div class=\"todoist_move\"></div>\n'+
-	  					'		<input class="todoist_checkbox_' + name + '" type="checkbox" id="check_' + id + '" data-id="' + id + '" />\n'+
+	  					'		<input title=\"' + todoist_tt.check + '\" class="todoist_checkbox_' + name + '" type="checkbox" id="check_' + id + '" data-id="' + id + '" />\n'+
 	  					' </td>\n' +
 	  					'	<td class="col1 todoist_input">\n'+
 	  					' 	<span class="todoist_task_text" data-id="' + id + '">' + title + '</span>\n'+
 	  					'   <input type="text" data-id="' + id + '" style="display:none;" class="todoist_input_' + name +'" value="' + title + '" />'+
 	  					' </td>\n' +
 	  					' <td class="col2 todoist_delete">\n' +
-	  					' 	<a href="#" class="todoist_delete_' + name + '" data-id="' + id +'">\n'+
+	  					' 	<a title=\"' + todoist_tt.delete + '\" href="#" class="todoist_delete_' + name + '" data-id="' + id +'">\n'+
 	  					'			x\n'+
 	  					' 	</a>\n'+
 	  					'	</td>\n'+
@@ -189,8 +189,8 @@
 	}
 	
 	function todoist_addHeaders() {
-		$("<div class='todoist_refresh todoist_icon'> </div>").appendTo($('.todoist_devType')).html(todoist_icon.ref);
-		$("<div class='todoist_deleteAll todoist_icon'> </div>").appendTo($('.todoist_devType')).html(todoist_icon.del);
+		$("<div class='todoist_refresh todoist_icon' title='" + todoist_tt.refreshList + "'> </div>").appendTo($('.todoist_devType')).html(todoist_icon.ref);
+		$("<div class='todoist_deleteAll todoist_icon' title='" + todoist_tt.clearList + "'> </div>").appendTo($('.todoist_devType')).html(todoist_icon.del);
 	}
 
 	$(document).ready(function(){
@@ -201,7 +201,7 @@
 			todoist_refreshTable(name);
 			
 			$('.todoist_devType_' + name).on('click','div.todoist_deleteAll',function(e) {
-				if (confirm('Are you sure? This deletes ALL the task in this list permanently.')) {
+				if (confirm(todoist_tt.clearconfirm)) {
 					todoist_sendCommand('set ' + name + ' clearList');
 				}
 			});
@@ -233,7 +233,7 @@
 				}
 			});
 			$('#todoist_' + name + '_table').on('click','a.todoist_delete_'+name,function(e) {
-				if (confirm('Are you sure? This deletes the task permanently.')) {
+				if (confirm(todoist_tt.delconfirm)) {
 					var id=$(this).attr('data-id');
 					todoist_sendCommand('set ' + name + ' deleteTask ID:'+ id);
 				}
