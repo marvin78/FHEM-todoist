@@ -309,6 +309,17 @@
 				var nameH = tid.split("_")[0];
 				todoist_sendCommand('set ' + nameH + ' deleteTask ID:'+ id);
 			},
+			over: function (event,ui) {
+				var width = ui.item.innerWidth();
+				var height = ui.item.innerHeight();
+				ui.placeholder.parent().parent().css("width",width).css("height",height); 
+			},
+			out: function (event,ui) { 
+				var parent = ui.sender;
+				var id = $(parent).attr('id');
+				var name = id.split("_")[1];
+				$(parent).css('width','');
+			},
 			receive: function (event,ui) {
 				var parent = ui.item.parent().parent();
 				var id = ui.item.attr('data-line-id');

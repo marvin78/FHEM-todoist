@@ -13,7 +13,7 @@ use Data::UUID;
 
 #######################
 # Global variables
-my $version = "1.0.6";
+my $version = "1.0.7";
 
 my %gets = (
   "version:noArg"     => "",
