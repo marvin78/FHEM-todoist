@@ -70,7 +70,7 @@
 	}
 	
 	function todoist_refreshTableWidth() {
-		$('#sortable').each(function() {
+		$('.sortable').each(function() {
 			$(this).css('width','');
 		});
 	}
@@ -330,7 +330,7 @@
 				$(parent).css('width','');
 				refreshInput(name);
 				todoist_refreshTable(name);
-				todoist_getSizes();
+				todoist_refreshTableWidth();
 			},
 			receive: function (event,ui) {
 				var parent = ui.item.parent().parent();
