@@ -69,6 +69,12 @@
 		todoist_removeLoading(name);
 	}
 	
+	function todoist_refreshTableWidth() {
+		$('#sortable').each(function() {
+			$(this).css('width','');
+		});
+	}
+	
 	function todoist_reloadTable(name,val) {
 		var todoist_small = (screen.width < 480 || screen.height < 480);
 		$('table#todoist_' + name + '_table').find('tr.todoist_data').remove();
@@ -302,6 +308,7 @@
 				var name = id.split("_")[1];
 				if (ui.item.attr('data-remove')==1) ui.item.remove();
 				todoist_refreshTable(name,1);
+				todoist_refreshTableWidth();
 			},
 			remove: function (event,ui) {
 				var id=ui.item.attr('data-line-id');
@@ -312,13 +319,18 @@
 			over: function (event,ui) {
 				var width = ui.item.innerWidth();
 				var height = ui.item.innerHeight();
-				ui.placeholder.parent().parent().css("width",width).css("height",height); 
+				var hwidth = ui.placeholder.innerWidth();
+				if (width>hwidth) ui.placeholder.parent().parent().css("width",width).css("height",height); 
+				if (width<hwidth) ui.item.css("width",hwidth).css("height",height); 
 			},
 			out: function (event,ui) { 
 				var parent = ui.sender;
 				var id = $(parent).attr('id');
 				var name = id.split("_")[1];
 				$(parent).css('width','');
+				refreshInput(name);
+				todoist_refreshTable(name);
+				todoist_getSizes();
 			},
 			receive: function (event,ui) {
 				var parent = ui.item.parent().parent();
