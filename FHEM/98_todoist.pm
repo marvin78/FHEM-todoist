@@ -13,7 +13,7 @@ use Data::UUID;
 
 #######################
 # Global variables
-my $version = "1.0.8";
+my $version = "1.0.9";
 
 my %gets = (
   "version:noArg"     => "",
@@ -267,7 +267,7 @@ sub todoist_UpdateTask($$$) {
 		$pwd=todoist_GetPwd($hash);
 		
 		if ($pwd) {
-			Log3 $name,4, "$name: hash: ".Dumper($hash);
+			Log3 $name,5, "$name: hash: ".Dumper($hash);
 			
 			## complete a task
 			if ($type eq "complete") {
@@ -561,7 +561,8 @@ sub todoist_HandleTaskCallback($$$){
 	my $hash = $param->{hash};
 	my $title = $param->{tTitle};
 	
-	my $taskId = $param->{taskId} if ($param->{taskId});
+	my $taskId = 0;
+	$taskId = $param->{taskId} if ($param->{taskId});
 	
 	my $reading = $title;
 	
@@ -590,11 +591,11 @@ sub todoist_HandleTaskCallback($$$){
 				$reading .= " - ".$taskId;
 				
 				## do some logging
-				Log3 $name,4, "todoist ($name):  Task Callback data (decoded JSON): ".Dumper($decoded_json );
+				Log3 $name,5, "todoist ($name):  Task Callback data (decoded JSON): ".Dumper($decoded_json );
 				
 				Log3 $name,4, "todoist ($name): Callback-ID: $taskId" if ($taskId);
 			}
-			Log3 $name,4, "todoist ($name):  Task Callback error(s): ".Dumper($err);
+			Log3 $name,4, "todoist ($name):  Task Callback error(s): ".Dumper($err) if ($err);
 			Log3 $name,5, "todoist ($name):  Task Callback param: ".Dumper($param);
 			
 			readingsBulkUpdate($hash, "error","none");
@@ -631,8 +632,7 @@ sub todoist_HandleTaskCallback($$$){
 				my $decoded_json = decode_json($data);
 				$error = $decoded_json->{error} if ($decoded_json->{error});
 			}
-			$error = $param->{wType}."Task: ";
-			$error .= $error;
+			$error .= " | ".$param->{wType}."Task: ".$taskId;
 			$error .= "Unknown";
 			Log3 $name, 2, "todoist ($name): got error: ".$error;
 			todoist_ErrorReadings($hash,$error);
@@ -701,7 +701,7 @@ sub todoist_GetTasks($;$) {
 
 			
 			
-			Log3 $name,4, "todoist ($name): Param: ".Dumper($param);
+			Log3 $name,5, "todoist ($name): Param: ".Dumper($param);
 			
 			## non-blocking access to todoist API
 			InternalTimer(gettimeofday()+0.2, "HttpUtils_NonblockingGet", $param, 0);
@@ -744,7 +744,7 @@ sub todoist_GetTasksCallback($$$){
 	
 	my $name = $hash->{NAME}; 
 	
-	Log3 $name,4, "todoist ($name):  Task Callback data-raw: ".Dumper($data);
+	Log3 $name,5, "todoist ($name):  Task Callback data-raw: ".Dumper($data);
 	
 	my $lText="";
 	
@@ -771,6 +771,8 @@ sub todoist_GetTasksCallback($$$){
 			InternalTimer(gettimeofday()+0.2, "todoist_ErrorReadings",$hash, 0); 
 		}
 		else {
+			Log3 $name,4, "todoist ($name):  getTasks was successful";
+			Log3 $name,5, "todoist ($name):  Task item data: ".Dumper(@{$decoded_json->{items}});
 			## items data
 			my @taskseries = @{$decoded_json->{items}};
 			
