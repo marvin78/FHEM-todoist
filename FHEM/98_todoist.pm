@@ -6,14 +6,13 @@ use strict;
 use warnings;
 use Data::Dumper; 
 use JSON;
-use MIME::Base64;
 use Encode;
 use Date::Parse;
 use Data::UUID;
 
 #######################
 # Global variables
-my $version = "1.0.10";
+my $version = "1.0.11";
 
 my %gets = (
   "version:noArg"     => "",
@@ -171,9 +170,18 @@ sub todoist_GetPwd($) {
 		return undef;
 	}	  
 	
-	if ($password) {
-		$pwd=decode_base64($password);
-	}
+	if ( defined($password) ) {
+    if ( eval "use Digest::MD5;1" ) {
+       $key = Digest::MD5::md5_hex(unpack "H*", $key);
+       $key .= Digest::MD5::md5_hex($key);
+    }
+   
+    for my $char (map { pack('C', hex($_)) } ($password =~ /(..)/g)) {
+       my $decode=chop($key);
+       $pwd.=chr(ord($char)^ord($decode));
+       $key=$decode.$key;
+    }
+ 	}
 	
 	return undef if ($pwd eq "");
 	
@@ -945,18 +953,6 @@ sub todoist_GetTasksCallback($$$){
 	return undef;
 }
 
-# called if weblink widget table has to be updated
-sub todoist_ReloadTable($) {
-	my ($name) = @_;
-	
-	my $ret = todoist_Html($name,1);
-	$ret =~ s/\"/\'/g;
-	$ret =~ s/\n//g;
-	
-	map {FW_directNotify("#FHEMWEB:$_", "if (typeof todoist_reloadTable === \"function\") todoist_reloadTable('$name',\"$ret\")", "")} devspec2array("WEB.*");
-}
-
-
 ## get all Users
 sub todoist_GetUsers($) {
 	my ($hash) = @_;
@@ -1456,20 +1452,26 @@ sub todoist_setPwd($$@) {
 	 
 	return "Password can't be empty" if (!@pwd);
 	
+	my $pwdString=$pwd[0];
+	my $enc_pwd = "";
 	
 	my $index = $hash->{TYPE}."_".$hash->{NAME}."_passwd";
   my $key = getUniqueId().$index;
+  
+  if(eval "use Digest::MD5;1") {
+      $key = Digest::MD5::md5_hex(unpack "H*", $key);
+      $key .= Digest::MD5::md5_hex($key);
+  }
+    
+  for my $char (split //, $pwdString) {
+      my $encode=chop($key);
+      $enc_pwd.=sprintf("%.2x",ord($char)^ord($encode));
+      $key=$encode.$key;
+  }
 	
-	Log3 $name,5,"todoist ($name): unencoded pwd: $pwd[0]";
-	
-	my $pwdString=$pwd[0];
-
-	$pwdString=encode_base64($pwdString);
-	$pwdString =~ s/^\s+|\s+$//g;
-	$pwdString =~ s/\n//g;
-	
+	Log3 $name,5,"todoist ($name): encoded pwd: $enc_pwd";
 		 
-	my $err = setKeyValue($index, $pwdString);
+	my $err = setKeyValue($index, $enc_pwd);
   
 	return "error while saving the password - $err" if(defined($err));
   
@@ -1505,10 +1507,21 @@ sub todoist_checkPwd ($$) {
     return undef;
   }  
 	
-	if ($password) {
-		my $pw=decode_base64($password);
-		
-		return 1 if ($pw eq $pwd);
+	if ( defined($password) ) {
+		if ( eval "use Digest::MD5;1" ) {
+		   $key = Digest::MD5::md5_hex(unpack "H*", $key);
+		   $key .= Digest::MD5::md5_hex($key);
+		}
+
+	  my $dec_pwd = '';
+	 
+	  for my $char (map { pack('C', hex($_)) } ($password =~ /(..)/g)) {
+	     my $decode=chop($key);
+	     $dec_pwd.=chr(ord($char)^ord($decode));
+	     $key=$decode.$key;
+	  }
+	   
+	  return 1 if ($dec_pwd eq $pwd);
 	}
 	else {
 		return "no password saved" if (!$password);
@@ -1809,6 +1822,17 @@ sub todoist_Html(;$$$) {
   return $rot.$ret;
 }
 
+# called if weblink widget table has to be updated
+sub todoist_ReloadTable($) {
+	my ($name) = @_;
+	
+	my $ret = todoist_Html($name,1);
+	$ret =~ s/\"/\'/g;
+	$ret =~ s/\n//g;
+	
+	map {FW_directNotify("#FHEMWEB:$_", "if (typeof todoist_reloadTable === \"function\") todoist_reloadTable('$name',\"$ret\")", "")} devspec2array("WEB.*");
+}
+
 # check if element is in array
 sub todoist_inArray {
   my ($arr,$search_for) = @_;
@@ -1837,7 +1861,7 @@ sub todoist_inArray {
     <br /><br />
     Notes:<br />
     <ul>
-        <li>JSON, Data::Dumper, MIME::Base64, Date::Parse and Data::UUID have to be installed on the FHEM host.</li>
+        <li>JSON, Data::Dumper, Digest::MD5, Date::Parse and Data::UUID have to be installed on the FHEM host.</li>
     </ul>
     <br /><br />
     <a name="todoist_Define"></a>
