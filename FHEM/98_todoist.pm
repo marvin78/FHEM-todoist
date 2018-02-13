@@ -12,7 +12,7 @@ use Data::UUID;
 
 #######################
 # Global variables
-my $version = "1.0.11";
+my $version = "1.0.12";
 
 my %gets = (
   "version:noArg"     => "",
@@ -1225,16 +1225,39 @@ sub todoist_Rename($$) {
     
     my $old_index = "todoist_".$old."_passwd";
     my $new_index = "todoist_".$new."_passwd";
+    my $key = getUniqueId().$old_index;
     
-    my $old_key =getUniqueId().$old_index;
-    my $new_key =getUniqueId().$new_index;
+    my $new_hash = $defs{$new};
+    my $name = $new_hash->{NAME};
     
-    my ($err, $old_pwd) = getKeyValue($old_index);
+    my $old_key="";
     
-    return undef unless(defined($old_pwd));
+    my ($err, $password) = getKeyValue($old_index);
+				
+		if ($err) {
+			$new_hash->{helper}{PWD_NEEDED} = 1;
+			Log3 $name, 4, "todoist ($name): unable to read password from file: $err";
+			return undef;
+		}	  
+		
+		if ( defined($password) ) {
+	    if ( eval "use Digest::MD5;1" ) {
+	       $key = Digest::MD5::md5_hex(unpack "H*", $key);
+	       $key .= Digest::MD5::md5_hex($key);
+	    }
+	   
+	    for my $char (map { pack('C', hex($_)) } ($password =~ /(..)/g)) {
+	       my $decode=chop($key);
+	       $old_key.=chr(ord($char)^ord($decode));
+	       $key=$decode.$key;
+	    }
+	 	}
+    my $new_key = $old_key;
     
-    setKeyValue($new_index, $old_pwd);
-    setKeyValue($old_index, undef);
+    
+    return undef unless(defined($old_key));
+		    
+    todoist_setPwd($new_hash, $name, $new_key);
 		
 		Log3 $new, 3, "todoist: device has been renamed from $old to $new. Access-Token has been assigned to new name.";
 }
@@ -1247,17 +1270,38 @@ sub todoist_Copy($$)
     
     my $old_index = "todoist_".$old."_passwd";
     my $new_index = "todoist_".$new."_passwd";
+    my $key = getUniqueId().$old_index;
     
-    my $old_key =getUniqueId().$old_index;
-    my $new_key =getUniqueId().$new_index;
+    my $new_hash = $defs{$new};
+    my $name = $new_hash->{NAME};
     
-    my ($err, $old_pwd) = getKeyValue($old_index);
+    my $old_key="";
     
-    return undef unless(defined($old_pwd));
-		    
-    setKeyValue($new_index, $old_pwd);
+    my ($err, $password) = getKeyValue($old_index);
+				
+		if ($err) {
+			$new_hash->{helper}{PWD_NEEDED} = 1;
+			Log3 $name, 4, "todoist ($name): unable to read password from file: $err";
+			return undef;
+		}	  
 		
-		my $new_hash = $defs{$new};
+		if ( defined($password) ) {
+	    if ( eval "use Digest::MD5;1" ) {
+	       $key = Digest::MD5::md5_hex(unpack "H*", $key);
+	       $key .= Digest::MD5::md5_hex($key);
+	    }
+	   
+	    for my $char (map { pack('C', hex($_)) } ($password =~ /(..)/g)) {
+	       my $decode=chop($key);
+	       $old_key.=chr(ord($char)^ord($decode));
+	       $key=$decode.$key;
+	    }
+	 	}
+    my $new_key = $old_key;
+    
+    return undef unless(defined($old_key));
+		    
+    todoist_setPwd($new_hash, $name, $new_key);
 		
 		delete($new_hash->{helper}{PWD_NEEDED});
 		

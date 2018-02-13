@@ -1,3 +1,5 @@
+2018-02-13 (1.0.12) 
+- copy and rename repaired
 2018-02-13 (1.0.11) 
 - better encryption of access token. ATTENTION: You need to save the token again. Perl module Digest::MD5 is needed
 2018-02-13 (1.0.10) 
