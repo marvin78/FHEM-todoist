@@ -13,7 +13,7 @@ use Data::UUID;
 
 #######################
 # Global variables
-my $version = "1.0.9";
+my $version = "1.0.10";
 
 my %gets = (
   "version:noArg"     => "",
@@ -81,6 +81,7 @@ sub todoist_Initialize($) {
 													"avoidDuplicates:1,0 ".
 													"listDivider ".
 													"showDetailWidget:1,0 ".
+													"hideListIfEmpty:1,0 ".
 													$readingFnAttributes;
 											
 	if( !defined($todoist_tt) ){
@@ -1702,8 +1703,12 @@ sub todoist_Html(;$$$) {
 		my $hash = $defs{$name};
 	  my $id   = $defs{$name}{NR};
 	  
+	  my $countList = ReadingsVal($name,"count",0);
+	  my $hLIE = AttrVal($name,"hideListIfEmpty",0);
+	  my $showList = ($hLIE==1 && $countList==0)?0:1;
+	  
 	  # show active lists only
-	  if (!IsDisabled($name)) {
+	  if (!IsDisabled($name) && ($showList || $detail)) {
 	  
 		  # refresh request? don't show everything
 			if (!$refreshGet) {
@@ -1927,6 +1932,12 @@ sub todoist_inArray {
         <ul>
         <li>0: show todoist-Task-ID (default)</li>
         <li>1: hide the todoist-Task-ID</li>
+        </ul></li>
+        <br />
+        <li>hideListIfEmpty
+        <ul>
+        <li>0: don't hide list in widget, if empty (default)</li>
+        <li>1: hide list in widget, if empty</li>
         </ul></li>
         <br />
         <li>showPriority
