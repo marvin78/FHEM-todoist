@@ -12,7 +12,7 @@ use Data::UUID;
 
 #######################
 # Global variables
-my $version = "1.0.12";
+my $version = "1.0.13";
 
 my %gets = (
   "version:noArg"     => "",
@@ -1304,6 +1304,8 @@ sub todoist_Copy($$)
     todoist_setPwd($new_hash, $name, $new_key);
 		
 		delete($new_hash->{helper}{PWD_NEEDED});
+		
+		readingsSingleUpdate($new_hash,"state","inactive",1);
 		
 		Log3 $new, 3, "todoist: device has been copied from $old to $new. Access-Token has been assigned to new device.";
 }
