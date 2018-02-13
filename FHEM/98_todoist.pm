@@ -12,7 +12,7 @@ use Data::UUID;
 
 #######################
 # Global variables
-my $version = "1.0.13";
+my $version = "1.0.14";
 
 my %gets = (
   "version:noArg"     => "",
@@ -555,7 +555,7 @@ sub todoist_CreateTask($$) {
 		}
 	}
 	else {
-		map {FW_directNotify("#FHEMWEB:$_", "if (typeof todoist_ErrorDialog === \"function\") todoist_ErrorDialog('$name','$title ".$todoist_tt->{"alreadythere"}."','".$todoist_tt->{"error"}."')", "")} devspec2array("WEB.*");
+		map {FW_directNotify("#FHEMWEB:$_", "if (typeof todoist_ErrorDialog === \"function\") todoist_ErrorDialog('$name','$title ".$todoist_tt->{"alreadythere"}."','".$todoist_tt->{"error"}."')", "")} devspec2array("TYPE=FHEMWEB");
 		todoist_ErrorReadings($hash,"duplicate detected","duplicate detected");
 	}
 	
@@ -621,14 +621,14 @@ sub todoist_HandleTaskCallback($$$){
 			readingsEndUpdate( $hash, 1 );
 			
 			if ($param->{wType} =~ /(complete|delete|close)/) {
-				map {FW_directNotify("#FHEMWEB:$_", "if (typeof todoist_removeLine === \"function\") todoist_removeLine('$name','$taskId')", "")} devspec2array("WEB.*");
+				map {FW_directNotify("#FHEMWEB:$_", "if (typeof todoist_removeLine === \"function\") todoist_removeLine('$name','$taskId')", "")} devspec2array("TYPE=FHEMWEB");
 			}
 			if ($param->{wType} eq "create") {
 				if ($param->{parentId}) {
 					CommandSet(undef, "$name updateTask ID:$taskId parent_id=".$param->{parentId});
 					Log3 $name, 3, "todoist ($name): startet set parent_id over update after create: Task-ID: ".$taskId." - parent_id: ".$param->{parentId};
 				}
-				map {FW_directNotify("#FHEMWEB:$_", "if (typeof todoist_addLine === \"function\") todoist_addLine('$name','$taskId','$title')", "")} devspec2array("WEB.*");
+				map {FW_directNotify("#FHEMWEB:$_", "if (typeof todoist_addLine === \"function\") todoist_addLine('$name','$taskId','$title')", "")} devspec2array("TYPE=FHEMWEB");
 				#todoist_ReloadTable($name);
 			}
 		}
@@ -662,7 +662,7 @@ sub todoist_GetTasks($;$) {
 	
 	my $name=$hash->{NAME};
 	
-	map {FW_directNotify("#FHEMWEB:$_", "if (typeof todoist_addLoading === \"function\") todoist_addLoading('$name')", "")} devspec2array("WEB.*");
+	map {FW_directNotify("#FHEMWEB:$_", "if (typeof todoist_addLoading === \"function\") todoist_addLoading('$name')", "")} devspec2array("TYPE=FHEMWEB");
 	
 	$completed = 0 unless defined($completed);
 	
@@ -1178,7 +1178,7 @@ sub todoist_clearList($) {
 		}
 	}
 	if ($i==0) {
-		map {FW_directNotify("#FHEMWEB:$_", "if (typeof todoist_removeLoading === \"function\") todoist_removeLoading('$name')", "")} devspec2array("WEB.*");
+		map {FW_directNotify("#FHEMWEB:$_", "if (typeof todoist_removeLoading === \"function\") todoist_removeLoading('$name')", "")} devspec2array("TYPE=FHEMWEB");
 	}
 }
 
@@ -1876,7 +1876,7 @@ sub todoist_ReloadTable($) {
 	$ret =~ s/\"/\'/g;
 	$ret =~ s/\n//g;
 	
-	map {FW_directNotify("#FHEMWEB:$_", "if (typeof todoist_reloadTable === \"function\") todoist_reloadTable('$name',\"$ret\")", "")} devspec2array("WEB.*");
+	map {FW_directNotify("#FHEMWEB:$_", "if (typeof todoist_reloadTable === \"function\") todoist_reloadTable('$name',\"$ret\")", "")} devspec2array("TYPE=FHEMWEB");
 }
 
 # check if element is in array
