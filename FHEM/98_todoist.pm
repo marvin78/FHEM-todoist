@@ -12,7 +12,7 @@ use Data::UUID;
 
 #######################
 # Global variables
-my $version = "1.0.15";
+my $version = "1.1.0 - devel 011";
 
 my %gets = (
   "version:noArg"     => "",
@@ -30,6 +30,7 @@ my %todoist_transtable_EN = (
   "delconfirm"        =>  "Are you sure? This deletes the task permanently.",
   "gotodetail"        =>  "Click to show detail page of todoist device",
   "newentry"          =>  "Add new task to list",
+  "nolistdata"        =>  "No data for this list",
 );
 
 my %todoist_transtable_DE = ( 
@@ -43,6 +44,7 @@ my %todoist_transtable_DE = (
   "delconfirm"        =>  "Task wirklich löschen?",
   "gotodetail"        =>  "Detailseite des todoist-Devices aufrufen",
   "newentry"          =>  "Neuen Eintrag zur Liste hinzufügen",
+  "nolistdata"        =>  "List ist leer",
 );
 
 my $todoist_tt;
@@ -81,6 +83,7 @@ sub todoist_Initialize($) {
                           "listDivider ".
                           "showDetailWidget:1,0 ".
                           "hideListIfEmpty:1,0 ".
+                          "delDeletedLists:1,0 ".
                           $readingFnAttributes;
                       
   if( !defined($todoist_tt) ){
@@ -142,7 +145,7 @@ sub todoist_Define($$) {
     CommandDeleteReading(undef, "$hash->{NAME} listText");
     ## set state
     readingsSingleUpdate($hash,"state","active",1) if (!$hash->{helper}{PWD_NEEDED} && !IsDisabled($name) );
-    readingsSingleUpdate($hash,"state","inactive",1) if ($hash->{helper}{PWD_NEEDED});
+    readingsSingleUpdate($hash,"state","inactive",1) if ($hash->{helper}{PWD_NEEDED} || ReadingsVal($name,"state","-") eq "-");
     ## remove timers
     RemoveInternalTimer($hash,"todoist_GetTasks");
     todoist_GetTasks($hash) if (!IsDisabled($name) && !$hash->{helper}{PWD_NEEDED});
@@ -192,7 +195,12 @@ sub todoist_GetPwd($) {
 sub todoist_ErrorReadings($;$$) {
   my ($hash,$errorLog,$errorMessage) = @_;
   
-  $errorLog="no data" if (!defined($errorLog));
+  my $level=2;
+  
+  if (!defined($errorLog)) {
+    $level=3;
+    $errorLog="no data";
+  }
   $errorMessage="no data" if (!defined($errorMessage));
   
   if (defined($hash->{helper}{errorData}) && $hash->{helper}{errorData} ne "") {
@@ -210,7 +218,7 @@ sub todoist_ErrorReadings($;$$) {
   readingsBulkUpdate( $hash,"lastError",$errorMessage );
   readingsEndUpdate( $hash, 1 );
   
-  Log3 $name,2, "todoist ($name): Error Message: ".$errorMessage;
+  Log3 $name,$level, "todoist ($name): Error Message: ".$errorMessage;
   Log3 $name,4, "todoist ($name): Api-Error Callback-data: ".$errorLog;
   
   $hash->{helper}{errorData}="";
@@ -801,6 +809,7 @@ sub todoist_GetTasksCallback($$$){
         }
         if ($project->{parent_id}) {
           $hash->{PROJECT_PARENT}=$project->{parent_id};
+          readingsBulkUpdate($hash, ".projectParentId",$project->{parent_id});
         }
         else {
           delete($hash->{PROJECT_PARENT});
@@ -1092,6 +1101,183 @@ sub todoist_GetUsersCallback($$$){
   
 }
 
+# get all projects 
+sub todoist_GetProjects($) {
+  my ($hash) = @_;
+  
+  my $name=$hash->{NAME};
+  
+  my $param;
+  
+  my $pwd="";
+  
+  ## if no token is needed and device is not disabled, check token and get list vom todoist
+  if (!$hash->{helper}{PWD_NEEDED} && !IsDisabled($name)) {
+    
+    ## get password
+    $pwd=todoist_GetPwd($hash);
+    
+    my $data= {
+      token           => $pwd,
+      sync_token      => '*',
+      resource_types  => '["projects"]'
+    };
+    
+    if ($pwd) {
+    
+      Log3 $name,5, "$name: hash: ".Dumper($hash);
+      
+      $param = {
+        url        => "https://todoist.com/api/v7/sync",
+        data       => $data,
+        timeout    => 7,
+        method     => "POST",
+        header     => "Content-Type: application/x-www-form-urlencoded",
+        hash       => $hash,
+        callback   => \&todoist_GetProjectsCallback,  ## call callback sub to work with the data we get
+      };
+      
+      
+      Log3 $name,5, "todoist ($name): Param: ".Dumper($param);
+      
+      ## non-blocking access to todoist API
+      InternalTimer(gettimeofday()+1, "HttpUtils_NonblockingGet", $param, 0);
+    }
+    else {
+      todoist_ErrorReadings($hash,"access token empty");
+    }
+  }
+  else {
+    if (!IsDisabled($name)) {
+      todoist_ErrorReadings($hash,"no access token set");
+    }
+    else {
+      todoist_ErrorReadings($hash,"device is disabled");
+    }
+  }
+  
+  return undef;
+  
+}
+
+# get projects callback
+
+sub todoist_GetProjectsCallback($$$){
+  my ($param, $err, $data) = @_;
+  
+  my $hash=$param->{hash};
+  
+  my $name = $hash->{NAME}; 
+  
+  ## some Project-Info
+  my $pid = $hash->{PID};
+  my $room = AttrVal($name,"room",undef);
+  my $group = AttrVal($name,"group",undef);
+  
+  my $return="";
+  
+  my $i=0;
+  
+  Log3 $name,5, "todoist ($name): Projects Callback data: ".Dumper($data);
+  
+  readingsBeginUpdate($hash);
+  
+  if ($err ne "") {
+    todoist_ErrorReadings($hash,$err);
+  }
+  else {
+    my $decoded_json="";
+    
+    if (eval{decode_json($data)}) {
+    
+      $decoded_json = decode_json($data);
+      
+      Log3 $name,5, "todoist ($name):  User Callback data (decoded JSON): ".Dumper($decoded_json );
+    }
+    if ((ref($decoded_json) eq "HASH" && !$decoded_json->{projects}) || $decoded_json eq "") {
+      $hash->{helper}{errorData} = Dumper($data);
+      $hash->{helper}{errorMessage} = "GetTasks: Response was damaged or empty. See log for details.";
+      InternalTimer(gettimeofday()+0.2, "todoist_ErrorReadings",$hash, 0); 
+    }
+    else {
+      Log3 $name,4, "todoist ($name): getProjects was successful";
+      Log3 $name,5, "todoist ($name): Task projects data: ".Dumper(@{$decoded_json->{projects}});
+      ## items data
+      my @projects = @{$decoded_json->{projects}};
+      
+      ## count the results
+      my $count=@projects;
+      
+      ## no data
+      if ($count==0) {
+        InternalTimer(gettimeofday()+0.2, "todoist_ErrorReadings",$hash, 0); 
+        readingsBulkUpdate($hash, "count",0);
+      }
+      else {
+        # array for compare
+        my @comDevs;
+        # walk through projects
+        foreach my $project (@projects) {
+          my $project_id = $project->{id};
+          my $parent_id = $project->{parent_id};
+          my $new_name = encode_utf8($project->{name});
+          # new title
+          my $title = $name."_".$new_name;
+          # is this parent_id equal to id of current project?
+          if ($pid == $parent_id) {
+            push @comDevs,$project_id;
+            Log3 $name,4, "todoist ($name): get Projects: Project-ID: $project_id - Title: $new_name - Parent-ID: $parent_id";
+            # does this project exist in FHEM?
+            my $existP = devspec2array("PID=$project_id");
+            if (!$existP && (!$project->{is_deleted} || $project->{is_deleted}!=1)) {
+              # if not, define new todoist device
+              fhem("copy $name $title $project_id") if (!defined($defs{$title}));
+              my $new_hash = $defs{$title};
+              # copy some attributes and token
+              if ($new_hash) {      
+                $return.=" $title";
+                $i++;
+                Log3 $name,4, "todoist ($name): new project $title, defined by cChildProjects";
+                $new_hash->{PROJECT_NAME}=$project->{name};
+                $new_hash->{PROJECT_INDENT}=$project->{indent};
+                $new_hash->{PROJECT_COLOR}=$project->{color};
+                $new_hash->{PROJECT_ORDER}=$project->{item_order};
+                if ($project->{user_id}) {
+                  $new_hash->{PROJECT_USER}=$project->{user_id};
+                }
+                else {
+                  delete($new_hash->{PROJECT_USER});
+                }
+                if ($project->{parent_id}) {
+                  $new_hash->{PROJECT_PARENT}=$project->{parent_id};
+                  readingsSingleUpdate($new_hash, ".projectParentId",$project->{parent_id},1);
+                }
+                else {
+                  delete($new_hash->{PROJECT_PARENT});
+                }
+              }
+            }
+          }
+        }
+        if (AttrVal($name,"delDeletedLists",0)==1) {
+          # get FHEM projects for this parent_id 
+          my @tDevs = devspec2array(".projectParentId=$pid");
+          foreach my $dev (@tDevs) {
+            my $tDev = $defs{$dev};
+            # delete the one not in array
+            if (!todoist_inArray(\@comDevs,$tDev->{PID})) {
+              CommandDelete(undef,$dev);
+              Log3 $name,3, "todoist ($name): deleted device ".$dev." in cChildProjects";
+            } 
+          }
+        }
+      }
+    }
+  }
+  Log3 $name,3, "todoist ($name): Got $i new projects: ".$return;
+  return "Got $i new projects: ".$return;
+}
+
 # sort alphabetically (probably deprecated)
 sub todoist_sort($) {
   my ($hash) = @_;
@@ -1264,7 +1450,7 @@ sub todoist_Rename($$) {
 
 ################################################
 # If Device is copied, copy the password data
-sub todoist_Copy($$)
+sub todoist_Copy($$;$)
 {
     my ($old, $new) = @_;  
     
@@ -1355,7 +1541,7 @@ sub todoist_Attr($@) {
     todoist_RestartGetTimer($hash);
   }
   
-  if ( $attrName eq "sortTasks" ||  $attrName =~ /(show(Priority|AssignedBy|Responsible|Indent|Order)|getCompleted|hideId)/) {
+  if ( $attrName eq "sortTasks" ||  $attrName =~ /(show(Priority|AssignedBy|Responsible|Indent|Order|DetailWidget)|getCompleted|hide(Id|ListIfEmpty)|autoGetUsers|avoidDuplicates|delDeletedLists)/) {
     if ( $cmd eq "set" ) {
       return "$name: $attrName has to be 0 or 1" if ($attrVal !~ /^(0|1)$/);
       Log3 $name, 4, "todoist ($name): set attribut $attrName to $attrVal";
@@ -1385,6 +1571,7 @@ sub todoist_Set ($@) {
     push @sets, "updateTask";
     push @sets, "clearList:noArg";
     push @sets, "getTasks:noArg";
+    push @sets, "cChildProjects:noArg";
     push @sets, "getUsers:noArg";
   }
   push @sets, "accessToken" if ($hash->{helper}{PWD_NEEDED});
@@ -1410,6 +1597,11 @@ sub todoist_Set ($@) {
     RemoveInternalTimer($hash,"todoist_GetTasks");
     Log3 $name, 4, "todoist ($name): set getTasks manually. Timer restartet.";
     InternalTimer(gettimeofday()+1, "todoist_GetTasks", $hash, 0) if (!IsDisabled($name) && !$hash->{helper}{PWD_NEEDED});
+  }
+  elsif ($cmd eq "cChildProjects") {
+    RemoveInternalTimer($hash,"todoist_GetProjects");
+    Log3 $name, 4, "todoist ($name): set getProjects manually. Timer restartet.";
+    InternalTimer(gettimeofday()+1, "todoist_GetProjects", $hash, 0) if (!IsDisabled($name) && !$hash->{helper}{PWD_NEEDED});
   }
   elsif ($cmd eq "getUsers") {
     RemoveInternalTimer($hash,"todoist_GetUsers");
@@ -1706,6 +1898,14 @@ sub todoist_Html(;$$$) {
                   .todoist_sortit_handler::after {
                     content: '.. .. .. ..';
                   }
+                  \@media(max-device-width: 480px){
+                    .todoist_move {
+                      width:35px;
+                    }
+                    .todoist_sortit_handler {
+                       width: 5px;
+                    }
+                  }
                   .todoist_delete {
                     padding-right:15px!important;
                     padding-left:15px!important;
@@ -1783,7 +1983,7 @@ sub todoist_Html(;$$$) {
                 "   </div>\n".
                 " </td>\n".
                 "</tr>\n";
-        $ret .= "<tr><td colspan=\"3\"><table class=\"block wide sortable\" id=\"todoist_".$name."_table\">\n"; 
+        $ret .= "<tr><td colspan=\"3\"><table class=\"block wide sortable\" id=\"todoistTable_".$name."\">\n"; 
       
       }
       
@@ -1834,7 +2034,7 @@ sub todoist_Html(;$$$) {
         
         $ret .= "<tr class=\"sortit odd todoist_ph\"".($showPH!=1?" style=\"display:none;\"":"").">";
         $ret .= " <td colspan=\"".$cs."\">".
-                "   No data for this list.\n".
+                "   ".$todoist_tt->{'nolistdata'}.".\n".
                 " </td>";
         $ret .= "</tr>";
 
@@ -1981,6 +2181,8 @@ sub todoist_inArray {
         <code>set &lt;DEVICE&gt; deleteTask ID:&lt;todoist-TASK-ID&gt;</code> - deletes a task by todoist-Task-ID</li>
         <li><b>sortTasks</b> - sort Tasks alphabetically</li>
         <li><b>clearList</b> - <b><u>deletes</u></b> all Tasks from the list (only FHEM listed Tasks can be deleted)</li>
+        <li><b>cChildProjects</b> - searches for children and defines them if possible, deletes lists that are deleted 
+        in todoist (Attribut delDeletedLists) </li>
     </ul>
     <br />
     <a name="todoist_Attributes"></a>
@@ -2075,6 +2277,12 @@ sub todoist_inArray {
         <ul>
         <li>0: don't check for duplicates (default)</li>
         <li>1: check for duplicates, deny new entries if task exists (exactly)</li>
+        </ul></li>
+        <br />
+        <li>delDeletedLists
+        <ul>
+        <li>0: don't delete deleted childrens (default)</li>
+        <li>1: delete deleted childrens</li>
         </ul></li>
         <br />
         <li>listDivider<br />
