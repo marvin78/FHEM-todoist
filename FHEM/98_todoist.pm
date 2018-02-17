@@ -49,7 +49,6 @@ my %todoist_transtable_DE = (
 
 my $todoist_tt;
 
-
 sub todoist_Initialize($) {
   my ($hash) = @_;
 
