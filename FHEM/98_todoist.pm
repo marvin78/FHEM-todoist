@@ -89,7 +89,7 @@ sub todoist_Initialize($) {
                       
   if( !defined($todoist_tt) ){
     # in any attribute redefinition readjust language
-    my $lang = AttrVal("global","language", AttrVal($name,"language","EN"));
+    my $lang = AttrVal($name,"language", AttrVal("global","language","EN"));
     if( $lang eq "DE") {
       $todoist_tt = \%todoist_transtable_DE;
     }
@@ -108,7 +108,7 @@ sub todoist_Define($$) {
   
   if( !defined($todoist_tt) ){
     # in any attribute redefinition readjust language
-    my $lang = AttrVal("global","language", AttrVal($name,"language","EN"));
+    my $lang = AttrVal($name,"language", AttrVal("global","language","EN"));
     if( $lang eq "DE") {
       $todoist_tt = \%todoist_transtable_DE;
     }
