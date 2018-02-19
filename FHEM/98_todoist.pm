@@ -12,7 +12,7 @@ use Data::UUID;
 
 #######################
 # Global variables
-my $version = "1.1.2";
+my $version = "1.1.3";
 
 my %gets = (
   "version:noArg"     => "",
@@ -1596,7 +1596,7 @@ sub todoist_Set ($@) {
   
   my @sets = ();
   
-  push @sets, "active:noArg" if (IsDisabled($name));
+  push @sets, "active:noArg" if (IsDisabled($name) && !$hash->{helper}{PWD_NEEDED});
   push @sets, "inactive:noArg" if (!IsDisabled($name));
   if (!IsDisabled($name) && !$hash->{helper}{PWD_NEEDED}) {
     push @sets, "addTask";
