@@ -1,6 +1,5 @@
-ATTENTION: As of Version 1.0.10, you need to save the access token again. Perl module Digest::MD5 is needed
-
-2018-02-17 (1.1.1)
+!!! ATTENTION: As of Version 1.0.10, you need to save the access token again. Perl module Digest::MD5 is needed
+2018-02-17 (1.1.2)
 - got rid of german commandref
 2018-02-17 (1.1.0)
 - get child projects and define them as devices
