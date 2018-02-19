@@ -174,7 +174,7 @@ sub todoist_GetPwd($) {
     return undef;
   }   
   
-  #some encryption
+  #some decryption
   if ( defined($password) ) {
     if ( eval "use Digest::MD5;1" ) {
        $key = Digest::MD5::md5_hex(unpack "H*", $key);
@@ -1949,13 +1949,13 @@ sub todoist_Html(;$$$) {
                   tr.ui-sortable-helper {
                     background-color:#111111;
                   }
-                  .todoist_indent_2 td:first-child input {
+                  .todoist_indent_2 {
                     padding-left:20px!important;
                   }
-                  .todoist_indent_3 td:first-child input {
+                  .todoist_indent_3 {
                     padding-left:40px!important;
                   }
-                  .todoist_indent_4 td:first-child input {
+                  .todoist_indent_4 {
                     padding-left:60px!important;
                   }
                   .todoist_ph td {
@@ -2041,12 +2041,12 @@ sub todoist_Html(;$$$) {
 
         my $indent=$hash->{helper}{INDENT}{$_};
         
-        $ret .= "<tr id=\"".$name."_".$_."\" data-data=\"true\" data-line-id=\"".$_."\" class=\"sortit todoist_data ".$eo." todoist_indent_".$indent."\">\n".
+        $ret .= "<tr id=\"".$name."_".$_."\" data-data=\"true\" data-line-id=\"".$_."\" class=\"sortit todoist_data ".$eo."\">\n".
                 " <td class=\"col1 todoist_col1\">\n".
                 "   <div class=\"todoist_move\"></div>\n".
                 "   <input title=\"".$todoist_tt->{'check'}."\" class=\"todoist_checkbox_".$name."\" type=\"checkbox\" id=\"check_".$_."\" data-id=\"".$_."\" />\n".
                 " </td>\n".
-                " <td class=\"col1 todoist_input\">\n".
+                " <td class=\"col1 todoist_input todoist_indent_".$indent."\">\n".
                 "   <span class=\"todoist_task_text\" data-id=\"".$_."\">".$hash->{helper}{TITLE}{$_}."</span>\n".
                 "   <input type=\"text\" data-id=\"".$_."\" style=\"display:none;\" class=\"todoist_input_".$name."\" value=\"".$hash->{helper}{TITLE}{$_}."\" />\n".
                 " </td>\n";
@@ -2415,17 +2415,5 @@ sub todoist_inArray {
 
 
 =end html
-=begin html_DE
-
-<a name="todoist"></a>
-<h3>todoist</h3>
-<ul>
-    Ein Modul für die Verwaltung einer todoist-Taskliste. Tasks können hinzugefügt, geändert, komplettiert, gelöscht und geschlossen werden.
-    Ein widget für die Bearbeitung von Tasks ist im Lieferumpfang enthalten.
-    <br /><br />
-    Für die Voraussetzungen, Beschreibung und Dokumentation der Befehle, Readings und Attribute, bitte die englische Commandref konsultieren.
-</ul>
-
-=end html_DE
 
 =cut
