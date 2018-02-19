@@ -10,4 +10,4 @@ Documentation can be found in the .pm file as commandref part.
 Support: https://forum.fhem.de/index.php/topic,78572.0.html
 
 
-ATTENTION: As of version 1.1.0 you have to reset the access token once.
+ATTENTION: As of version 1.0.10 you have to reset the access token once.
