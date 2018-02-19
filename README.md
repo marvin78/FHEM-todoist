@@ -5,6 +5,9 @@ A FHEM module to get a task list as readings from todoist. Tasks can be complete
 
 FHEM-Users use this eg. to work with shopping lists in home automation.
 
-Documentation is in the file.
+Documentation can be found in the .pm file as commandref part.
 
 Support: https://forum.fhem.de/index.php/topic,78572.0.html
+
+
+ATTENTION: As of version you have to reset the access token once.
