@@ -12,7 +12,7 @@ use Data::UUID;
 
 #######################
 # Global variables
-my $version = "1.1.3";
+my $version = "1.1.4";
 
 my %gets = (
   "version:noArg"     => "",
@@ -261,6 +261,11 @@ sub todoist_UpdateTask($$$) {
     $taskId = int($temp[1]);
     $title = $hash->{helper}{"TITLE"}{$temp[1]};
   }
+  ## use task content (only complete)
+  elsif (@temp && $temp[0] eq "TITLE" && ($type eq "complete" || $type eq "close" || $type eq "delete")) {
+    $title = $temp[1];
+    $taskId = $hash->{helper}{"TITLES"}{$title} if ($hash->{helper}{"TITLES"});
+  }
   ## use Task-Number 
   else {
     $tid=int($tid);
@@ -485,9 +490,9 @@ sub todoist_CreateTask($$) {
         
         # data array for API - we could transfer more data        
         my $data = {
-                     project_id           => int($hash->{PID}),
-                     content              => $title,
-                     token                => $pwd,
+          project_id           => int($hash->{PID}),
+          content              => $title,
+          token                => $pwd,
         };
         
         ## check for dueDate as Parameter or part of title - push to hash
@@ -870,6 +875,7 @@ sub todoist_GetTasksCallback($$$){
           ## a few helper for ID and revision
           $hash->{helper}{"IDS"}{"Task_".$i}=$taskID; # todoist Task-ID
           $hash->{helper}{"TITLE"}{$taskID}=$title; # Task title (content)
+          $hash->{helper}{"TITLES"}{$title}=$taskID; # Task title (content)
           $hash->{helper}{"WID"}{$taskID}=$i; # FHEM Task-ID
           $hash->{helper}{"INDENT"}{$taskID}=$task->{indent}; # todoist Task indent
           $hash->{helper}{"PRIORITY"}{$taskID}=$task->{priority}; # todoist Task indent
@@ -1407,112 +1413,111 @@ sub todoist_Undefine($$) {
 ################################################
 # If Device is deleted, delete the password data
 sub todoist_Delete($$) {
-    my ($hash, $name) = @_;  
-    
-    my $old_index = "todoist_".$name."_passwd";
-    
-    my $old_key =getUniqueId().$old_index;
-    
-    my ($err, $old_pwd) = getKeyValue($old_index);
-    
-    return undef unless(defined($old_pwd));
-        
-    setKeyValue($old_index, undef);
+  my ($hash, $name) = @_;  
+  
+  my $old_index = "todoist_".$name."_passwd";
+  
+  my $old_key =getUniqueId().$old_index;
+  
+  my ($err, $old_pwd) = getKeyValue($old_index);
+  
+  return undef unless(defined($old_pwd));
+      
+  setKeyValue($old_index, undef);
 
-    
-    Log3 $name, 3, "todoist: device $name as been deleted. Access-Token has been deleted too.";
+  
+  Log3 $name, 3, "todoist: device $name as been deleted. Access-Token has been deleted too.";
 }
 
 ################################################
 # If Device is renamed, copy the password data
 sub todoist_Rename($$) {
-    my ($new, $old) = @_;  
-    
-    my $old_index = "todoist_".$old."_passwd";
-    my $new_index = "todoist_".$new."_passwd";
-    my $key = getUniqueId().$old_index;
-    
-    my $new_hash = $defs{$new};
-    my $name = $new_hash->{NAME};
-    
-    my $old_key="";
-    
-    my ($err, $password) = getKeyValue($old_index);
-        
-    if ($err) {
-      $new_hash->{helper}{PWD_NEEDED} = 1;
-      Log3 $name, 4, "todoist ($name): unable to read password from file: $err";
-      return undef;
-    }   
-    
-    if ( defined($password) ) {
-      if ( eval "use Digest::MD5;1" ) {
-         $key = Digest::MD5::md5_hex(unpack "H*", $key);
-         $key .= Digest::MD5::md5_hex($key);
-      }
-     
-      for my $char (map { pack('C', hex($_)) } ($password =~ /(..)/g)) {
-         my $decode=chop($key);
-         $old_key.=chr(ord($char)^ord($decode));
-         $key=$decode.$key;
-      }
+  my ($new, $old) = @_;  
+  
+  my $old_index = "todoist_".$old."_passwd";
+  my $new_index = "todoist_".$new."_passwd";
+  my $key = getUniqueId().$old_index;
+  
+  my $new_hash = $defs{$new};
+  my $name = $new_hash->{NAME};
+  
+  my $old_key="";
+  
+  my ($err, $password) = getKeyValue($old_index);
+      
+  if ($err) {
+    $new_hash->{helper}{PWD_NEEDED} = 1;
+    Log3 $name, 4, "todoist ($name): unable to read password from file: $err";
+    return undef;
+  }   
+  
+  if ( defined($password) ) {
+    if ( eval "use Digest::MD5;1" ) {
+       $key = Digest::MD5::md5_hex(unpack "H*", $key);
+       $key .= Digest::MD5::md5_hex($key);
     }
-    my $new_key = $old_key;
-    
-    
-    return undef unless(defined($old_key));
-        
-    todoist_setPwd($new_hash, $name, $new_key);
-    
-    Log3 $new, 3, "todoist: device has been renamed from $old to $new. Access-Token has been assigned to new name.";
+   
+    for my $char (map { pack('C', hex($_)) } ($password =~ /(..)/g)) {
+       my $decode=chop($key);
+       $old_key.=chr(ord($char)^ord($decode));
+       $key=$decode.$key;
+    }
+  }
+  my $new_key = $old_key;
+  
+  
+  return undef unless(defined($old_key));
+      
+  todoist_setPwd($new_hash, $name, $new_key);
+  
+  Log3 $new, 3, "todoist: device has been renamed from $old to $new. Access-Token has been assigned to new name.";
 }
 
 ################################################
 # If Device is copied, copy the password data
-sub todoist_Copy($$;$)
-{
-    my ($old, $new) = @_;  
-    
-    my $old_index = "todoist_".$old."_passwd";
-    my $new_index = "todoist_".$new."_passwd";
-    my $key = getUniqueId().$old_index;
-    
-    my $new_hash = $defs{$new};
-    my $name = $new_hash->{NAME};
-    
-    my $old_key="";
-    
-    my ($err, $password) = getKeyValue($old_index);
-        
-    if ($err) {
-      $new_hash->{helper}{PWD_NEEDED} = 1;
-      Log3 $name, 4, "todoist ($name): unable to read password from file: $err";
-      return undef;
-    }   
-    
-    if ( defined($password) ) {
-      if ( eval "use Digest::MD5;1" ) {
-         $key = Digest::MD5::md5_hex(unpack "H*", $key);
-         $key .= Digest::MD5::md5_hex($key);
-      }
-     
-      for my $char (map { pack('C', hex($_)) } ($password =~ /(..)/g)) {
-         my $decode=chop($key);
-         $old_key.=chr(ord($char)^ord($decode));
-         $key=$decode.$key;
-      }
+sub todoist_Copy($$;$) {
+  my ($old, $new) = @_;  
+  
+  my $old_index = "todoist_".$old."_passwd";
+  my $new_index = "todoist_".$new."_passwd";
+  my $key = getUniqueId().$old_index;
+  
+  my $new_hash = $defs{$new};
+  my $name = $new_hash->{NAME};
+  
+  my $old_key="";
+  
+  my ($err, $password) = getKeyValue($old_index);
+      
+  if ($err) {
+    $new_hash->{helper}{PWD_NEEDED} = 1;
+    Log3 $name, 4, "todoist ($name): unable to read password from file: $err";
+    return undef;
+  }   
+  
+  if ( defined($password) ) {
+    if ( eval "use Digest::MD5;1" ) {
+       $key = Digest::MD5::md5_hex(unpack "H*", $key);
+       $key .= Digest::MD5::md5_hex($key);
     }
-    my $new_key = $old_key;
-    
-    return undef unless(defined($old_key));
-        
-    todoist_setPwd($new_hash, $name, $new_key);
-    
-    delete($new_hash->{helper}{PWD_NEEDED});
-    
-    readingsSingleUpdate($new_hash,"state","inactive",1);
-    
-    Log3 $new, 3, "todoist: device has been copied from $old to $new. Access-Token has been assigned to new device.";
+   
+    for my $char (map { pack('C', hex($_)) } ($password =~ /(..)/g)) {
+       my $decode=chop($key);
+       $old_key.=chr(ord($char)^ord($decode));
+       $key=$decode.$key;
+    }
+  }
+  my $new_key = $old_key;
+  
+  return undef unless(defined($old_key));
+      
+  todoist_setPwd($new_hash, $name, $new_key);
+  
+  delete($new_hash->{helper}{PWD_NEEDED});
+  
+  readingsSingleUpdate($new_hash,"state","inactive",1);
+  
+  Log3 $new, 3, "todoist: device has been copied from $old to $new. Access-Token has been assigned to new device.";
 }
 
 ## some checks if attribute is set or deleted
@@ -1849,7 +1854,19 @@ sub todoist_detailFn(){
   
   return undef if (IsDisabled($name) || AttrVal($name,"showDetailWidget",1)!=1);
   
-  return todoist_Html($name,undef,1);
+  my $html="";
+  
+  my $icon = AttrVal($devname, "icon", "");
+  $icon = FW_makeImage($icon,$icon,"icon") . "&nbsp;" if($icon);
+
+  #$html = '<div id="ddtable" class="makeTable wide"><table class="block wide"><tr class="odd">'.
+  #           '<td width="300px"><div>'.$icon.'&nbsp;'.AttrVal($name,"alias",$name).'</div></td>'.
+  #           '<td informId="'.$name.'"><div id="'.$name.'" title="Initialized" class="col2">'.InternalVal($devname,"STATE",ReadingsVal($devname,"state","-")).'</div></td>'.
+  #           '</tr></table></div>';
+  
+  $html .= todoist_Html($name,undef,1);
+  
+  return $html;
 }
 
 # frontend weblink widget (FHEMWEB)
@@ -2201,20 +2218,23 @@ sub todoist_inArray {
         <code>set &lt;DEVICE&gt; updateTask 1 dueDate=übermorgen</code></li>
         
         <br /><br />
-        <li><b>completeTask</b> - completes a task. Needs number of task (reading 'Task_NUMBER') or the 
+        <li><b>completeTask</b> - completes a task. Needs number of task (reading 'Task_NUMBER'), the title or the 
         todoist-Task-ID (ID:&lt;ID&gt;) as parameter<br />
         <code>set &lt;DEVICE&gt; completeTask &lt;TASK-ID&gt;</code> - completes a task by number<br >
         <code>set &lt;DEVICE&gt; completeTask ID:&lt;todoist-TASK-ID&gt;</code> - completes a task by todoist-Task-ID</li>
+        <code>set &lt;DEVICE&gt; completeTask TITLE:&lt;Task title&gt;</code> - completes a task by title</li>
         <li><b>closeTask</b> - closes a task. Needs number of task (reading 'Task_NUMBER') or the 
         todoist-Task-ID (ID:<ID>) as parameter<br />
         Difference to complete is: regular task is completed and moved to history, subtask is checked (marked as done, but not moved to history),<br /> 
         recurring task is moved forward (due date is updated).<br />
         <code>set &lt;DEVICE&gt; closeTask &lt;TASK-ID&gt;</code> - completes a task by number<br >
         <code>set &lt;DEVICE&gt; closeTask ID:&lt;todoist-TASK-ID&gt;</code> - completes a task by todoist-Task-ID</li>
+        <code>set &lt;DEVICE&gt; closeTask TITLE:&lt;Task title&gt;</code> - completes a task by title</li>
         <li><b>uncompleteTask</b> - uncompletes a Task. Use it like complete.</li>
-        <li><b>deleteTask</b> - deletes a task. Needs number of task (reading 'Task_NUMBER') or the todoist-Task-ID (ID:&lt;ID&gt;) as parameter
+        <li><b>deleteTask</b> - deletes a task. Needs number of task (reading 'Task_NUMBER'), title or the todoist-Task-ID (ID:&lt;ID&gt;) as parameter
         <code>set &lt;DEVICE&gt; deleteTask &lt;TASK-ID&gt;</code> - deletes a task by number<br />
         <code>set &lt;DEVICE&gt; deleteTask ID:&lt;todoist-TASK-ID&gt;</code> - deletes a task by todoist-Task-ID</li>
+        <code>set &lt;DEVICE&gt; deleteTask TITLE:&lt;Task title&gt;</code> - deletes a task by title</li>
         <li><b>sortTasks</b> - sort Tasks alphabetically</li>
         <li><b>clearList</b> - <b><u>deletes</u></b> all Tasks from the list (only FHEM listed Tasks can be deleted)</li>
         <li><b>cChildProjects</b> - searches for children and defines them if possible, deletes lists that are deleted 
