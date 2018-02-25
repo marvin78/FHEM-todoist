@@ -168,7 +168,7 @@
               ' </td>\n'+
               '</tr>\n'
     );
-    $('table#todoist_' + name + '_table').find("tr.todoist_ph").hide();
+    $('#todoistTable_' + name).find("tr.todoist_ph").hide();
     todoist_getSizes();
     todoist_refreshTable(name);
   }
