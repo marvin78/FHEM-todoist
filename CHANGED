@@ -1,5 +1,5 @@
 !!! ATTENTION: As of Version 1.0.10, you need to save the access token again. Perl module Digest::MD5 is needed
-2018-02-16 (1.1.5)
+2018-02-16 (1.1.6)
 - better doku, error message for task not found by title
 2018-02-25 (1.1.4)
 - delete, close and complete task by title/content
