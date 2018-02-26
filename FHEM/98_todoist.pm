@@ -12,7 +12,7 @@ use Data::UUID;
 
 #######################
 # Global variables
-my $version = "1.1.5";
+my $version = "1.1.6";
 
 my %gets = (
   "version:noArg"     => "",
@@ -31,6 +31,7 @@ my %todoist_transtable_EN = (
   "gotodetail"        =>  "Click to show detail page of todoist device",
   "newentry"          =>  "Add new task to list",
   "nolistdata"        =>  "No data for this list",
+  "idnotfound"        =>  "Could not find the task",
 );
 
 my %todoist_transtable_DE = ( 
@@ -45,6 +46,7 @@ my %todoist_transtable_DE = (
   "gotodetail"        =>  "Detailseite des todoist-Devices aufrufen",
   "newentry"          =>  "Neuen Eintrag zur Liste hinzufügen",
   "nolistdata"        =>  "List ist leer",
+  "idnotfound"        =>  "Task konnte nicht gefundern werden",
 );
 
 my $todoist_tt;
@@ -246,13 +248,13 @@ sub todoist_UpdateTask($$$) {
   my %commands=();
   
   my $method;
-  my $taskId;
+  my $taskId=0;
   my $title;
   
   ## get Task-ID
   my $tid = @$a[0];
   
-  ## check if ID is todoist ID (ID:.*)
+  ## check if ID is todoist ID (ID:.*) or title (TITLE:.*)
   my @temp=split(":",$tid);
   
   
@@ -261,7 +263,7 @@ sub todoist_UpdateTask($$$) {
     $taskId = int($temp[1]);
     $title = $hash->{helper}{"TITLE"}{$temp[1]};
   }
-  ## use task content (only complete)
+  ## use task content for update
   elsif (@temp && $temp[0] eq "TITLE") {
     $title = encode_utf8($temp[1]);
     $taskId = $hash->{helper}{"TITLES"}{$title} if ($hash->{helper}{"TITLES"});
@@ -271,6 +273,12 @@ sub todoist_UpdateTask($$$) {
     $tid=int($tid);
     $taskId=$hash->{helper}{"IDS"}{"Task_".$tid};
     $title=ReadingsVal($name,"Task_".sprintf('%03d',$tid),"-");
+  }
+  
+  if ($taskId == 0) {
+    map {FW_directNotify("#FHEMWEB:$_", "if (typeof todoist_ErrorDialog === \"function\") todoist_ErrorDialog('$name','$title ".$todoist_tt->{"idnotfound"}."','".$todoist_tt->{"error"}."')", "")} devspec2array("TYPE=FHEMWEB");
+    todoist_ErrorReadings($hash,"Task $title could not be found for $type","task not found");
+    return undef;
   }
   
   my $uuidO=Data::UUID->new;
@@ -2215,30 +2223,29 @@ sub todoist_inArray {
             </ul><br />
         Examples: <br /><br />
         <code>set &lt;DEVICE&gt; updateTask ID:12345678 dueDate=2017-01-15 priority=1</code><br />
-        <code>set &lt;DEVICE&gt; updateTask 1 dueDate=übermorgen</code></li>
-        
-        <br /><br />
-        <li><b>completeTask</b> - completes a task. Needs number of task (reading 'Task_NUMBER'), the title or the 
-        todoist-Task-ID (ID:&lt;ID&gt;) as parameter<br />
+        <code>set &lt;DEVICE&gt; updateTask 1 dueDate=übermorgen</code><br />
+        <code>set &lt;DEVICE&gt; updateTask TITLE:Brot dueDate=übermorgen</code><br /><br /></li>
+        <li><b>completeTask</b> - completes a task. Needs number of task (reading 'Task_NUMBER'), the title (TITLE:&lt;TITLE&gt;) or the 
+        todoist-Task-ID (ID:&lt;ID&gt;) as parameter<br /><br />
         <code>set &lt;DEVICE&gt; completeTask &lt;TASK-ID&gt;</code> - completes a task by number<br >
         <code>set &lt;DEVICE&gt; completeTask ID:&lt;todoist-TASK-ID&gt;</code> - completes a task by todoist-Task-ID</li>
-        <code>set &lt;DEVICE&gt; completeTask TITLE:&lt;Task title&gt;</code> - completes a task by title</li>
-        <li><b>closeTask</b> - closes a task. Needs number of task (reading 'Task_NUMBER') or the 
+        <code>set &lt;DEVICE&gt; completeTask TITLE:&lt;Task title&gt;</code> - completes a task by title<br /><br /></li>
+        <li><b>closeTask</b> - closes a task. Needs number of task (reading 'Task_NUMBER')m the title (TITLE:&lt;TITLE&gt;) or the 
         todoist-Task-ID (ID:<ID>) as parameter<br />
         Difference to complete is: regular task is completed and moved to history, subtask is checked (marked as done, but not moved to history),<br /> 
-        recurring task is moved forward (due date is updated).<br />
-        <code>set &lt;DEVICE&gt; closeTask &lt;TASK-ID&gt;</code> - completes a task by number<br >
+        recurring task is moved forward (due date is updated).<br /><br />
+        <code>set &lt;DEVICE&gt; closeTask &lt;TASK-ID&gt;</code> - completes a task by number<br />
         <code>set &lt;DEVICE&gt; closeTask ID:&lt;todoist-TASK-ID&gt;</code> - completes a task by todoist-Task-ID</li>
-        <code>set &lt;DEVICE&gt; closeTask TITLE:&lt;Task title&gt;</code> - completes a task by title</li>
-        <li><b>uncompleteTask</b> - uncompletes a Task. Use it like complete.</li>
-        <li><b>deleteTask</b> - deletes a task. Needs number of task (reading 'Task_NUMBER'), title or the todoist-Task-ID (ID:&lt;ID&gt;) as parameter
+        <code>set &lt;DEVICE&gt; closeTask TITLE:&lt;Task title&gt;</code> - completes a task by title<br /><br /></li>
+        <li><b>uncompleteTask</b> - uncompletes a Task. Use it like complete.<br /><br /></li>
+        <li><b>deleteTask</b> - deletes a task. Needs number of task (reading 'Task_NUMBER'), title (TITLE:&lt;TITLE&gt;) or the todoist-Task-ID (ID:&lt;ID&gt;) as parameter<br /><br />
         <code>set &lt;DEVICE&gt; deleteTask &lt;TASK-ID&gt;</code> - deletes a task by number<br />
         <code>set &lt;DEVICE&gt; deleteTask ID:&lt;todoist-TASK-ID&gt;</code> - deletes a task by todoist-Task-ID</li>
-        <code>set &lt;DEVICE&gt; deleteTask TITLE:&lt;Task title&gt;</code> - deletes a task by title</li>
-        <li><b>sortTasks</b> - sort Tasks alphabetically</li>
-        <li><b>clearList</b> - <b><u>deletes</u></b> all Tasks from the list (only FHEM listed Tasks can be deleted)</li>
+        <code>set &lt;DEVICE&gt; deleteTask TITLE:&lt;Task title&gt;</code> - deletes a task by title<br /><br /></li>
+        <li><b>sortTasks</b> - sort Tasks alphabetically<br /><br /></li>
+        <li><b>clearList</b> - <b><u>deletes</u></b> all Tasks from the list (only FHEM listed Tasks can be deleted)<br /><br /></li>
         <li><b>cChildProjects</b> - searches for children and defines them if possible, deletes lists that are deleted 
-        in todoist (Attribut delDeletedLists) </li>
+        in todoist (Attribut delDeletedLists)<br /></li>
     </ul>
     <br />
     <a name="todoist_Attributes"></a>
