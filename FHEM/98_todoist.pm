@@ -12,7 +12,7 @@ use Data::UUID;
 
 #######################
 # Global variables
-my $version = "1.1.6";
+my $version = "1.1.7";
 
 my %gets = (
   "version:noArg"     => "",
@@ -259,12 +259,12 @@ sub todoist_UpdateTask($$$) {
   
   
   ## use the todoist ID
-  if (@temp && $temp[0] eq "ID") {
+  if (@temp && $temp[0] =~ /id/i) {
     $taskId = int($temp[1]);
     $title = $hash->{helper}{"TITLE"}{$temp[1]};
   }
-  ## use task content for update
-  elsif (@temp && $temp[0] eq "TITLE") {
+  ## use task content
+  elsif (@temp && $temp[0] =~ /title/i) {
     $title = encode_utf8($temp[1]);
     $taskId = $hash->{helper}{"TITLES"}{$title} if ($hash->{helper}{"TITLES"});
   }
@@ -275,12 +275,14 @@ sub todoist_UpdateTask($$$) {
     $title=ReadingsVal($name,"Task_".sprintf('%03d',$tid),"-");
   }
   
+  # error if we did not get a task id
   if ($taskId == 0) {
     map {FW_directNotify("#FHEMWEB:$_", "if (typeof todoist_ErrorDialog === \"function\") todoist_ErrorDialog('$name','$title ".$todoist_tt->{"idnotfound"}."','".$todoist_tt->{"error"}."')", "")} devspec2array("TYPE=FHEMWEB");
-    todoist_ErrorReadings($hash,"Task $title could not be found for $type","task not found");
+    todoist_ErrorReadings($hash,"Task $title could not be found for $type","task $title not found");
     return undef;
   }
   
+  # some random string for UUID
   my $uuidO=Data::UUID->new;
   my $uuid=$uuidO->create_str();
   
