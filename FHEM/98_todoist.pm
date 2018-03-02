@@ -12,7 +12,7 @@ use Data::UUID;
 
 #######################
 # Global variables
-my $version = "1.1.7";
+my $version = "1.1.7.1";
 
 my %gets = (
   "version:noArg"     => "",
@@ -1900,7 +1900,7 @@ sub todoist_Html(;$$$) {
   my $count = @devs;
   my $width = 95/$count;
   
-  # refresh request? don't show everything
+  # refresh request? don't return everything
   if (!$refreshGet) {
     # define global JS variables
     $rot .= " <script type=\"text/javascript\">
@@ -2032,7 +2032,7 @@ sub todoist_Html(;$$$) {
     # show active lists only
     if (!IsDisabled($name) && ($showList || $detail)) {
     
-      # refresh request? don't show everything
+      # refresh request? don't return everything
       if (!$refreshGet) {
         
         $ret .= "<table class=\"roomoverview todoist_table\">\n";
@@ -2089,7 +2089,7 @@ sub todoist_Html(;$$$) {
         $i++;
       }
       
-      # refresh request? don't show everything
+      # refresh request? don't return everything
       if (!$refreshGet) {
         
         my $showPH = 0;
@@ -2120,7 +2120,7 @@ sub todoist_Html(;$$$) {
     }
   }
   
-  # refresh request? don't show everything
+  # refresh request? don't return everything
   if (!$refreshGet) {
   
     $ret .= "</div>\n";
@@ -2230,19 +2230,19 @@ sub todoist_inArray {
         <li><b>completeTask</b> - completes a task. Needs number of task (reading 'Task_NUMBER'), the title (TITLE:&lt;TITLE&gt;) or the 
         todoist-Task-ID (ID:&lt;ID&gt;) as parameter<br /><br />
         <code>set &lt;DEVICE&gt; completeTask &lt;TASK-ID&gt;</code> - completes a task by number<br >
-        <code>set &lt;DEVICE&gt; completeTask ID:&lt;todoist-TASK-ID&gt;</code> - completes a task by todoist-Task-ID</li>
+        <code>set &lt;DEVICE&gt; completeTask ID:&lt;todoist-TASK-ID&gt;</code> - completes a task by todoist-Task-ID
         <code>set &lt;DEVICE&gt; completeTask TITLE:&lt;Task title&gt;</code> - completes a task by title<br /><br /></li>
         <li><b>closeTask</b> - closes a task. Needs number of task (reading 'Task_NUMBER')m the title (TITLE:&lt;TITLE&gt;) or the 
         todoist-Task-ID (ID:<ID>) as parameter<br />
         Difference to complete is: regular task is completed and moved to history, subtask is checked (marked as done, but not moved to history),<br /> 
         recurring task is moved forward (due date is updated).<br /><br />
         <code>set &lt;DEVICE&gt; closeTask &lt;TASK-ID&gt;</code> - completes a task by number<br />
-        <code>set &lt;DEVICE&gt; closeTask ID:&lt;todoist-TASK-ID&gt;</code> - completes a task by todoist-Task-ID</li>
+        <code>set &lt;DEVICE&gt; closeTask ID:&lt;todoist-TASK-ID&gt;</code> - completes a task by todoist-Task-ID
         <code>set &lt;DEVICE&gt; closeTask TITLE:&lt;Task title&gt;</code> - completes a task by title<br /><br /></li>
         <li><b>uncompleteTask</b> - uncompletes a Task. Use it like complete.<br /><br /></li>
         <li><b>deleteTask</b> - deletes a task. Needs number of task (reading 'Task_NUMBER'), title (TITLE:&lt;TITLE&gt;) or the todoist-Task-ID (ID:&lt;ID&gt;) as parameter<br /><br />
         <code>set &lt;DEVICE&gt; deleteTask &lt;TASK-ID&gt;</code> - deletes a task by number<br />
-        <code>set &lt;DEVICE&gt; deleteTask ID:&lt;todoist-TASK-ID&gt;</code> - deletes a task by todoist-Task-ID</li>
+        <code>set &lt;DEVICE&gt; deleteTask ID:&lt;todoist-TASK-ID&gt;</code> - deletes a task by todoist-Task-ID
         <code>set &lt;DEVICE&gt; deleteTask TITLE:&lt;Task title&gt;</code> - deletes a task by title<br /><br /></li>
         <li><b>sortTasks</b> - sort Tasks alphabetically<br /><br /></li>
         <li><b>clearList</b> - <b><u>deletes</u></b> all Tasks from the list (only FHEM listed Tasks can be deleted)<br /><br /></li>
