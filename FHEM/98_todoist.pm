@@ -12,7 +12,7 @@ use Data::UUID;
 
 #######################
 # Global variables
-my $version = "1.1.7.1";
+my $version = "1.1.72";
 
 my %gets = (
   "version:noArg"     => "",
@@ -53,7 +53,6 @@ my $todoist_tt;
 
 sub todoist_Initialize($) {
   my ($hash) = @_;
-  my $name = $hash->{NAME}; 
 
   $hash->{SetFn}        = "todoist_Set";
   $hash->{GetFn}        = "todoist_Get";
@@ -90,13 +89,18 @@ sub todoist_Initialize($) {
                           $readingFnAttributes;
                       
   if( !defined($todoist_tt) ){
-    # in any attribute redefinition readjust language
-    my $lang = AttrVal($name,"language", AttrVal("global","language","EN"));
-    if( $lang eq "DE") {
-      $todoist_tt = \%todoist_transtable_DE;
-    }
-    else{
-      $todoist_tt = \%todoist_transtable_EN;
+    my @devs = devspec2array("TYPE=todoist");
+    if (@devs) {   
+      if ($devs[0]) {
+        # in any attribute redefinition readjust language
+        my $lang = AttrVal($devs[0],"language", AttrVal("global","language","EN"));
+        if( $lang eq "DE") {
+          $todoist_tt = \%todoist_transtable_DE;
+        }
+        else{
+          $todoist_tt = \%todoist_transtable_EN;
+        }
+      }
     }
   }
   
