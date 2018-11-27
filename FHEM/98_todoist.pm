@@ -12,7 +12,7 @@ use Data::UUID;
 
 #######################
 # Global variables
-my $version = "1.1.8";
+my $version = "1.1.8.1";
 
 my %gets = (
   "version:noArg"     => "",
@@ -87,6 +87,14 @@ sub todoist_Initialize($) {
                           "delDeletedLists:1,0 ".
                           "language:EN,DE ".
                           $readingFnAttributes;
+    
+  $hash->{NotifyOrderPrefix} = "64-";                      
+                          
+  ## renew version in reload
+  foreach my $d ( sort keys %{ $modules{todoist}{defptr} } ) {
+      my $hash = $modules{todoist}{defptr}{$d};
+      $hash->{VERSION} = $version;
+  }
                       
   if( !defined($todoist_tt) ){
     my @devs = devspec2array("TYPE=todoist");
@@ -102,12 +110,6 @@ sub todoist_Initialize($) {
         }
       }
     }
-  }
-  
-  ## renew version in reload
-  foreach my $d ( sort keys %{ $modules{todoist}{defptr} } ) {
-      my $hash = $modules{todoist}{defptr}{$d};
-      $hash->{VERSION} = $version;
   }
   
   return undef;
@@ -142,6 +144,7 @@ sub todoist_Define($$) {
   $hash->{PID}=$a[2];
   $hash->{INTERVAL}=AttrVal($name,"pollInterval",undef)?AttrVal($name,"pollInterval",undef):1800;
   $hash->{VERSION}=$version;
+  $hash->{MID}     = 'da39a3ee5e6dfdss43434bf3457bdbfef95601890afd80709'; # 
   
   ## check if Access Token is needed
   my $index = $hash->{TYPE}."_".$hash->{NAME}."_passwd";
