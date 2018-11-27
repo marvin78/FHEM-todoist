@@ -12,7 +12,7 @@ use Data::UUID;
 
 #######################
 # Global variables
-my $version = "1.1.72";
+my $version = "1.1.8";
 
 my %gets = (
   "version:noArg"     => "",
@@ -102,6 +102,12 @@ sub todoist_Initialize($) {
         }
       }
     }
+  }
+  
+  ## renew version in reload
+  foreach my $d ( sort keys %{ $modules{todoist}{defptr} } ) {
+      my $hash = $modules{todoist}{defptr}{$d};
+      $hash->{VERSION} = $version;
   }
   
   return undef;
