@@ -12,7 +12,7 @@ use Data::UUID;
 
 #######################
 # Global variables
-my $version = "1.1.8.1";
+my $version = "1.1.8.3";
 
 my %gets = (
   "version:noArg"     => "",
@@ -144,7 +144,7 @@ sub todoist_Define($$) {
   $hash->{PID}=$a[2];
   $hash->{INTERVAL}=AttrVal($name,"pollInterval",undef)?AttrVal($name,"pollInterval",undef):1800;
   $hash->{VERSION}=$version;
-  $hash->{MID}     = 'da39a3ee5e6dfdss43434bf3457bdbfef95601890afd80709'; # 
+  $hash->{MID}     = 'da39a3ee5e634fdss43434bf3457bdbfef95601890afd80709'; # 
   
   ## check if Access Token is needed
   my $index = $hash->{TYPE}."_".$hash->{NAME}."_passwd";
