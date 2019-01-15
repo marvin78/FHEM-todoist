@@ -14,7 +14,7 @@ use Data::UUID;
 
 #######################
 # Global variables
-my $version = "1.2.0.1";
+my $version = "1.2.0.2";
 
 my %gets = (
   "version:noArg"     => "",
@@ -1912,6 +1912,8 @@ sub todoist_Html(;$$$) {
   my $ret="";
   my $rot="";
   
+  my $eo;
+  
   my $r=0;
   
   my $count = @devs;
@@ -2068,7 +2070,7 @@ sub todoist_Html(;$$$) {
       }
       
       my $i=1;
-      my $eo;
+   
       my $cs=3;
       
       # show data
