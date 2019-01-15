@@ -1,4 +1,6 @@
-﻿if (typeof todoist_checkVar === 'undefined') {
+﻿FW_version["todoist.js"] = "$Id$";
+
+if (typeof todoist_checkVar === 'undefined') {
   
   var todoist_checkVar=1;
   
