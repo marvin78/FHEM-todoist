@@ -14,7 +14,7 @@ use Data::UUID;
 
 #######################
 # Global variables
-my $version = "1.2.0.2";
+my $version = "1.2.0.3";
 
 my %gets = (
   "version:noArg"     => "",
@@ -88,6 +88,7 @@ sub todoist_Initialize($) {
                           "hideListIfEmpty:1,0 ".
                           "delDeletedLists:1,0 ".
                           "language:EN,DE ".
+                          "sslVersion ".
                           $readingFnAttributes;
     
   $hash->{NotifyOrderPrefix} = "64-";                      
