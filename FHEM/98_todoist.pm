@@ -6,15 +6,19 @@ package main;
 
 use strict;
 use warnings;
-use Data::Dumper; 
-use JSON;
-use Encode;
-use Date::Parse;
-use Data::UUID;
+
+my $missingModul = "";
+
+eval "use Data::Dumper;1" or $missingModul .= "Data::Dumper ";
+eval "use JSON;1" or $missingModul .= "JSON ";
+eval "use Encode;1" or $missingModul .= "Encode ";
+
 
 #######################
 # Global variables
-my $version = "1.2.0.3";
+my $version = "1.2.0.5";
+
+my $srandUsed;
 
 my %gets = (
   "version:noArg"     => "",
@@ -301,8 +305,7 @@ sub todoist_UpdateTask($$$) {
   }
   
   # some random string for UUID
-  my $uuidO=Data::UUID->new;
-  my $uuid=$uuidO->create_str();
+  my $uuid = todoist_genUUID();
   
   # JSON String start- and endpoint
   my $commandsStart="[{";
@@ -2171,6 +2174,15 @@ sub todoist_inArray {
   return 0;
 }
 
+sub todoist_genUUID() {
+  srand(gettimeofday()) if(!$srandUsed);
+  $srandUsed = 1;
+  my $uuid = sprintf("%08x-f33f-%s-%s-%s", time(), substr(getUniqueId(),-4), 
+    join("",map { unpack "H*", chr(rand(256)) } 1..2),
+    join("",map { unpack "H*", chr(rand(256)) } 1..8));
+  return $uuid;
+}
+
 1;
 
 =pod
@@ -2190,7 +2202,7 @@ sub todoist_inArray {
     <br /><br />
     Notes:<br />
     <ul>
-        <li>JSON, Data::Dumper, Digest::MD5, Date::Parse and Data::UUID have to be installed on the FHEM host.</li>
+        <li>JSON, Data::Dumper, Digest::MD5, have to be installed on the FHEM host.</li>
     </ul>
     <br /><br />
     <a name="todoist_Define"></a>
