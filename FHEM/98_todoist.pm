@@ -7,11 +7,11 @@ package main;
 use strict;
 use warnings;
 
-my $missingModul = "";
+my $missingModule = "";
 
-eval "use Data::Dumper;1" or $missingModul .= "Data::Dumper ";
-eval "use JSON;1" or $missingModul .= "JSON ";
-eval "use Encode;1" or $missingModul .= "Encode ";
+eval "use Data::Dumper;1" or $missingModule .= "Data::Dumper ";
+eval "use JSON;1" or $missingModule .= "JSON ";
+eval "use Encode;1" or $missingModule .= "Encode ";
 
 
 #######################
@@ -97,26 +97,18 @@ sub todoist_Initialize($) {
     
   $hash->{NotifyOrderPrefix} = "64-";                      
                           
-  ## renew version in reload
+  ## renew version and language in reload
   foreach my $d ( sort keys %{ $modules{todoist}{defptr} } ) {
       my $hash = $modules{todoist}{defptr}{$d};
       $hash->{VERSION} = $version;
-  }
-                      
-  if( !defined($todoist_tt) ){
-    my @devs = devspec2array("TYPE=todoist");
-    if (@devs) {   
-      if ($devs[0]) {
-        # in any attribute redefinition readjust language
-        my $lang = AttrVal($devs[0],"language", AttrVal("global","language","EN"));
-        if( $lang eq "DE") {
-          $todoist_tt = \%todoist_transtable_DE;
-        }
-        else{
-          $todoist_tt = \%todoist_transtable_EN;
-        }
+      
+      my $lang = AttrVal($hash->{NAME},"language", AttrVal("global","language","EN"));
+      if( $lang eq "DE") {
+        $todoist_tt = \%todoist_transtable_DE;
       }
-    }
+      else{
+        $todoist_tt = \%todoist_transtable_EN;
+      }
   }
   
   return undef;
@@ -146,12 +138,14 @@ sub todoist_Define($$) {
     Log3 $name, 4, $msg;
     return $msg;
   }
+  
+  return "Cannot define a todoist device. Perl module(s) $missingModule is/are missing." if ( $missingModule );
 
   ## set internal variables
   $hash->{PID}=$a[2];
   $hash->{INTERVAL}=AttrVal($name,"pollInterval",undef)?AttrVal($name,"pollInterval",undef):1800;
   $hash->{VERSION}=$version;
-  $hash->{MID}     = 'da39a3ee5e634fdss43434bf3457bdbfef95601890afd80709'; # 
+  $hash->{MID}     = 'todoist_'.$a[2]; # 
   
   $modules{todoist}{defptr}{ $hash->{MID} } = $hash; #MID for internal purposes
   
