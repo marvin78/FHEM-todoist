@@ -17,7 +17,7 @@ eval "use Date::Parse;1" or $missingModule .= "Date::Parse ";
 
 #######################
 # Global variables
-my $version = "1.2.0.7";
+my $version = "1.2.0.8";
 
 my $srandUsed;
 
@@ -112,7 +112,7 @@ sub todoist_Initialize($) {
       }
   }
   
-  return undef;
+  return FHEM::Meta::InitMod( __FILE__, $hash );
 }
 
 sub todoist_Define($$) {
@@ -1917,7 +1917,7 @@ sub todoist_Html(;$$$) {
   my $ret="";
   my $rot="";
   
-  my $eo;
+  my $eo="";
   
   my $r=0;
   
@@ -2477,3 +2477,5 @@ sub todoist_genUUID() {
 
 
 =end html
+
+=cut
