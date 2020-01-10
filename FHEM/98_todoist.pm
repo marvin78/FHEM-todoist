@@ -17,7 +17,7 @@ eval "use Date::Parse;1" or $missingModule .= "Date::Parse ";
 
 #######################
 # Global variables
-my $version = "1.2.6";
+my $version = "1.2.7";
 
 my $srandUsed;
 
@@ -848,9 +848,8 @@ sub todoist_GetTasksCallback($$$){
       # set some internals (project data)
       if ($project) {
         $hash->{PROJECT_NAME}=$project->{name};
-        $hash->{PROJECT_INDENT}=$project->{indent};
         $hash->{PROJECT_COLOR}=$project->{color};
-        $hash->{PROJECT_ORDER}=$project->{item_order};
+        $hash->{PROJECT_ORDER}=$project->{child_order};
         if ($project->{user_id}) {
           $hash->{PROJECT_USER}=$project->{user_id};
         }
