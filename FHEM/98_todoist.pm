@@ -17,7 +17,7 @@ eval "use Date::Parse;1" or $missingModule .= "Date::Parse ";
 
 #######################
 # Global variables
-my $version = "1.2.8";
+my $version = "1.2.9";
 
 my $srandUsed;
 
@@ -830,9 +830,7 @@ sub todoist_GetTasksCallback($$$){
     if ((ref($decoded_json) eq "HASH" && !$decoded_json->{items}) || $decoded_json eq "") {
       $hash->{helper}{errorData} = Dumper($data);
       $hash->{helper}{errorMessage} = "GetTasks: Response was damaged or empty. See log for details.";
-      if (!$decoded_json->{items} && $decoded_json ne "") {
-        
-      }
+
       InternalTimer(gettimeofday()+0.2, "todoist_ErrorReadings",$hash, 0); 
     }
     # got project
@@ -1285,6 +1283,7 @@ sub todoist_GetProjectsCallback($$$){
           my $new_name = encode_utf8($project->{name});
           # new title
           my $title = $name."_".$new_name;
+          $title =~ s!\s!!g;
           # is this parent_id equal to id of current project?
           if ($pid == $parent_id) {
             # push to deletion array
