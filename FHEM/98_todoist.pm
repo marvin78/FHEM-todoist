@@ -378,7 +378,7 @@ sub todoist_UpdateTask($$$) {
         $args{'assigned_by_uid'} = $h->{"assignedByUid"} if ($h->{"assignedByUid"});
         $args{'assigned_by_uid'} = $h->{"assignedBy"} if ($h->{"assignedByUid"});
         ## order of the task
-        $args{'item_order'} = $h->{"order"} if ($h->{"order"});
+        $args{'child_order'} = $h->{"order"} if ($h->{"order"});
         ## indent of the task
         $args{'child_order'} = $h->{"child_order"} if ($h->{"child_order"});
         ## parent_id
