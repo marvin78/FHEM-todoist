@@ -847,7 +847,6 @@ sub todoist_GetTasksCallback($$$){
       
       # set some internals (project data)
       if ($project) {
-        delete($hash->{PROJECT_INDENT}) if (defined($hash->{PROJECT_INDENT}));
         $hash->{PROJECT_NAME}=$project->{name};
         $hash->{PROJECT_COLOR}=$project->{color};
         $hash->{PROJECT_ORDER}=$project->{child_order};
