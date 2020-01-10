@@ -17,7 +17,7 @@ eval "use Date::Parse;1" or $missingModule .= "Date::Parse ";
 
 #######################
 # Global variables
-my $version = "1.2.5";
+my $version = "1.2.6";
 
 my $srandUsed;
 
@@ -240,7 +240,7 @@ sub todoist_ErrorReadings($;$$) {
   readingsBulkUpdate( $hash,"lastError",$errorMessage );
   readingsEndUpdate( $hash, 1 );
   
-  Log3 $name,$level, "todoist ($name): Error Message: ".$errorMessage;
+  Log3 $name,$level, "todoist ($name): Error Message: ".$errorMessage if ($errorMessage ne "no data");
   Log3 $name,4, "todoist ($name): Api-Error Callback-data: ".$errorLog;
   
   $hash->{helper}{errorData}="";
@@ -830,6 +830,9 @@ sub todoist_GetTasksCallback($$$){
     if ((ref($decoded_json) eq "HASH" && !$decoded_json->{items}) || $decoded_json eq "") {
       $hash->{helper}{errorData} = Dumper($data);
       $hash->{helper}{errorMessage} = "GetTasks: Response was damaged or empty. See log for details.";
+      if (!$decoded_json->{items} && $decoded_json ne "") {
+        
+      }
       InternalTimer(gettimeofday()+0.2, "todoist_ErrorReadings",$hash, 0); 
     }
     # got project
@@ -1976,6 +1979,9 @@ sub todoist_Html(;$$$) {
                   .todoist_move {
                     width:10px;
                     float:left;
+                  }
+                  .todoist_input {
+                    
                   }
                   .todoist_sortit_handler {
                     padding-top: 0px!important;
