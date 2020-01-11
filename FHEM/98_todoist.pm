@@ -17,7 +17,7 @@ eval "use Date::Parse;1" or $missingModule .= "Date::Parse ";
 
 #######################
 # Global variables
-my $version = "1.2.9";
+my $version = "1.2.10";
 
 my $srandUsed;
 
@@ -379,7 +379,7 @@ sub todoist_UpdateTask($$$) {
         $args{'assigned_by_uid'} = $h->{"assignedBy"} if ($h->{"assignedByUid"});
         ## order of the task
         $args{'child_order'} = $h->{"order"} if ($h->{"order"});
-        ## indent of the task
+        ## child order of the task
         $args{'child_order'} = $h->{"child_order"} if ($h->{"child_order"});
         ## parent_id
         $args{'parent_id'} = $h->{"parent_id"} if ($h->{"parent_id"});
@@ -388,12 +388,8 @@ sub todoist_UpdateTask($$$) {
         
         if ($args{'parent_id'}) {
           my $pid=$args{'parent_id'};
-          if ($hash->{helper}{"INDENT"}{$pid}) {
-            $args{'indent'} = int($hash->{helper}{"INDENT"}{$pid})+1;
-          }
         }
         
-        $args{'parent_id'} = "" if ($h->{"indent"}==1);
         
         ## remove attribute
         if ($h->{"remove"}) {
@@ -559,7 +555,7 @@ sub todoist_CreateTask($$) {
         ## order of the task
         $data->{'item_order'} = $h->{"order"} if ($h->{"order"});
         
-        ## indent of the task
+        ## child order  of the task
         $data->{'child_order'} = $h->{"child_order"} if ($h->{"child_order"});
         
         
@@ -912,9 +908,7 @@ sub todoist_GetTasksCallback($$$){
           $hash->{helper}{"WID"}{$taskID}=$i; # FHEM Task-ID
           $hash->{helper}{"parent_id"}{$taskID}=$task->{parent_id}; # parent_id of item
           $hash->{helper}{"child_order"}{$taskID}=$task->{child_order}; # order of task under parent
-          #$hash->{helper}{"INDENT"}{$taskID}=$task->{indent}; # todoist Task indent
           $hash->{helper}{"PRIORITY"}{$taskID}=$task->{priority}; # todoist Task priority
-          #push @{$hash->{helper}{"INDENTS"}{$task->{indent}}},$taskID; # ident for better widget
           #push @{$hash->{helper}{"PARENTS"}{$task->{parent_id}}},$taskID; # ident for better widget
           $hash->{helper}{"ORDER"}{$taskID}=$task->{item_order}; # todoist Task order     
           if ($param->{completed} != 1) {    
@@ -1383,7 +1377,6 @@ sub todoist_sort($) {
     readingsBulkUpdate($hash,"Task_".sprintf("%03s",$i)."_recurrenceType",$hash->{helper}{"RECURRENCE_TYPE"}{$data->{ID}}) if ($hash->{helper}{"RECURRENCE_TYPE"}{$data->{ID}});
     readingsBulkUpdate($hash,"Task_".sprintf("%03s",$i)."_completedAt",$hash->{helper}{"COMPLETED_AT"}{$data->{ID}}) if ($hash->{helper}{"COMPLETED_AT"}{$data->{ID}});
     readingsBulkUpdate($hash,"Task_".sprintf("%03s",$i)."_completedById",$hash->{helper}{"COMPLETED_BY_ID"}{$data->{ID}}) if ($hash->{helper}{"COMPLETED_BY_ID"}{$data->{ID}});
-    readingsBulkUpdate($hash,"Task_".sprintf("%03s",$i)."_indent",$hash->{helper}{"INDENT"}{$data->{ID}}) if ($hash->{helper}{"INDENT"}{$data->{ID}} && AttrVal($name,"showIndent",0)==1);
     readingsBulkUpdate($hash,"Task_".sprintf("%03s",$i)."_order",$hash->{helper}{"ORDER"}{$data->{ID}}) if ($hash->{helper}{"ORDER"}{$data->{ID}} && AttrVal($name,"showOrder",0)==1);
     readingsBulkUpdate($hash,"Task_".sprintf("%03s",$i)."_parentID",$hash->{helper}{"PARENT_ID"}{$data->{ID}}) if ($hash->{helper}{"PARENT_ID"}{$data->{ID}});
     readingsBulkUpdate($hash,"Task_".sprintf("%03s",$i)."_checked",$hash->{helper}{"CHECKED"}{$data->{ID}}) if ($hash->{helper}{"CHECKED"}{$data->{ID}} && AttrVal($name,"showChecked",1)==1);
@@ -1626,7 +1619,7 @@ sub todoist_Attr($@) {
     }
   }
   
-  if ( $attrName eq "sortTasks" ||  $attrName =~ /(show(Priority|AssignedBy|Responsible|Indent|Order|DetailWidget)|getCompleted|hide(Id|ListIfEmpty)|autoGetUsers|avoidDuplicates|delDeletedLists)/) {
+  if ( $attrName eq "sortTasks" ||  $attrName =~ /(show(Priority|AssignedBy|Responsible|Order|DetailWidget)|getCompleted|hide(Id|ListIfEmpty)|autoGetUsers|avoidDuplicates|delDeletedLists)/) {
     if ( $cmd eq "set" ) {
       return "$name: $attrName has to be 0 or 1" if ($attrVal !~ /^(0|1)$/);
       Log3 $name, 4, "todoist ($name): set attribut $attrName to $attrVal";
@@ -2017,15 +2010,7 @@ sub todoist_Html(;$$$) {
                   tr.ui-sortable-helper {
                     background-color:#111111;
                   }
-                  .todoist_indent_2 {
-                    padding-left:20px!important;
-                  }
-                  .todoist_indent_3 {
-                    padding-left:40px!important;
-                  }
-                  .todoist_indent_4 {
-                    padding-left:60px!important;
-                  }
+               
                   .todoist_ph td {
                     padding: 4px 8px;
                   }
@@ -2109,14 +2094,13 @@ sub todoist_Html(;$$$) {
         
 
 
-        my $indent=$hash->{helper}{INDENT}{$_}?$hash->{helper}{INDENT}{$_}:"0";
         
         $ret .= "<tr id=\"".$name."_".$_."\" data-data=\"true\" data-line-id=\"".$_."\" class=\"sortit todoist_data ".$eo."\">\n".
                 " <td class=\"col1 todoist_col1\">\n".
                 "   <div class=\"todoist_move\"></div>\n".
                 "   <input title=\"".$todoist_tt->{'check'}."\" class=\"todoist_checkbox_".$name."\" type=\"checkbox\" id=\"check_".$_."\" data-id=\"".$_."\" />\n".
                 " </td>\n".
-                " <td class=\"col1 todoist_input todoist_indent_".$indent."\">\n".
+                " <td class=\"col1 todoist_input\">\n".
                 "   <span class=\"todoist_task_text\" data-id=\"".$_."\">".$hash->{helper}{TITLE}{$_}."</span>\n".
                 "   <input type=\"text\" data-id=\"".$_."\" style=\"display:none;\" class=\"todoist_input_".$name."\" value=\"".$hash->{helper}{TITLE}{$_}."\" />\n".
                 " </td>\n";
@@ -2256,8 +2240,8 @@ sub todoist_genUUID() {
          <li>responsibleUid=the todoist-ID of the user who is responsible for accomplishing the current task</li>
          <li>assignedByUid=the todoist-ID of the user who assigned the current task</li>
          <li>order=the order of the task inside a project (the smallest value would place the task at the top)</li>
-         <li>parentID=parent_id of the parent task. indent will be updated automatically.</li>
-         <li>indent=the indent of the task (a number between 1 and 4, where 1 is top-level)</li>
+         <li>parentID=parent_id of the parent task.</li>
+
         </ul><br />
         Examples: <br /><br />
             <code>set &lt;DEVICE&gt; addTask &lt;TASK_TITLE&gt; dueDate=2017-01-15 priority=2</code><br /><br />
@@ -2271,8 +2255,7 @@ sub todoist_genUUID() {
              <li>responsibleUid=the todoist-ID of the user who is responsible for accomplishing the current task</li>
              <li>assignedByUid=the todoist-ID of the user who assigned the current task</li>
              <li>order=the order of the task inside a project (the smallest value would place the task at the top)</li>
-             <li>indent=the indent of the task (a number between 1 and 4, where 1 is top-level)</li>
-             <li>parentID=parent_id of the parent task. indent will be updated automatically.</li>
+             <li>parentID=parent_id of the parent task.</li>
              <li>remove=&lt;TYPE&gt; (comma seperated list of attributes which should be removed from the task)</li>
             </ul><br />
         Examples: <br /><br />
@@ -2339,12 +2322,6 @@ sub todoist_genUUID() {
         <ul>
         <li>0: don't show assignedByUid (default)</li>
         <li>1: show assignedByUid</li>
-        </ul></li>
-        <br />
-        <li>showIndent
-        <ul>
-        <li>0: don't show indent of the task (default)</li>
-        <li>1: show indent</li>
         </ul></li>
         <br />
         <li>showOrder
@@ -2431,8 +2408,6 @@ sub todoist_genUUID() {
             the user this task was assigned by.</li>
         <li>Task_XXX_responsibleUid<br />
             the user this task was assigned to.</li>
-        <li>Task_XXX_indent<br />
-            shows the indent of the task (attribute showIndent).</li>
         <li>Task_XXX_order<br />
             shows the order no. of the task (attribute showOrder).</li>
         <li>User_XXX<br />
