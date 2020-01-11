@@ -17,7 +17,7 @@ eval "use Date::Parse;1" or $missingModule .= "Date::Parse ";
 
 #######################
 # Global variables
-my $version = "1.2.10";
+my $version = "1.2.12";
 
 my $srandUsed;
 
@@ -354,6 +354,26 @@ sub todoist_UpdateTask($$$) {
         Log3 $name,5, "$name: Args: ".Dumper(%args);
         $method="POST";
       }
+      ## move a task
+      elsif ($type eq "move") {
+        $tType = "item_move";
+        %args = (
+          id => $taskId,
+        );
+        ## parent_id
+        $args{'parent_id'} = $h->{"parent_id"} if ($h->{"parent_id"});
+        $args{'parent_id'} = $h->{"parentID"} if ($h->{"parentID"});
+        $args{'parent_id'} = $h->{"parentId"} if ($h->{"parentId"});
+        
+        ## project_id
+        $args{'project_id'} = $h->{"project_id"} if ($h->{"project_id"});
+        $args{'project_id'} = $h->{"projectID"} if ($h->{"projectID"});
+        $args{'project_id'} = $h->{"projectId"} if ($h->{"projectId"});
+        
+        if ($args{'parent_id'}) {
+          my $pid=$args{'parent_id'};
+        }
+      }
       ## update a task 
       elsif ($type eq "update") {
         $tType = "item_update";
@@ -381,14 +401,6 @@ sub todoist_UpdateTask($$$) {
         $args{'child_order'} = $h->{"order"} if ($h->{"order"});
         ## child order of the task
         $args{'child_order'} = $h->{"child_order"} if ($h->{"child_order"});
-        ## parent_id
-        $args{'parent_id'} = $h->{"parent_id"} if ($h->{"parent_id"});
-        $args{'parent_id'} = $h->{"parentID"} if ($h->{"parentID"});
-        $args{'parent_id'} = $h->{"parentId"} if ($h->{"parentId"});
-        
-        if ($args{'parent_id'}) {
-          my $pid=$args{'parent_id'};
-        }
         
         
         ## remove attribute
@@ -1647,6 +1659,7 @@ sub todoist_Set ($@) {
     push @sets, "uncompleteTask";
     push @sets, "deleteTask";
     push @sets, "updateTask";
+    push @sets, "moveTask";
     push @sets, "clearList:noArg";
     push @sets, "getTasks:noArg";
     push @sets, "cChildProjects:noArg";
@@ -1716,11 +1729,12 @@ sub todoist_Set ($@) {
     }
     return "in order to complete a task, we need it's ID" if ($count==0);
   }
-  elsif ($cmd eq "updateTask") {
+  elsif ($cmd eq "updateTask" || $cmd eq "moveTask") {
+    my $term=$cmd eq "updateTask"?"update":"move";
     my $count=@args;
     if ($count!=0) {
       my $exp=decode_utf8(join(" ",@args));
-      todoist_UpdateTask ($hash,$exp,"update");
+      todoist_UpdateTask ($hash,$exp,$term);
     }
     return "in order to complete a task, we need it's ID" if ($count==0);
   }
@@ -2255,13 +2269,19 @@ sub todoist_genUUID() {
              <li>responsibleUid=the todoist-ID of the user who is responsible for accomplishing the current task</li>
              <li>assignedByUid=the todoist-ID of the user who assigned the current task</li>
              <li>order=the order of the task inside a project (the smallest value would place the task at the top)</li>
-             <li>parentID=parent_id of the parent task.</li>
              <li>remove=&lt;TYPE&gt; (comma seperated list of attributes which should be removed from the task)</li>
             </ul><br />
         Examples: <br /><br />
         <code>set &lt;DEVICE&gt; updateTask ID:12345678 dueDate=2017-01-15 priority=1</code><br />
         <code>set &lt;DEVICE&gt; updateTask 1 dueDate=übermorgen</code><br />
         <code>set &lt;DEVICE&gt; updateTask TITLE:Brot dueDate=übermorgen</code><br /><br /></li>
+        <li><b>moveTask</b> - move a task to another parent or project. 
+        Needs Task-ID or todoist-Task-ID as parameter<br /><br />
+        Possible additional parameters are:<br />
+          <ul>
+             <li>parentID=parent_id of the parent task.</li>
+             <li>projectID=project_id of the parent task.</li>
+            </ul><br /><br /></li>
         <li><b>completeTask</b> - completes a task. Needs number of task (reading 'Task_NUMBER'), the title (TITLE:&lt;TITLE&gt;) or the 
         todoist-Task-ID (ID:&lt;ID&gt;) as parameter<br /><br />
         <code>set &lt;DEVICE&gt; completeTask &lt;TASK-ID&gt;</code> - completes a task by number<br >
