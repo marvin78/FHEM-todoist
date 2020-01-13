@@ -17,7 +17,7 @@ eval "use Date::Parse;1" or $missingModule .= "Date::Parse ";
 
 #######################
 # Global variables
-my $version = "1.2.12";
+my $version = "1.3.0";
 
 my $srandUsed;
 
@@ -82,6 +82,7 @@ sub todoist_Initialize($) {
                           "showAssignedBy:1,0 ".
                           "showResponsible:1,0 ".
                           "showParent:1,0 ".
+                          "showSection:1,0 ".
                           "showChecked:1,0 ".
                           "showDeleted:1,0 ".
                           "showOrder:1,0 ".
@@ -249,6 +250,111 @@ sub todoist_ErrorReadings($;$$) {
 }
 
 
+# reorderTasks
+sub todoist_ReorderTasks ($$) {
+  my ($hash,$cmd) = @_;
+  
+  my $name=$hash->{NAME};
+  
+  Log3 $name,4, "$name: cmd: ".$cmd;
+  
+  my $pwd="";
+  
+  my $param;
+  
+  my %commands=();
+  
+  # some random string for UUID
+  my $uuid = todoist_genUUID();
+  
+  # JSON String start- and endpoint
+  my $commandsStart="[{";
+  my $commandsEnd="}]";
+  
+  my $tType;
+  
+  my $argsStart = "{\"items\": [";
+  my $argsEnd   = "]}";
+  
+  my $args = "";
+  
+  ## if no token is needed and device is not disabled, check token and get list vom todoist
+  if (!$hash->{helper}{PWD_NEEDED} && !IsDisabled($name)) {
+    
+    ## get password
+    $pwd=todoist_GetPwd($hash);
+    
+    if ($pwd) {
+      Log3 $name,5, "$name: hash: ".Dumper($hash);
+      
+      # get Task - IDs in order
+      my $tids = $cmd;
+      my @taskIds = split(",",$tids);
+      
+      $tType = "item_reorder";
+      
+      my $i=0;
+      
+      foreach my $taskId (@taskIds) { 
+        $i++;
+        $args .= "," if ($i>1);
+        $args .= "{\"id\":".$taskId.",\"child_order\":".$i."}";
+      }
+      
+      $args = $argsStart.$args.$argsEnd;
+      
+      Log3 $name,5, "todoist ($name): Data sent to todoist API: ".$args;
+      
+      my $dataArr=$commandsStart.'"type":"'.$tType.'","uuid":"'.$uuid.'","args":'.$args.$commandsEnd;
+      
+      Log3 $name,4, "todoist ($name): Data Array sent to todoist API: ".$dataArr;
+    
+      my $data= {
+        token     =>    $pwd,
+        commands  =>    $dataArr
+      };
+      
+      Log3 $name,4, "todoist ($name): JSON sent to todoist API: ".Dumper($data);
+      
+      my $method="POST";
+      
+      $param = {
+        url        => "https://api.todoist.com/sync/v8/sync",
+        data       => $data,
+        method     => $method,
+        wType      => "reorder",
+        timeout    => 7,
+        header     => "Content-Type: application/x-www-form-urlencoded",
+        hash       => $hash,
+        callback   => \&todoist_HandleTaskCallback,  ## call callback sub to work with the data we get
+      };
+      
+      Log3 $name,5, "todoist ($name): Param: ".Dumper($param);
+      
+      ## non-blocking access to todoist API
+      InternalTimer(gettimeofday()+0.1, "HttpUtils_NonblockingGet", $param, 0);
+      
+      
+    }  
+    else {
+      todoist_ErrorReadings($hash,"access token empty");
+    }
+  }
+  else {
+    if (!IsDisabled($name)) {
+      todoist_ErrorReadings($hash,"no access token set");
+    }
+    else {
+      todoist_ErrorReadings($hash,"device is disabled");
+    }
+  
+  }
+  
+  
+  
+  return undef;
+}
+
 # update Task
 sub todoist_UpdateTask($$$) {
   my ($hash,$cmd, $type) = @_;
@@ -369,6 +475,11 @@ sub todoist_UpdateTask($$$) {
         $args{'project_id'} = $h->{"project_id"} if ($h->{"project_id"});
         $args{'project_id'} = $h->{"projectID"} if ($h->{"projectID"});
         $args{'project_id'} = $h->{"projectId"} if ($h->{"projectId"});
+        
+        ## section_id
+        $args{'section_id'} = $h->{"section_id"} if ($h->{"section_id"});
+        $args{'section_id'} = $h->{"sectionID"} if ($h->{"sectionID"});
+        $args{'section_id'} = $h->{"sectionId"} if ($h->{"sectionId"});
         
         if ($args{'parent_id'}) {
           my $pid=$args{'parent_id'};
@@ -919,6 +1030,7 @@ sub todoist_GetTasksCallback($$$){
           $hash->{helper}{"TITLES"}{$title}=$taskID; # Task title (content)
           $hash->{helper}{"WID"}{$taskID}=$i; # FHEM Task-ID
           $hash->{helper}{"parent_id"}{$taskID}=$task->{parent_id}; # parent_id of item
+          $hash->{helper}{"section_id"}{$taskID}=$task->{section_id}; # section_id of item
           $hash->{helper}{"child_order"}{$taskID}=$task->{child_order}; # order of task under parent
           $hash->{helper}{"PRIORITY"}{$taskID}=$task->{priority}; # todoist Task priority
           #push @{$hash->{helper}{"PARENTS"}{$task->{parent_id}}},$taskID; # ident for better widget
@@ -934,9 +1046,16 @@ sub todoist_GetTasksCallback($$$){
           ## set parent_id if not null
           if (defined($task->{parent_id}) && $task->{parent_id} ne 'null') {
             ## if this task has a parent_id we set the reading
-            readingsBulkUpdate($hash, $prefix.$t."_parentID",$task->{parent_id});
+            readingsBulkUpdate($hash, $prefix.$t."_parentID",$task->{parent_id}) if (AttrVal($name,"showParent",1)==1);
             $hash->{helper}{"PARENT_ID"}{$taskID}=$task->{parent_id};
           }   
+          
+          ## set section_id if not null
+          if (defined($task->{section_id}) && $task->{section_id} ne 'null') {
+            ## if this task has a parent_id we set the reading
+            readingsBulkUpdate($hash, $prefix.$t."_sectionID",$task->{section_id}) if (AttrVal($name,"showSection",1)==1);
+            $hash->{helper}{"SECTION_ID"}{$taskID}=$task->{section_id};
+          }  
           
           ## set completed_date if present
           if (defined($task->{checked}) && $task->{checked}!=0) {
@@ -960,7 +1079,7 @@ sub todoist_GetTasksCallback($$$){
           }
           
           ## set due_date if present
-          if (defined($task->{due}) && $task->{due_date_utc} ne 'null') {
+          if (defined($task->{due}) && $task->{due}{date} ne 'null') {
             ## if there is a task with due date, we create a new reading
             readingsBulkUpdate($hash, $prefix.$t."_dueDate",FmtDateTime(str2time($task->{due}{date})));
             $hash->{helper}{"DUE_DATE"}{$taskID}=FmtDateTime(str2time($task->{due}{date}));
@@ -1391,6 +1510,7 @@ sub todoist_sort($) {
     readingsBulkUpdate($hash,"Task_".sprintf("%03s",$i)."_completedById",$hash->{helper}{"COMPLETED_BY_ID"}{$data->{ID}}) if ($hash->{helper}{"COMPLETED_BY_ID"}{$data->{ID}});
     readingsBulkUpdate($hash,"Task_".sprintf("%03s",$i)."_order",$hash->{helper}{"ORDER"}{$data->{ID}}) if ($hash->{helper}{"ORDER"}{$data->{ID}} && AttrVal($name,"showOrder",0)==1);
     readingsBulkUpdate($hash,"Task_".sprintf("%03s",$i)."_parentID",$hash->{helper}{"PARENT_ID"}{$data->{ID}}) if ($hash->{helper}{"PARENT_ID"}{$data->{ID}});
+    readingsBulkUpdate($hash,"Task_".sprintf("%03s",$i)."_sectionID",$hash->{helper}{"SECTION_ID"}{$data->{ID}}) if ($hash->{helper}{"SECTION_ID"}{$data->{ID}});
     readingsBulkUpdate($hash,"Task_".sprintf("%03s",$i)."_checked",$hash->{helper}{"CHECKED"}{$data->{ID}}) if ($hash->{helper}{"CHECKED"}{$data->{ID}} && AttrVal($name,"showChecked",1)==1);
     readingsBulkUpdate($hash,"Task_".sprintf("%03s",$i)."_isDeleted",$hash->{helper}{"ISDELETED"}{$data->{ID}}) if ($hash->{helper}{"ISDELETED"}{$data->{ID}} && AttrVal($name,"showDeleted",1)==1);
     readingsBulkUpdate($hash,"Task_".sprintf("%03s",$i)."_ID",$data->{ID}) if (AttrVal($name,"hideId",0)!=1);
@@ -1631,7 +1751,7 @@ sub todoist_Attr($@) {
     }
   }
   
-  if ( $attrName eq "sortTasks" ||  $attrName =~ /(show(Priority|AssignedBy|Responsible|Order|DetailWidget)|getCompleted|hide(Id|ListIfEmpty)|autoGetUsers|avoidDuplicates|delDeletedLists)/) {
+  if ( $attrName eq "sortTasks" ||  $attrName =~ /(show(Priority|AssignedBy|Responsible|Order|DetailWidget|Section|Parent)|getCompleted|hide(Id|ListIfEmpty)|autoGetUsers|avoidDuplicates|delDeletedLists)/) {
     if ( $cmd eq "set" ) {
       return "$name: $attrName has to be 0 or 1" if ($attrVal !~ /^(0|1)$/);
       Log3 $name, 4, "todoist ($name): set attribut $attrName to $attrVal";
@@ -1664,6 +1784,7 @@ sub todoist_Set ($@) {
     push @sets, "getTasks:noArg";
     push @sets, "cChildProjects:noArg";
     push @sets, "getUsers:noArg";
+    push @sets, "reorderTasks";
   }
   push @sets, "accessToken" if ($hash->{helper}{PWD_NEEDED});
   push @sets, "newAccessToken" if (!$hash->{helper}{PWD_NEEDED});
@@ -1737,6 +1858,14 @@ sub todoist_Set ($@) {
       todoist_UpdateTask ($hash,$exp,$term);
     }
     return "in order to complete a task, we need it's ID" if ($count==0);
+  }
+  elsif ($cmd eq "reorderTasks") {
+    my $count=@args;
+    if ($count!=0) {
+      my $exp=$args[0];
+      todoist_ReorderTasks ($hash,$exp);
+    }
+    return "in order to delete a task, we need it's ID" if ($count==0);
   }
   elsif ($cmd eq "deleteTask") {
     my $count=@args;
@@ -2255,6 +2384,7 @@ sub todoist_genUUID() {
          <li>assignedByUid=the todoist-ID of the user who assigned the current task</li>
          <li>order=the order of the task inside a project (the smallest value would place the task at the top)</li>
          <li>parentID=parent_id of the parent task.</li>
+         <li>sectionID=section_id of the parent task.</li>         
 
         </ul><br />
         Examples: <br /><br />
@@ -2279,8 +2409,8 @@ sub todoist_genUUID() {
         Needs Task-ID or todoist-Task-ID as parameter<br /><br />
         Possible additional parameters are:<br />
           <ul>
-             <li>parentID=parent_id of the parent task.</li>
-             <li>projectID=project_id of the parent task.</li>
+             <li>parentID=todoist-ID of the new parent task.</li>
+             <li>projectID=todoist-ID of the receiving project.</li>
             </ul><br /><br /></li>
         <li><b>completeTask</b> - completes a task. Needs number of task (reading 'Task_NUMBER'), the title (TITLE:&lt;TITLE&gt;) or the 
         todoist-Task-ID (ID:&lt;ID&gt;) as parameter<br /><br />
@@ -2350,6 +2480,18 @@ sub todoist_genUUID() {
         <li>1: show order number</li>
         </ul></li>
         <br />
+        <li>showParent
+        <ul>
+        <li>0: don't show parent_id of the task</li>
+        <li>1: show parent_id (default)</li>
+        </ul></li>
+        <br />
+        <li>showSection
+        <ul>
+        <li>0: don't show section_id of the task</li>
+        <li>1: show section_id (default)</li>
+        </ul></li>
+        <br />
         <li>showChecked
         <ul>
         <li>0: don't show if a task is checked (for tasks with parent_id)</li>
@@ -2410,6 +2552,8 @@ sub todoist_genUUID() {
             the tasks are listet as Task_000, Task_001 [...].</li>
         <li>Task_XXX_parentID<br />
             parent ID of task XXX if not null</li>
+        <li>Task_XXX_sectionID<br />
+            section ID of task XXX if not null</li>
         <li>Task_XXX_checked<br />
             1 when a task with parent_id is checked</li>  
         <li>Task_XXX_isDeleted<br />
