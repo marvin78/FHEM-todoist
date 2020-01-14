@@ -1,2 +1,2 @@
-UPD 2020-01-14_08:47:34 86764 FHEM/98_todoist.pm
-UPD 2020-01-13_21:36:10 15026 www/pgm2/todoist.js
+UPD 2020-01-14_11:22:55 87010 FHEM/98_todoist.pm
+UPD 2020-01-14_11:26:28 15146 www/pgm2/todoist.js
